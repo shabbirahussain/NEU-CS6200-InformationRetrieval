@@ -24,13 +24,13 @@ public final class Constants {
 	public static final String PRE_PROCESS_DST_PATH = BASE_PATH + "/AP_DATA/ap89_collection";
 	
 	public static final String QUERY_FILE_PATH  = BASE_PATH + "/AP_DATA/query_desc.51-100.short.txt";
-	public static final String OUTPUT_FILE_PATH = BASE_PATH + "/AP_DATA/results/output1000.txt";
+	public static final String OUTPUT_FILE_PATH = BASE_PATH + "/AP_DATA/results/output1000_";
 	
 	// Word assosiations
 	
 	public static final String DATA_FILE_PREFIX = "ap";
 	
-	public static final String  HOST = "localhost";
+	public static final String  HOST = "192.168.1.105"; //"localhost";
 	public static final Integer PORT = 9300;
 	public static final String CLUSTER_NAME = "dead-pool";
 	
@@ -41,7 +41,12 @@ public final class Constants {
 	public static final ByteSizeUnit BULK_MEMORY_SIZE  = ByteSizeUnit.GB;
 	public static final Boolean ENABLE_BULK_INSERT = true;
 
+	public static final Boolean ENABLE_TF_CACHE = true;
+	public static final Integer MAX_RESULTS = 1000;
 	
+	
+	
+	public static final String TEXT_FIELD_NAME = "TEXT";
 	
 	// ---------------------------------- Dynamic Initializations ----------------------------------------
 	
@@ -90,5 +95,4 @@ public final class Constants {
 			        .build();
 		} catch (UnknownHostException e) {e.printStackTrace();}
 	}
-	
 }

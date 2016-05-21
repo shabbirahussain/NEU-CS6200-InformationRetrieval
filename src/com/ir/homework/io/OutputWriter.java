@@ -15,15 +15,15 @@ public final class OutputWriter {
 	public static class OutputRecord{
 		public String  queryNo;
 		public String  docNo;
-		public Integer rank;
-		public Double  score;
+		public Long    rank;
+		public Float  score;
 		
 		
-		public OutputRecord(String queryNo, String docNo, Integer rank, Double score){
+		public OutputRecord(String queryNo, String docNo, Long i, Float float1){
 			this.queryNo = queryNo;
 			this.docNo   = docNo;
-			this.rank    = rank;
-			this.score   = score;
+			this.rank    = i;
+			this.score   = float1;
 		}
 	};
 	
@@ -75,7 +75,7 @@ public final class OutputWriter {
 		try {
 			or.open();
 			
-			or.writeOutput(new OutputRecord("13", "test-doc001", 1, 0.245));
+			or.writeOutput(new OutputRecord("13", "test-doc001", 1L, (float) 0.245));
 			
 			or.close();
 		} catch (IOException e) {

@@ -145,7 +145,7 @@ public final class FilePreprocessor {
 	private String cleanupLines(String line){
 		line = line.replaceAll("&amp;", "&");
 		line = line.replaceAll("&", "&amp;");
-		
+		line = line.toLowerCase();
 		return line;
 	}
 

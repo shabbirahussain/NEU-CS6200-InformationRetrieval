@@ -49,7 +49,7 @@ public class DataLoader {
 			System.out.println("Record Count=" + pushCnt);
 		} catch (Exception e1) {e1.printStackTrace();}
 		
-		// Segment to monitor
+		// Segment monitor
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1.0e-9;
 		System.out.println("Time Required=" + elapsedTimeInSec);
 	}
@@ -74,7 +74,7 @@ public class DataLoader {
 				System.out.println(file.getName());
 				Document doc = dBuilder.parse(file);
 				
-				org.w3c.dom.NodeList docs = doc.getElementsByTagName("DOC");
+				org.w3c.dom.NodeList docs = doc.getElementsByTagName("doc");
 				
 				for(int i=0; i<docs.getLength(); i++, cnt++){
 					IndexRequestBuilder irBuilder = getRequest(docs.item(i));
@@ -108,8 +108,8 @@ public class DataLoader {
 	 */
 	private IndexRequestBuilder getRequest(org.w3c.dom.Node node) throws IOException{
 		Element elem = (Element)node;
-		String DOCNO = elem.getElementsByTagName("DOCNO").item(0).getTextContent().trim();
-		String TEXT  = elem.getElementsByTagName("TEXT" ).item(0).getTextContent().trim();
+		String DOCNO = elem.getElementsByTagName("docno").item(0).getTextContent().trim().toUpperCase();
+		String TEXT  = elem.getElementsByTagName("text" ).item(0).getTextContent().trim();
 		
 		XContentBuilder builder = jsonBuilder()
 			.startObject()
