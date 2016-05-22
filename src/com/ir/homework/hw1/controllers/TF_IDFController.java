@@ -18,14 +18,14 @@ import static com.ir.homework.common.Constants.*;
  * @author shabbirhussain
  *
  */
-public class OkapiTFController extends BaseSearchController implements SearchController{
+public class TF_IDFController extends BaseSearchController implements SearchController{
 	
 	/**
 	 * constructor for re using cache across controllers
 	 * @param searchCache search cache object
 	 * @param maxResults maximum number of results
 	 */
-	public OkapiTFController(SearchControllerCache searchCache, Integer maxResults){
+	public TF_IDFController(SearchControllerCache searchCache, Integer maxResults){
 		super(searchCache, maxResults);
 	}
 	
@@ -55,14 +55,20 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 					Float okapi_tf = (float) (tf_w_d / (tf_w_d + 0.5 + 1.5*(len_d/avg_len_d)));
 					
 					// Normalize score for multiple instances 
-					//okapi_tf = (float) (1/(1+Math.pow(okapi_tf, -1)));
+					// okapi_tf = (float) (1/(1+Math.pow(okapi_tf, -1)));
 					
-					Float tf_d_q = docScore.getOrDefault(docNo, 0.0F);
-					//The matching score for document $d$ and query $q$ is as follows.
-					// $$ tf(d, q) = \sum_{w \in q} okapi\_tf(w, d) $$
-					tf_d_q += okapi_tf;
+
+					Float tfidf_d_q   = docScore.getOrDefault(docNo, 0.0F);
+					Long  D   = super.searchCache.getDocumentCount();
+					Long  df_w = super.searchCache.getTermDocCount(term);
 					
-					docScore.put(docNo, tf_d_q);
+					// $$ tfidf(d, q) = \sum_{w \in q} okapi\_tf(w, d) \cdot \log \frac{D}{df_w} $$
+					//Where:
+					//	$D$ is the total number of documents in the corpus
+					//	$df_w$ is the number of documents which contain term $w$
+					tfidf_d_q += (float) (okapi_tf * Math.log(D / df_w));
+
+					docScore.put(docNo, tfidf_d_q);
 				}
 			}
 			return super.prepareOutput(queryNo, docScore);
@@ -79,7 +85,7 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 		
 		SearchControllerCache sc = new SearchControllerCache(INDEX_NAME, INDEX_TYPE, MAX_RESULTS, TEXT_FIELD_NAME);
 		
-		OkapiTFController okc = new OkapiTFController(sc, MAX_RESULTS);
+		TF_IDFController okc = new TF_IDFController(sc, MAX_RESULTS);
 
 		Map<String, String[]> queries = new HashMap<String, String[]>();
 		queries.put("test-key", (new String[]{"cat", "dog"}));

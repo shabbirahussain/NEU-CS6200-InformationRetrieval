@@ -3,7 +3,12 @@
  */
 package com.ir.homework.hw1;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +17,7 @@ import com.ir.homework.hw1.controllers.*;
 import com.ir.homework.hw1.controllers.util.SearchControllerCache;
 import com.ir.homework.io.OutputWriter;
 import com.ir.homework.io.QueryReader;
+import com.ir.homework.io.ResultEvaluator;
 
 import static com.ir.homework.common.Constants.*;
 
@@ -26,18 +32,31 @@ public final class Executor {
 	 */
 	public static void main(String[] args) {
 		long start = System.nanoTime(); 
-		
-		searchCache = new SearchControllerCache(INDEX_NAME, INDEX_TYPE, MAX_RESULTS, TEXT_FIELD_NAME);
-		
-		
+		List<SearchController> controllers = new LinkedList<SearchController>();
+		searchCache = loadOrCreateCache(SearchControllerCache.class, OBJECT_STORE_PATH);
 		
 		////////////////// Controllers //////////////////////////////////
-		SearchController sc = new OkapiTFController(searchCache, MAX_RESULTS);
+		// OkapiTF
+		controllers.add(new OkapiTFController(searchCache, MAX_RESULTS));
+		
+		// TF-IDF
+		controllers.add(new TF_IDFController(searchCache, MAX_RESULTS));
+		
+		// OkapiBM25
+		controllers.add(new OkapiBM25Controller(searchCache, MAX_RESULTS));
+		
+		////////////////////////////////////////////////////////////////
+		Double correctnessScore;
+		for(SearchController sc : controllers){
+			System.out.println("\n================ " + sc.getClass().getSimpleName() + " ==========================");
+			correctnessScore = execute(sc, QUERY_FILE_PATH, OUTPUT_FILE_PATH, ENABLE_SILENT_MODE, TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
+		}
 		
 		
-		execute(sc, QUERY_FILE_PATH, OUTPUT_FILE_PATH);
-		
-		
+		if(ENABLE_PERSISTENT_CACHE){
+			System.out.println("Saving cache for future use...");
+			saveObject(searchCache, OBJECT_STORE_PATH);
+		}
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1.0e-9;
 		System.out.println("Time Required=" + elapsedTimeInSec);
@@ -48,8 +67,10 @@ public final class Executor {
 	 * @param sc Search Controller to use
 	 * @param queryFilePath
 	 * @param outFilePath
+	 * @return accutacy score from trec_eval
 	 */
-	public static void execute(SearchController sc, String queryFilePath, String outFilePath){
+	public static Double execute(SearchController sc, String queryFilePath, String outFilePath, Boolean silentMode, String evalPath, String []evalParams){
+		Double result = null;
 		outFilePath = outFilePath + sc.getClass().getSimpleName() + ".txt";
 		
 		QueryReader  qr = new QueryReader(queryFilePath);
@@ -60,16 +81,87 @@ public final class Executor {
 			ow.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
-				System.out.println("Executing Q:"+ q.getKey());
+				if(!silentMode) System.out.println("Executing Q:"+ q.getKey());
 				records = sc.executeQuery(q);
-				System.out.println("Found "+ records.size() + " results.");
 				for(OutputWriter.OutputRecord r: records)
 					ow.writeOutput(r);
 				
 			}
 			ow.close();
+			
+			
+			// run evaluation on output
+			if(!silentMode) System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
+			result = (new ResultEvaluator(evalPath, evalParams, outFilePath)).runEvaluation(silentMode);
+			
 		} catch (ArrayIndexOutOfBoundsException | IOException e) {
 			e.printStackTrace();
 		}
+		return result;
+	}
+	
+	/**
+	 * Saves a serializable object
+	 * @param object object to be stored
+	 * @param storePath full path of directory where objects are stored
+	 */
+	private static void saveObject(Object object, String storePath){
+		String fullFilePath = storePath + object.getClass().getName() + ".ser";
+		
+		ObjectOutputStream oos;
+		try {
+			oos = new ObjectOutputStream(new FileOutputStream(fullFilePath));
+			oos.writeObject(object);
+			oos.close();
+		} catch (IOException e) {e.printStackTrace();}
+		return;
+	}
+	
+	/**
+	 * 
+	 * @param c class of object to be loaded
+	 * @param storePath full path of directory where objects are stored
+	 * @return Uncasted object of given class fetched from store
+	 */
+	private static Object loadObject(Class c, String storePath){
+		String fullFilePath = storePath + c.getName() + ".ser";
+		Object result;
+		try{
+			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fullFilePath));
+			result = ois.readObject();
+			ois.close();
+			
+			return result;
+		}catch(ClassNotFoundException | IOException e){}
+		return null;
+	}
+	
+	/**
+	 * Creates a new search controller cache
+	 * @return
+	 */
+	private static SearchControllerCache createSearchControllerCache(){
+		System.out.println("Creating new cache...");
+		SearchControllerCache result = new SearchControllerCache(INDEX_NAME, INDEX_TYPE, MAX_RESULTS, TEXT_FIELD_NAME);
+		return result;
+	}
+	
+	/**
+	 * Loads or creates a SearchCache
+	 * @param c class of object to be loaded
+	 * @param storePath full path of directory where objects are stored
+	 * @return Uncasted object of given class fetched from store
+	 */
+	private static SearchControllerCache loadOrCreateCache(Class c, String storePath){
+		SearchControllerCache result;
+		if(ENABLE_PERSISTENT_CACHE){
+			System.out.println("Loading cache from: " + storePath);
+			result = (SearchControllerCache) loadObject(SearchControllerCache.class, storePath);
+			if(result == null)
+				result = createSearchControllerCache();
+		}else{
+			result = createSearchControllerCache();
+		}
+		return result;
 	}
 }

@@ -27,13 +27,16 @@ public class SearchControllerCache implements Serializable{
 	/**
 	 * Class stores term statistics 
 	 */
-	private class TermStats{
-		public Map<String, Float> docFrequncyMap;
-		public Double termImportance;
+	private class TermStats implements Serializable{
+		// Serialization version Id
+		private static final long serialVersionUID = 1L;
 		
-		public TermStats(Map<String, Float> docFrequncyMap, Double termImportance){
+		public Map<String, Float> docFrequncyMap;
+		public Long termDocCount;
+		
+		public TermStats(Map<String, Float> docFrequncyMap, Long termDocCount){
 			this.docFrequncyMap = docFrequncyMap;
-			this.termImportance = termImportance;
+			this.termDocCount = termDocCount;
 		}
 	}
 	
@@ -43,7 +46,7 @@ public class SearchControllerCache implements Serializable{
 	// Stores document stats
 	private Map<String, Float> docStatsMap;
 	
-	private Long   documentCount;
+	private Long  documentCount;
 	private Float avgDocLength;
 	
 	/**
@@ -62,6 +65,7 @@ public class SearchControllerCache implements Serializable{
 		docStatsMap  = new HashMap<String, Float>();
 		
 		SearchResponse response;
+		documentCount = 1L;
 		// Calculate document count
 		response = client.prepareSearch()
 			.setIndices(index)
@@ -70,6 +74,7 @@ public class SearchControllerCache implements Serializable{
 			.get();
 		
 		documentCount = response.getHits().getTotalHits();
+		//*/
 		
 		// Calculate document length
 		response = client.prepareSearch()
@@ -103,8 +108,20 @@ public class SearchControllerCache implements Serializable{
 		return result;
 	}
 	
+	/**
+	 * Getter for average document length
+	 * @return
+	 */
 	public Float getAvgDocLength(){
 		return avgDocLength;
+	}
+	
+	/**
+	 * Getter for documentCount
+	 * @return
+	 */
+	public Long getDocumentCount(){
+		return documentCount;
 	}
 	
 	/**
@@ -147,12 +164,12 @@ public class SearchControllerCache implements Serializable{
 	}
 	
 	/**
-	 * Fetches term importance from cache or builds new one
+	 * Fetches documents a term is found
 	 * @param term
 	 * @return
 	 */
-	public Double getTermImportance(String term){
-		return this.getTermStats(term).termImportance;
+	public Long getTermDocCount(String term){
+		return this.getTermStats(term).termDocCount;
 	}
 	
 	/** 
@@ -180,9 +197,9 @@ public class SearchControllerCache implements Serializable{
 	 */
 	private TermStats calcTermStats(String term){
 		Map<String,Float> tfMap = this.calcTermFrequency(term);
-		Double termImportance   = this.calcTermImportance(term);
+		Long termDocCount     = this.calcTermDocCount(term);
 		
-		TermStats result = new TermStats(tfMap, termImportance);
+		TermStats result = new TermStats(tfMap, termDocCount);
 		return result;
 	}
 	
@@ -220,8 +237,8 @@ public class SearchControllerCache implements Serializable{
 	 * @param term given string term
 	 * @return an importance score
 	 */
-	private Double calcTermImportance(String term){
-		Double result;
+	private Long calcTermDocCount(String term){
+		Long result = 0L; 
 		
 		// Get query term document count
 		SearchResponse response = client.prepareSearch(index)
@@ -230,14 +247,9 @@ public class SearchControllerCache implements Serializable{
 				.setNoFields()
 				.get();
 		
-		Long tatalHits = 0L; 
 		if(response.status() == RestStatus.OK){
-			tatalHits = response.getHits().getTotalHits();
+			result = response.getHits().getTotalHits();
 		}
-		
-		// Calculate term importance with logarithmic decay
-		result = (documentCount / Math.log(tatalHits));
-		
 		return result;
 	}
 	
@@ -247,9 +259,11 @@ public class SearchControllerCache implements Serializable{
 	 */
 	public static void main(String args[]){
 		SearchControllerCache sc = new SearchControllerCache(INDEX_NAME, INDEX_TYPE, MAX_RESULTS, TEXT_FIELD_NAME);
+		String docNo = "AP890912-0225";
 		
-		System.out.println("len="+sc.getDocLength("AP890912-0225"));
-		System.out.println("imp=" + sc.calcTermImportance("nuclear"));
-		System.out.println("imp=" + sc.calcTermImportance("the"));
+		System.out.println("len["+docNo+"]="+sc.getDocLength(docNo));
+		System.out.println("imp=" + sc.calcTermDocCount("nuclear"));
+		System.out.println("imp=" + sc.calcTermDocCount("a"));
+		
 	}
 }
