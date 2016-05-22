@@ -3,6 +3,8 @@
  */
 package com.ir.homework.hw1.controllers;
 
+import static com.ir.homework.hw1.Constants.*;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +13,6 @@ import java.util.Map.Entry;
 
 import com.ir.homework.hw1.controllers.util.SearchControllerCache;
 import com.ir.homework.io.OutputWriter.OutputRecord;
-import static com.ir.homework.common.Constants.*;
 
 
 /**
@@ -46,26 +47,26 @@ public class TF_IDFController extends BaseSearchController implements SearchCont
 					Float tf_w_d    = tfe.getValue();
 					Float len_d     = super.searchCache.getDocLength(docNo);
 					Float avg_len_d = super.searchCache.getAvgDocLength();
-
-					//$$ okapi\_tf(w, d) = \frac{tf_{w,d}}{tf_{w,d} + 0.5 + 1.5 \cdot (len(d) / avg(len(d)))} $$
-					//Where:
-					//		$tf_{w,d}$ is the term frequency of term $w$ in document $d$
-					//		$len(d)$ is the length of document $d$
-					//		$avg(len(d))$ is the average document length for the entire corpus
-					Float okapi_tf = (float) (tf_w_d / (tf_w_d + 0.5 + 1.5*(len_d/avg_len_d)));
 					
-					// Normalize score for multiple instances 
-					// okapi_tf = (float) (1/(1+Math.pow(okapi_tf, -1)));
-					
-
-					Float tfidf_d_q   = docScore.getOrDefault(docNo, 0.0F);
 					Long  D   = super.searchCache.getDocumentCount();
 					Long  df_w = super.searchCache.getTermDocCount(term);
 					
-					// $$ tfidf(d, q) = \sum_{w \in q} okapi\_tf(w, d) \cdot \log \frac{D}{df_w} $$
-					//Where:
-					//	$D$ is the total number of documents in the corpus
-					//	$df_w$ is the number of documents which contain term $w$
+					Float tfidf_d_q   = docScore.getOrDefault(docNo, 0.0F);
+					/**TF-IDF
+					 * This is the second vector space model. The scoring function is as follows.
+					 *  $$ okapi\_tf(w, d) = \frac{tf_{w,d}}{tf_{w,d} + 0.5 + 1.5 \cdot (len(d) / avg(len(d)))} $$
+					 *  Where:
+					 *  	$tf_{w,d}$ is the term frequency of term $w$ in document $d$
+					 *  	$len(d)$ is the length of document $d$
+					 *  	$avg(len(d))$ is the average document length for the entire corpus
+					 *  
+					 *  $$ tfidf(d, q) = \sum_{w \in q} okapi\_tf(w, d) \cdot \log \frac{D}{df_w} $$
+					 *  Where:
+					 *  	$D$ is the total number of documents in the corpus
+					 *  	$df_w$ is the number of documents which contain term $w$
+					 */
+					Float okapi_tf = (float) (tf_w_d / (tf_w_d + 0.5 + 1.5*(len_d/avg_len_d)));
+					okapi_tf = super.sigmoidSmoothing(okapi_tf);
 					tfidf_d_q += (float) (okapi_tf * Math.log(D / df_w));
 
 					docScore.put(docNo, tfidf_d_q);

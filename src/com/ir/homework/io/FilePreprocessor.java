@@ -3,7 +3,7 @@
  */
 package com.ir.homework.io;
 
-import static com.ir.homework.common.Constants.*;
+import static com.ir.homework.hw1.Constants.*;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -59,6 +59,9 @@ public final class FilePreprocessor {
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1.0e-9;
 		System.out.println("Time Required=" + elapsedTimeInSec);
+		
+		// Load data into elastic search
+		DataLoader.main(null);
 	}
 	
 	public Integer preProcessFiles() throws IOException{
@@ -67,12 +70,11 @@ public final class FilePreprocessor {
 		File   folder      = new File(dataSrcFilePath);
 		File[] listOfFiles = folder.listFiles();
 		
-		int errCnt=0, fileCnt=0;
+		int errCnt=0;
 		for (File file : listOfFiles) {
 			// If valid file type pre process it
 			if (file.isFile() && file.getName().startsWith(dataFilePrefix)){
-				fileCnt++;
-				//System.out.println("[Info]: Processing file [" + file.getName() + "]");
+				System.out.println("[Info]: Processing file [" + file.getName() + "]");
 				
 				try{
 					File processedFile = preProcessFile(file, dataDstFilePath);
@@ -143,9 +145,10 @@ public final class FilePreprocessor {
 	 * @return
 	 */
 	private String cleanupLines(String line){
-		line = line.replaceAll("&amp;", "&");
-		line = line.replaceAll("&", "&amp;");
 		line = line.toLowerCase();
+		line = line.replaceAll("&amp;", "&");
+		//line = line.replaceAll("[^a-z|0-9|&|<|>]", " ");
+		line = line.replaceAll("&", "&amp;");
 		return line;
 	}
 

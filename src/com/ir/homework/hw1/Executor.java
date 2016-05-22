@@ -3,6 +3,8 @@
  */
 package com.ir.homework.hw1;
 
+import static com.ir.homework.hw1.Constants.*;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,8 +21,6 @@ import com.ir.homework.io.OutputWriter;
 import com.ir.homework.io.QueryReader;
 import com.ir.homework.io.ResultEvaluator;
 
-import static com.ir.homework.common.Constants.*;
-
 /**
  * @author shabbirhussain
  *
@@ -35,7 +35,7 @@ public final class Executor {
 		List<SearchController> controllers = new LinkedList<SearchController>();
 		searchCache = loadOrCreateCache(SearchControllerCache.class, OBJECT_STORE_PATH);
 		
-		////////////////// Controllers //////////////////////////////////
+		//////////////////////// Controllers ////////////////////////////
 		// OkapiTF
 		controllers.add(new OkapiTFController(searchCache, MAX_RESULTS));
 		
@@ -45,16 +45,20 @@ public final class Executor {
 		// OkapiBM25
 		controllers.add(new OkapiBM25Controller(searchCache, MAX_RESULTS));
 		
+		// UnigramLM_LaplaceSmoothing
+		controllers.add(new UnigramLM_LaplaceSmoothing(searchCache, MAX_RESULTS));
+		
 		////////////////////////////////////////////////////////////////
 		Double correctnessScore;
 		for(SearchController sc : controllers){
 			System.out.println("\n================ " + sc.getClass().getSimpleName() + " ==========================");
-			correctnessScore = execute(sc, QUERY_FILE_PATH, OUTPUT_FILE_PATH, ENABLE_SILENT_MODE, TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
+			correctnessScore = execute(sc);
+			System.out.println("==> Correctness Score: " + correctnessScore);
 		}
 		
 		
 		if(ENABLE_PERSISTENT_CACHE){
-			System.out.println("Saving cache for future use...");
+			System.out.println("\n\nSaving cache for future use...");
 			saveObject(searchCache, OBJECT_STORE_PATH);
 		}
 		
@@ -69,11 +73,11 @@ public final class Executor {
 	 * @param outFilePath
 	 * @return accutacy score from trec_eval
 	 */
-	public static Double execute(SearchController sc, String queryFilePath, String outFilePath, Boolean silentMode, String evalPath, String []evalParams){
+	public static Double execute(SearchController sc){
 		Double result = null;
-		outFilePath = outFilePath + sc.getClass().getSimpleName() + ".txt";
+		String outFilePath = OUTPUT_FILE_PATH + sc.getClass().getSimpleName() + ".txt";
 		
-		QueryReader  qr = new QueryReader(queryFilePath);
+		QueryReader  qr = new QueryReader(QUERY_FILE_PATH, ENABLE_STEMMING);
 		OutputWriter ow = new OutputWriter( outFilePath);
 		
 		List<OutputWriter.OutputRecord> records;
@@ -81,18 +85,19 @@ public final class Executor {
 			ow.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
-				if(!silentMode) System.out.println("Executing Q:"+ q.getKey());
+				searchCache.resetStatististics();
+				if(!ENABLE_SILENT_MODE) System.out.print("Executing Q:"+ q.getKey());
 				records = sc.executeQuery(q);
 				for(OutputWriter.OutputRecord r: records)
 					ow.writeOutput(r);
-				
+				if(!ENABLE_SILENT_MODE) System.out.println("\t CacheHits% = " + Math.round(100 * searchCache.cacheHits / (searchCache.cacheHits + searchCache.cacheMiss)));
 			}
 			ow.close();
 			
 			
 			// run evaluation on output
-			if(!silentMode) System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
-			result = (new ResultEvaluator(evalPath, evalParams, outFilePath)).runEvaluation(silentMode);
+			if(!ENABLE_SILENT_MODE) System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
+			result = (new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS, outFilePath)).runEvaluation(ENABLE_SILENT_MODE);
 			
 		} catch (ArrayIndexOutOfBoundsException | IOException e) {
 			e.printStackTrace();

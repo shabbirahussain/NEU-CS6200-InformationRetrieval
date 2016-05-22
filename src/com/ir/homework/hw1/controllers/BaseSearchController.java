@@ -67,4 +67,14 @@ public abstract class BaseSearchController {
 		}
 		return result;
 	}
+	
+	/**
+	 * Applies sigmoid transformaion for given value 
+	 * @param value
+	 * @return smoothened value over sigmoid
+	 */
+	protected Float sigmoidSmoothing(Float value){
+		//value = (float) (10/(1+Math.pow(value, -1)));
+		return value;
+	}
 }

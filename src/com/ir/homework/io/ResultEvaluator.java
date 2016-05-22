@@ -3,14 +3,14 @@
  */
 package com.ir.homework.io;
 
+import static com.ir.homework.hw1.Constants.*;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-
-import static com.ir.homework.common.Constants.*;
 /**
  * @author shabbirhussain
  * Evaluates the results generated using treckeval

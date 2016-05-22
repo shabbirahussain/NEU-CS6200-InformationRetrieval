@@ -1,12 +1,12 @@
 package com.ir.homework.io;
 
+import static com.ir.homework.hw1.Constants.*;
+
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-
-import static com.ir.homework.common.Constants.*;
 
 public final class OutputWriter {
 	private String oPath;

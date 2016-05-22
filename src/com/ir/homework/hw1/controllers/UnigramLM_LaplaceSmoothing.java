@@ -16,14 +16,14 @@ import com.ir.homework.io.OutputWriter.OutputRecord;
  * @author shabbirhussain
  *
  */
-public class OkapiTFController extends BaseSearchController implements SearchController{
+public class UnigramLM_LaplaceSmoothing extends BaseSearchController implements SearchController{
 	
 	/**
 	 * constructor for re using cache across controllers
 	 * @param searchCache search cache object
 	 * @param maxResults maximum number of results
 	 */
-	public OkapiTFController(SearchControllerCache searchCache, Integer maxResults){
+	public UnigramLM_LaplaceSmoothing(SearchControllerCache searchCache, Integer maxResults){
 		super(searchCache, maxResults);
 	}
 	
@@ -43,25 +43,21 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 					
 					Float tf_w_d    = tfe.getValue();
 					Float len_d     = super.searchCache.getDocLength(docNo);
-					Float avg_len_d = super.searchCache.getAvgDocLength();
+					Long  V			= super.searchCache.getVocabSize();
 
-					Float tf_d_q = docScore.getOrDefault(docNo, 0.0F);
-					/**Okapi TF
-					 * This is a vector space model using a slightly modified version of TF to score documents. The Okapi TF score for term $w$ in document $d$ is as follows.
-					 *  $$ okapi\_tf(w, d) = \frac{tf_{w,d}}{tf_{w,d} + 0.5 + 1.5 \cdot (len(d) / avg(len(d)))} $$
+					Float lm_laplace_d_q = docScore.getOrDefault(docNo, 0.0F);
+					/** Unigram LM with Laplace smoothing
+					 * This is a language model with Laplace (“add-one”) smoothing. We will use maximum likelihood estimates of the query based on a multinomial model “trained” on the document. The matching score is as follows.
+					 *  $$ lm\_laplace(d, q) = \sum_{w \in q} \log p\_laplace(w|d) \\ p\_laplace(w|d) = \frac{tf_{w,d} + 1}{len(d) + V} $$
 					 *  Where:
-					 *  	$tf_{w,d}$ is the term frequency of term $w$ in document $d$
-					 *  	$len(d)$ is the length of document $d$
-					 *  	$avg(len(d))$ is the average document length for the entire corpus
-					 *  
-					 *  The matching score for document $d$ and query $q$ is as follows.
-					 *  $$ tf(d, q) = \sum_{w \in q} okapi\_tf(w, d) $$
+					 *  	$V$ is the vocabulary size – the total number of unique terms in the collection.
 					 */
-					Float okapi_tf = (float) (tf_w_d / (tf_w_d + 0.5 + 1.5*(len_d/avg_len_d)));
-					okapi_tf = super.sigmoidSmoothing(okapi_tf); // Normalize score for multiple instances 
-					tf_d_q += okapi_tf;
 					
-					docScore.put(docNo, tf_d_q);
+					Float p_laplace = (tf_w_d + 1)/ (len_d + V);
+					p_laplace = super.sigmoidSmoothing(p_laplace);
+					lm_laplace_d_q += ((Double)Math.log(p_laplace)).floatValue();
+					
+					docScore.put(docNo, lm_laplace_d_q);
 				}
 			}
 			return super.prepareOutput(queryNo, docScore);

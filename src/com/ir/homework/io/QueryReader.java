@@ -1,16 +1,35 @@
 package com.ir.homework.io;
 
+import static com.ir.homework.hw1.Constants.*;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
-import static com.ir.homework.common.Constants.*;
+import opennlp.tools.stemmer.PorterStemmer;
+
 
 public final class QueryReader {
 	private String qPath;
+	private Boolean stemQueryTerms;
+	
+	private PorterStemmer stemer;
+	
+	/**
+	 * Creates an object of Query reader with specified file path
+	 * @param qPath
+	 */
+	public QueryReader(String qPath, Boolean stemQueryTerms){
+		this.qPath = qPath;
+		this.stemQueryTerms = stemQueryTerms;
+		
+		stemer = new PorterStemmer();
+	}
 	
 	/**
 	 * Reads the queries and creates tokens out of them 
@@ -28,6 +47,17 @@ public final class QueryReader {
 			if(split.length==2){
 				String queryId   = split[0];
 				String tokens[]  = createTokens(split[1]);
+				List<String> cleanTokens = new LinkedList<String>();
+				
+				for(int i=0;i<tokens.length; i++){
+					// Remove blank terms
+					if(tokens[i].trim().length()>0) {
+						// Stem query terms
+						if(stemQueryTerms) tokens[i] = stemer.stem(tokens[i]);
+						cleanTokens.add(tokens[i]);
+					}
+				}
+				tokens = cleanTokens.toArray(new String[0]);
 				output.put(queryId, tokens);
 			}
 		}
@@ -35,14 +65,6 @@ public final class QueryReader {
 		return output;
 	}
 	
-	/**
-	 * Creates an object of Query reader with specified file path
-	 * @param qPath
-	 */
-	public QueryReader(String qPath){
-		this.qPath = qPath;
-	}
-
 	/**
 	 * Creates tokens out of given query
 	 * @param query
@@ -59,7 +81,7 @@ public final class QueryReader {
 	 */
 	public static void main(String args[]){
 		try{
-			(new QueryReader(QUERY_FILE_PATH)).getQueryTokens();
+			(new QueryReader(QUERY_FILE_PATH, ENABLE_STEMMING)).getQueryTokens();
 		}catch(Exception e){e.printStackTrace();}
 	}
 }

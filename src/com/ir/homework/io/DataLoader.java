@@ -5,7 +5,8 @@ package com.ir.homework.io;
 
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import static com.ir.homework.common.Constants.*;
+
+import static com.ir.homework.hw1.Constants.*;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.*;

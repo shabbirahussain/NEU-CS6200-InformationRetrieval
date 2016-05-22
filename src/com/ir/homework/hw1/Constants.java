@@ -1,4 +1,4 @@
-package com.ir.homework.common;
+package com.ir.homework.hw1;
 
 
 import java.net.InetAddress;
@@ -50,9 +50,10 @@ public final class Constants {
 
 	public static final Boolean ENABLE_TF_CACHE = true;
 	public static final Boolean ENABLE_PERSISTENT_CACHE = true;
-	public static final Boolean ENABLE_SILENT_MODE = false;
+	public static final Boolean ENABLE_SILENT_MODE = true;
+	public static final Boolean ENABLE_STEMMING = false;
 	
-	public static final Integer MAX_RESULTS = 1000;
+	public static final Integer MAX_RESULTS = 500;
 	
 	
 	

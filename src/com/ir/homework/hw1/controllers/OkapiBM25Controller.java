@@ -3,7 +3,6 @@
  */
 package com.ir.homework.hw1.controllers;
 
-import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +10,6 @@ import java.util.Map.Entry;
 
 import com.ir.homework.hw1.controllers.util.SearchControllerCache;
 import com.ir.homework.io.OutputWriter.OutputRecord;
-import static com.ir.homework.common.Constants.*;
 
 
 /**
@@ -19,7 +17,7 @@ import static com.ir.homework.common.Constants.*;
  *
  */
 public class OkapiBM25Controller extends BaseSearchController implements SearchController{
-	private static final Double K1 = 0.09;
+	private static final Double K1 = 0.9;
 	private static final Double K2 = 0.0; // K2 is ignored
 	private static final Double B  = 1.0;
 	
@@ -54,11 +52,15 @@ public class OkapiBM25Controller extends BaseSearchController implements SearchC
 					Long df_w       = super.searchCache.getTermDocCount(term);
 
 					Float bm25_d_q = docScore.getOrDefault(docNo, 0.0F);
-					// $$ bm25(d, q) = \sum_{w \in q} \left[ \log\left( \frac{D + 0.5}{df_w + 0.5} \right) \cdot \frac{tf_{w,d} + k_1 \cdot tf_{w,d}}{tf_{w,d} + k_1 \left((1-b) + b \cdot \frac{len(d)}{avg(len(d))}\right)} \cdot \frac{tf_{w,q} + k_2 \cdot tf_{w,q}}{tf_{w,q} + k_2} \right] $$
-					//Where:
-					//	$tf_{w,q}$ is the term frequency of term $w$ in query $q$
-					//	$k_1$, $k_2$, and $b$ are constants. You can use the values from the slides, or try your own.
+					/**Okapi BM25
+					 * BM25 is a language model based on a binary independence model. Its matching score is as follows.
+					 *  $$ bm25(d, q) = \sum_{w \in q} \left[ \log\left( \frac{D + 0.5}{df_w + 0.5} \right) \cdot \frac{tf_{w,d} + k_1 \cdot tf_{w,d}}{tf_{w,d} + k_1 \left((1-b) + b \cdot \frac{len(d)}{avg(len(d))}\right)} \cdot \frac{tf_{w,q} + k_2 \cdot tf_{w,q}}{tf_{w,q} + k_2} \right] $$
+					 *  Where:
+					 *  	$tf_{w,q}$ is the term frequency of term $w$ in query $q$
+					 *  	$k_1$, $k_2$, and $b$ are constants. You can use the values from the slides, or try your own.
+					 */
 					Double d_bm25_d_q = Math.log((D + 0.5)/(df_w + 0.5)) * ((tf_w_d + K1 * tf_w_d)/(tf_w_d + K1 * ((1 - B) + (B * len_d/avg_len_d))));
+					d_bm25_d_q = super.sigmoidSmoothing(d_bm25_d_q.floatValue()).doubleValue();
 					bm25_d_q += d_bm25_d_q.floatValue();
 					
 					docScore.put(docNo, bm25_d_q);

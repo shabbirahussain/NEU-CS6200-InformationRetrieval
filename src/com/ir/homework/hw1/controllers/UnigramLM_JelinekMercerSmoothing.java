@@ -16,14 +16,15 @@ import com.ir.homework.io.OutputWriter.OutputRecord;
  * @author shabbirhussain
  *
  */
-public class OkapiTFController extends BaseSearchController implements SearchController{
+public class UnigramLM_JelinekMercerSmoothing extends BaseSearchController implements SearchController{
+	private static final Float λ = 0.4F;
 	
 	/**
 	 * constructor for re using cache across controllers
 	 * @param searchCache search cache object
 	 * @param maxResults maximum number of results
 	 */
-	public OkapiTFController(SearchControllerCache searchCache, Integer maxResults){
+	public UnigramLM_JelinekMercerSmoothing(SearchControllerCache searchCache, Integer maxResults){
 		super(searchCache, maxResults);
 	}
 	
@@ -43,25 +44,22 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 					
 					Float tf_w_d    = tfe.getValue();
 					Float len_d     = super.searchCache.getDocLength(docNo);
-					Float avg_len_d = super.searchCache.getAvgDocLength();
+					Long  V			= super.searchCache.getVocabSize();
 
-					Float tf_d_q = docScore.getOrDefault(docNo, 0.0F);
-					/**Okapi TF
-					 * This is a vector space model using a slightly modified version of TF to score documents. The Okapi TF score for term $w$ in document $d$ is as follows.
-					 *  $$ okapi\_tf(w, d) = \frac{tf_{w,d}}{tf_{w,d} + 0.5 + 1.5 \cdot (len(d) / avg(len(d)))} $$
+					Float lm_jm_d_q = docScore.getOrDefault(docNo, 0.0F);
+					/** Unigram LM with Jelinek-Mercer smoothing
+					 * This is a similar language model, except that here we smooth a foreground document language model with a background model from the entire corpus.
+					 *  $$ lm\_jm(d, q) = \sum_{w \in q} \log p\_jm(w|d) \\ p\_jm(w|d) = \lambda \frac{tf_{w,d}}{len(d)} + (1 - \lambda) \frac{\sum_{d'} tf_{w,d'}}{\sum_{d'} len(d')} $$
 					 *  Where:
-					 *  	$tf_{w,d}$ is the term frequency of term $w$ in document $d$
-					 *  	$len(d)$ is the length of document $d$
-					 *  	$avg(len(d))$ is the average document length for the entire corpus
+					 *  	$\lambda \in (0, 1)$ is a smoothing parameter which specifies the mixture of the foreground and background distributions.
 					 *  
-					 *  The matching score for document $d$ and query $q$ is as follows.
-					 *  $$ tf(d, q) = \sum_{w \in q} okapi\_tf(w, d) $$
+					 *  Think carefully about how to efficiently obtain the background model here. If you wish, you can instead estimate the corpus probability using $\frac{cf_w}{V}$.
 					 */
-					Float okapi_tf = (float) (tf_w_d / (tf_w_d + 0.5 + 1.5*(len_d/avg_len_d)));
-					okapi_tf = super.sigmoidSmoothing(okapi_tf); // Normalize score for multiple instances 
-					tf_d_q += okapi_tf;
 					
-					docScore.put(docNo, tf_d_q);
+					Float p_laplace = λ * (tf_w_d + 1)/(len_d + V) + (1-λ);
+					lm_jm_d_q += ((Double)Math.log(p_laplace)).floatValue();
+					
+					docScore.put(docNo, lm_jm_d_q);
 				}
 			}
 			return super.prepareOutput(queryNo, docScore);
