@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.ir.homework.io.misc;
+package com.ir.homework.hw1.util;
 
 
 import static com.ir.homework.hw1.Constants.*;

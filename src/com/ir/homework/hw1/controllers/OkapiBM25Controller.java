@@ -9,17 +9,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw1.elasticutil.ElasticClient;
-import com.ir.homework.io.OutputWriter.OutputRecord;
+import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
 
 
 /**
  * @author shabbirhussain
  *
  */
-public class OkapiBM25Controller extends BaseSearchController implements SearchController{
+public class OkapiBM25Controller extends BaseSearchController{
 	private static final Double K1 = 0.9;
 	private static final Double K2 = 0.0; // K2 is ignored
-	private static final Double B  = 1.0;
+	private static final Double B  = 0.9;
 	
 	/**
 	 * constructor for re using cache across controllers
@@ -38,17 +38,17 @@ public class OkapiBM25Controller extends BaseSearchController implements SearchC
 			
 			Map<String, Float> docScore = new HashMap<String, Float>();
 			for(String term: queryTerms){
-				Map<String, Float> tf = elasticClient.getTermFrequency(term);
+				Map<String, Float> tf = elasticClient.getDocFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){
 					String docNo = tfe.getKey();
 					
 					Float tf_w_d    = tfe.getValue();
-					Float len_d     = super.elasticClient.getDocLength(docNo);
-					Float avg_len_d = super.elasticClient.getAvgDocLength();
+					Long  len_d     = super.elasticClient.getTermCount(docNo);
+					Float avg_len_d = super.elasticClient.getAvgDocLen();
 					
-					Long D          = super.elasticClient.getDocumentCount();
-					Long df_w       = super.elasticClient.getTermDocCount(term);
+					Long D          = super.elasticClient.getDocCount();
+					Long df_w       = super.elasticClient.getDocCount(term);
 
 					Float bm25_d_q = docScore.getOrDefault(docNo, 0.0F);
 					/**Okapi BM25

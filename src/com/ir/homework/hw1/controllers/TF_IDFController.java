@@ -9,14 +9,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw1.elasticutil.ElasticClient;
-import com.ir.homework.io.OutputWriter.OutputRecord;
+import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
 
 
 /**
  * @author shabbirhussain
  *
  */
-public class TF_IDFController extends BaseSearchController implements SearchController{
+public class TF_IDFController extends BaseSearchController{
 	
 	/**
 	 * constructor for re using cache across controllers
@@ -35,17 +35,17 @@ public class TF_IDFController extends BaseSearchController implements SearchCont
 			
 			Map<String, Float> docScore = new HashMap<String, Float>();
 			for(String term: queryTerms){
-				Map<String, Float> tf = elasticClient.getTermFrequency(term);
+				Map<String, Float> tf = elasticClient.getDocFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){
 					String docNo = tfe.getKey();
 					
 					Float tf_w_d    = tfe.getValue();
-					Float len_d     = super.elasticClient.getDocLength(docNo);
-					Float avg_len_d = super.elasticClient.getAvgDocLength();
+					Long  len_d     = super.elasticClient.getTermCount(docNo);
+					Float avg_len_d = super.elasticClient.getAvgDocLen();
 					
-					Long  D   = super.elasticClient.getDocumentCount();
-					Long  df_w = super.elasticClient.getTermDocCount(term);
+					Long  D    = super.elasticClient.getDocCount();
+					Long  df_w = super.elasticClient.getDocCount(term);
 					
 					Float tfidf_d_q   = docScore.getOrDefault(docNo, 0.0F);
 					/**TF-IDF

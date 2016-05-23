@@ -16,11 +16,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw1.controllers.*;
+import com.ir.homework.hw1.elasticutil.CachedElasticClient;
 import com.ir.homework.hw1.elasticutil.ElasticClient;
 import com.ir.homework.hw1.elasticutil.ElasticClientBuilder;
-import com.ir.homework.io.OutputWriter;
-import com.ir.homework.io.QueryReader;
-import com.ir.homework.io.ResultEvaluator;
+import com.ir.homework.hw1.io.OutputWriter;
+import com.ir.homework.hw1.io.QueryReader;
+import com.ir.homework.hw1.io.ResultEvaluator;
 
 /**
  * @author shabbirhussain
@@ -34,13 +35,8 @@ public final class Executor {
 	public static void main(String[] args) {
 		long start = System.nanoTime(); 
 		List<SearchController> controllers = new LinkedList<SearchController>();
-		elasticClient = loadOrCreateCache(ElasticClient.class, OBJECT_STORE_PATH)
-				.setIndices(INDEX_NAME)
-				.setTypes(INDEX_TYPE)
-				.setLimit(MAX_RESULTS)
-				.setField(TEXT_FIELD_NAME)
-				.setCache(ENABLE_TF_CACHE);
-		
+
+		elasticClient = loadOrCreateCache(CachedElasticClient.class, OBJECT_STORE_PATH);
 		
 		
 		//////////////////////// Controllers ////////////////////////////
@@ -84,7 +80,7 @@ public final class Executor {
 	 * @param sc Search Controller to use
 	 * @param queryFilePath
 	 * @param outFilePath
-	 * @return accutacy score from trec_eval
+	 * @return accuracy score from trec_eval
 	 */
 	public static Double execute(SearchController sc){
 		Double result = null;
@@ -98,12 +94,10 @@ public final class Executor {
 			ow.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
-				elasticClient.resetStatististics();
-				if(!ENABLE_SILENT_MODE) System.out.print("Executing Q:"+ q.getKey());
+				if(!ENABLE_SILENT_MODE) System.out.println("Executing Q:"+ q.getKey());
 				records = sc.executeQuery(q);
 				for(OutputWriter.OutputRecord r: records)
 					ow.writeOutput(r);
-				if(!ENABLE_SILENT_MODE) System.out.println("\t CacheHits% = " + Math.round(100 * elasticClient.cacheHits / (elasticClient.cacheHits + elasticClient.cacheMiss)));
 			}
 			ow.close();
 			
@@ -156,11 +150,22 @@ public final class Executor {
 	
 	/**
 	 * Creates a new search controller cache
-	 * @return
+	 * @return New instance of elastic client
 	 */
-	private static ElasticClient createSearchControllerCache(){
-		System.out.println("Creating new cache...");
-		ElasticClient result = ElasticClientBuilder.createElasticClient();
+	private static ElasticClient createElasticClient(){
+		System.out.println("Creating new elastic client...");
+		
+		ElasticClient result = ElasticClientBuilder.createElasticClientBuilder()
+				.setClusterName(CLUSTER_NAME)
+				.setHost(HOST)
+				.setPort(PORT)
+				.setIndices(INDEX_NAME)
+				.setTypes(INDEX_TYPE)
+				.setLimit(MAX_RESULTS)
+				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
+				.setField(TEXT_FIELD_NAME)
+				.build();
+		
 		return result;
 	}
 	
@@ -170,16 +175,14 @@ public final class Executor {
 	 * @param storePath full path of directory where objects are stored
 	 * @return Uncasted object of given class fetched from store
 	 */
-	private static ElasticClient loadOrCreateCache(Class c, String storePath){
+	private static ElasticClient loadOrCreateCache(Class<?> c, String storePath){
 		ElasticClient result;
 		if(ENABLE_PERSISTENT_CACHE){
 			System.out.println("Loading cache from: " + storePath);
-			result = (ElasticClient) loadObject(ElasticClient.class, storePath);
-			if(result == null)
-				result = createSearchControllerCache();
-		}else{
-			result = createSearchControllerCache();
+			result = (ElasticClient) loadObject(c, storePath);
+			if(result != null) return result;
 		}
+		result = createElasticClient();
 		return result;
 	}
 }

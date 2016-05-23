@@ -54,7 +54,7 @@ public class FileLoader {
 		long cnt = 0;
 		for (File file : listOfFiles) {
 			if (file.isFile() && file.getName().startsWith(dataFilePrefix)) {
-				System.out.println(file.getName());
+				System.out.println("[Info]: Loading file [" + file.getName() + "]");
 				Document doc = dBuilder.parse(file);
 				
 				org.w3c.dom.NodeList docs = doc.getElementsByTagName("doc");

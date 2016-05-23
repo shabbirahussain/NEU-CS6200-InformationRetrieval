@@ -8,17 +8,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Predicate;
 
 import com.ir.homework.hw1.elasticutil.ElasticClient;
-import com.ir.homework.io.OutputWriter.OutputRecord;
+import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
 
 
 /**
  * @author shabbirhussain
  *
  */
-public class MetaSearchController extends BaseSearchController implements SearchController{
+public class MetaSearchController extends BaseSearchController{
 	List<SearchController> controllers;
 	
 	/**

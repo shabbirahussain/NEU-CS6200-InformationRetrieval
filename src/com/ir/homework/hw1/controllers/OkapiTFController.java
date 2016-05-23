@@ -9,14 +9,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw1.elasticutil.ElasticClient;
-import com.ir.homework.io.OutputWriter.OutputRecord;
+import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
 
 
 /**
  * @author shabbirhussain
  *
  */
-public class OkapiTFController extends BaseSearchController implements SearchController{
+public class OkapiTFController extends BaseSearchController{
 	
 	/**
 	 * constructor for re using cache across controllers
@@ -34,16 +34,16 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 			String []queryTerms = query.getValue();
 			
 			Map<String, Float> docScore = new HashMap<String, Float>();
+
+			Float avg_len_d = super.elasticClient.getAvgDocLen();
 			for(String term: queryTerms){
-				Map<String, Float> tf = elasticClient.getTermFrequency(term);
-				
+				Map<String, Float> tf = elasticClient.getDocFrequency(term);
 				for(Entry<String, Float> tfe: tf.entrySet()){
 					String docNo = tfe.getKey();
 					
 					Float tf_w_d    = tfe.getValue();
-					Float len_d     = super.elasticClient.getDocLength(docNo);
-					Float avg_len_d = super.elasticClient.getAvgDocLength();
-
+					Long  len_d     = super.elasticClient.getTermCount(docNo);
+					
 					Float tf_d_q = docScore.getOrDefault(docNo, 0.0F);
 					/**Okapi TF
 					 * This is a vector space model using a slightly modified version of TF to score documents. The Okapi TF score for term $w$ in document $d$ is as follows.
@@ -60,6 +60,7 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 					// Normalize score for multiple instances
 					okapi_tf  = super.additionalTransformation(term, okapi_tf);
 					tf_d_q += okapi_tf;
+					
 					
 					docScore.put(docNo, tf_d_q);
 				}

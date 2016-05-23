@@ -9,14 +9,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw1.elasticutil.ElasticClient;
-import com.ir.homework.io.OutputWriter.OutputRecord;
+import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
 
 
 /**
  * @author shabbirhussain
  *
  */
-public class UnigramLM_LaplaceSmoothing extends BaseSearchController implements SearchController{
+public class UnigramLM_LaplaceSmoothing extends BaseSearchController{
 	
 	/**
 	 * constructor for re using cache across controllers
@@ -35,13 +35,13 @@ public class UnigramLM_LaplaceSmoothing extends BaseSearchController implements 
 			
 			Map<String, Float> docScore = new HashMap<String, Float>();
 			for(String term: queryTerms){
-				Map<String, Float> tf = elasticClient.getTermFrequency(term);
+				Map<String, Float> tf = elasticClient.getDocFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){
 					String docNo = tfe.getKey();
 					
 					Float tf_w_d    = tfe.getValue();
-					Float len_d     = super.elasticClient.getDocLength(docNo);
+					Long  len_d     = super.elasticClient.getTermCount(docNo);
 					Long  V			= super.elasticClient.getVocabSize();
 
 					Float lm_laplace_d_q = docScore.getOrDefault(docNo, 0.0F);

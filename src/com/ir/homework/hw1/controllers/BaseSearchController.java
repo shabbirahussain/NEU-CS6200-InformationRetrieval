@@ -3,6 +3,7 @@
  */
 package com.ir.homework.hw1.controllers;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -11,7 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw1.elasticutil.ElasticClient;
-import com.ir.homework.io.OutputWriter;
+import com.ir.homework.hw1.io.OutputWriter;
 
 import static com.ir.homework.hw1.Constants.*;
 
@@ -19,7 +20,7 @@ import static com.ir.homework.hw1.Constants.*;
  * @author shabbirhussain
  *
  */
-public abstract class BaseSearchController {
+public abstract class BaseSearchController implements SearchController{
 	protected ElasticClient elasticClient;
 	
 	/**
@@ -81,13 +82,14 @@ public abstract class BaseSearchController {
 	/**
 	 * Assigns appropriate score to each term bases on its rarity
 	 * @param term string term to be evaluated against corpus
-	 * @return 
+	 * @return Term significance
+	 * @throws IOException 
 	 */
-	private Float weightTermUniqeness(String term){
+	private Float weightTermUniqeness(String term) throws IOException{
 		Float result = null;
 		
-		Long docCnt = this.elasticClient.getDocumentCount();
-		Long termDocCnt = this.elasticClient.getTermDocCount(term);
+		Long docCnt		= this.elasticClient.getDocCount();
+		Long termDocCnt = this.elasticClient.getDocCount(term);
 		
 		result = ((Long)(docCnt / termDocCnt)).floatValue();
 		

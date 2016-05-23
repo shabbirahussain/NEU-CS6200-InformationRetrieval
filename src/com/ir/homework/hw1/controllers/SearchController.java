@@ -6,7 +6,7 @@ package com.ir.homework.hw1.controllers;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.ir.homework.io.OutputWriter;
+import com.ir.homework.hw1.io.OutputWriter;
 
 /**
  * @author shabbirhussain
