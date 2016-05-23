@@ -1,40 +1,33 @@
-package com.ir.homework.hw1.controllers.util;
+package com.ir.homework.hw1.elasticutil;
 
 import static com.ir.homework.hw1.Constants.*;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.termvectors.TermVectorsRequest;
-import org.elasticsearch.action.termvectors.TermVectorsRequestBuilder;
-import org.elasticsearch.action.termvectors.TermVectorsResponse;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 
-public class SearchControllerCache implements Serializable{
+public class ElasticClient implements Serializable{
 	// Serialization version Id
 	private static final long serialVersionUID = 1L;
 	
-	protected String index;
-	protected String type;
+	protected String indices;
+	protected String types;
 	protected Integer maxResults;
 	protected String  textFieldName;
+	
+	private Boolean enableCache;
+	private Boolean enableBulkProcessing;
 	
 	/**
 	 * Class stores term statistics 
@@ -62,100 +55,136 @@ public class SearchControllerCache implements Serializable{
 	private Float avgDocLength;
 	private Long  vocabSize;
 	
-	
 	/**
-	 * Default constructor for search controller
-	 * @param index index name
-	 * @param type type name
-	 * @param maxResults maximum number of results to fetch
-	 * @param textFieldName data field name to query
+	 * Default constructor
 	 */
-	public SearchControllerCache(String index, String type, Integer maxResults, String textFieldName){
-		this.index = index;
-		this.type  = type;
-		this.maxResults    = maxResults;
-		this.textFieldName = textFieldName;
+	public ElasticClient(){
+		this.enableCache = true;
+		this.enableBulkProcessing = true;
 		termStatsMap = new HashMap<String, TermStats>();
 		docStatsMap  = new HashMap<String, Float>();
-		SearchResponse response;
-		
-		// Calculate document count
-		System.out.println("Fetching document count...");
-		documentCount = 1L;
-		response = client.prepareSearch()
-			.setIndices(index)
-			.setTypes(type)
-			.setNoFields()
-			.get();
-		
-		documentCount = response.getHits().getTotalHits();
-		
-		
-		// Calculate document length
-		System.out.println("Fetching average document length...");
-		response = client.prepareSearch()
-				.setIndices(index)
-				.setTypes(type)
-				.addAggregation(
-						AggregationBuilders
-						.avg("AVG_LEN")
-						.script(new Script("doc['" + textFieldName + "'].values.size()")))
-				.setNoFields()
-				.setSize(0)
-				.get();
-		
-		avgDocLength = ((Double) response.getAggregations().get("AVG_LEN").getProperty("value")).floatValue();
-		
-		
-		// Calculate vocabulary size
-		System.out.println("Fetching vocabulary size...");
-		documentCount = 1L;
-		
+	}
 	
-		response = client.prepareSearch()
-				.setIndices(index)
-				.setTypes(type)
-				.addAggregation(AggregationBuilders
-						.cardinality("VOCAB_SIZE")
-						.precisionThreshold(Integer.MAX_VALUE)
-						.field(textFieldName)
-						//.script(new Script("doc['" + textFieldName + "'].values "))
-						)
-				.setNoFields()
-				.setSize(0)
-				.get();
-		
-		vocabSize = ((Double) response.getAggregations().get("VOCAB_SIZE").getProperty("value")).longValue();
+	// ---------------------- Setters ---------------------------------
+	
+	/**
+	 * Sets indices of elastic client
+	 * @param indices name of the indices
+	 * @return
+	 */
+	public ElasticClient setIndices(String indices){
+		this.indices = indices;
+		return this;
+	}
+	
+	public ElasticClient setTypes(String types){
+		this.types = types;
+		return this;
+	}
+	/**
+	 * Sets cached retrieval mode
+	 * @param enableCache 
+	 * @return
+	 */
+	public ElasticClient setCache(Boolean enableCache){
+		this.enableCache = enableCache;
+		return this;
 	}
 	
 	/**
-	 * Getter for average document length
+	 * Sets bulk processing mode
+	 * @param enableBulkProcessing
+	 * @return
+	 */
+	public ElasticClient setBulkProcessing(Boolean enableBulkProcessing){
+		this.enableBulkProcessing = enableBulkProcessing;
+		return this;
+	}
+	
+	/**
+	 * Sets size of query retrieval
+	 * @param size
+	 * @return
+	 */
+	public ElasticClient setLimit(Integer size){
+		this.maxResults = size;
+		return this;
+	}
+	
+	/**
+	 * Sets field to query
+	 * @param field
+	 * @return
+	 */
+	public ElasticClient setField(String field){
+		this.textFieldName = field;
+		return this;
+	}
+
+	
+	// --------------------------- Getters ----------------------------
+	
+	/**
+	 * Fetches and cashes average document length
 	 * @return
 	 */
 	public Float getAvgDocLength(){
-		return avgDocLength;
+		// Check if term is previously mapped or not. If yes return from cache
+		Float result = this.avgDocLength;
+		if(enableCache && result != null) {
+			this.cacheHits++;
+			return result;
+		}
+		this.cacheMiss++;
+		
+		// Calculate new results
+		avgDocLength = result = this.calcAvgDocLen();
+		
+		return result;
 	}
 	
 	/**
-	 * Getter for documentCount
+	 * Fetches and cashes document count
 	 * @return
 	 */
 	public Long getDocumentCount(){
-		return documentCount;
+		// Check if term is previously mapped or not. If yes return from cache
+		Long result = this.documentCount;
+		if(enableCache && result != null) {
+			this.cacheHits++;
+			return result;
+		}
+		this.cacheMiss++;
+		
+		// Calculate new results
+		documentCount = result = this.calcDocumentCount();
+		
+		return result;
 	}
 	
 	/**
-	 * Vocabulary size of whole corpus
+	 * Fetches and cashes Vocabulary size of whole corpus
 	 * @return
 	 */
 	public Long getVocabSize(){
-		return vocabSize;
+		// Check if term is previously mapped or not. If yes return from cache
+		Long result = this.vocabSize;
+		if(enableCache && result != null) {
+			this.cacheHits++;
+			return result;
+		}
+		this.cacheMiss++;
+		
+		// Calculate new results
+		vocabSize = result = this.calcVocabSize();
+		
+		return result;
 	}
 	
 	/**
 	 * Fetches and cashes the term frequency 
 	 * @param term search term
-	 * @return term frequency map indexed by document id
+	 * @return term frequency map indicesed by document id
 	 * @throws IOException
 	 */
 	public Map<String,Float> getTermFrequency(String term) throws IOException{
@@ -179,7 +208,7 @@ public class SearchControllerCache implements Serializable{
 	public Float getDocLength(String docNo){
 		// Check if term is previously mapped or not. If yes return from cache
 		Float result = docStatsMap.get(docNo);
-		if(ENABLE_TF_CACHE && result != null) {
+		if(enableCache && result != null) {
 			this.cacheHits++;
 			return result;
 		}
@@ -193,6 +222,103 @@ public class SearchControllerCache implements Serializable{
 		return result;
 	}
 	
+	// --------------------------- Loaders ----------------------------
+	
+	/**
+	 * Loads data into index
+	 * @param id unique identifier of document
+	 * @param source data to be loaded in JSON format
+	 */
+	public void loadData(String id, XContentBuilder source){
+		IndexRequestBuilder irBuilder = client.prepareIndex()
+				.setIndex(this.indices)
+				.setType(this.types)
+				.setId(id)
+				.setSource(source);
+		
+		if (enableBulkProcessing) bulkProcessor.add(irBuilder.request());
+		else                      irBuilder.get();
+		
+		return;
+	}
+	
+	/**
+	 * Commits the data to index
+	 */
+	public void commit(){
+		bulkProcessor.close();
+	}
+	
+	// --------------------------- Private methods --------------------
+	
+
+	/**
+	 * Calculates document count
+	 * @return
+	 */
+	private Long calcDocumentCount(){
+		SearchResponse response;
+		Long result = 1L;
+		
+		response = client.prepareSearch()
+			.setIndices(this.indices)
+			.setTypes(this.types)
+			.setNoFields()
+			.get();
+		
+		result = response.getHits().getTotalHits();
+		return result;
+	}
+	
+	/**
+	 * Calculates average document length
+	 * @return
+	 */
+	private Float calcAvgDocLen(){
+		SearchResponse response;
+		Float result = 0F;
+
+		response = client.prepareSearch()
+				.setIndices(this.indices)
+				.setTypes(this.types)
+				.addAggregation(
+						AggregationBuilders
+						.avg("AVG_LEN")
+						.script(new Script("doc['" + textFieldName + "'].values.size()")))
+				.setNoFields()
+				.setSize(0)
+				.get();
+		
+		result = ((Double) response.getAggregations().get("AVG_LEN").getProperty("value")).floatValue();
+		return result;
+	}
+	
+	
+	/**
+	 * Calculates vocabulary size
+	 * @return
+	 */
+	private Long calcVocabSize(){
+		SearchResponse response;
+		Long result = 0L;
+		
+		response = client.prepareSearch()
+				.setIndices(this.indices)
+				.setTypes(this.types)
+				.addAggregation(AggregationBuilders
+						.cardinality("VOCAB_SIZE")
+						.precisionThreshold(Integer.MAX_VALUE)
+						.field(textFieldName)
+						//.script(new Script("doc['" + textFieldName + "'].values "))
+						)
+				.setNoFields()
+				.setSize(0)
+				.get();
+		
+		result = ((Double) response.getAggregations().get("VOCAB_SIZE").getProperty("value")).longValue();
+		return result;
+	}
+	
 	/** 
 	 * Fetches term stats from cache or builds new one
 	 * @param term
@@ -201,7 +327,7 @@ public class SearchControllerCache implements Serializable{
 	private TermStats getTermStats(String term){
 		// Check if term is previously mapped or not. If yes return from cache
 		TermStats result = termStatsMap.get(term);
-		if(ENABLE_TF_CACHE && result != null){
+		if(enableCache && result != null){
 			this.cacheHits++;
 			return result;
 		}
@@ -222,8 +348,9 @@ public class SearchControllerCache implements Serializable{
 	 */
 	private Float calcDocLength(String docNo){
 		Float result = null;
-		SearchResponse response = client.prepareSearch(index)
-			.setTypes(type)
+		SearchResponse response = client.prepareSearch()
+			.setIndices(this.indices)
+			.setTypes(this.types)
 			.setQuery(QueryBuilders.boolQuery()
 					.must(QueryBuilders.idsQuery().addIds(docNo))
 					.should(QueryBuilders.functionScoreQuery()
@@ -264,8 +391,9 @@ public class SearchControllerCache implements Serializable{
 	 */
 	private Map<String,Float> calcTermFrequency(String term){
 		Map<String,Float> result = null;
-		SearchResponse response = client.prepareSearch(index)
-			.setTypes(type)
+		SearchResponse response = client.prepareSearch()
+			.setIndices(this.indices)
+			.setTypes(this.types)
 			.setQuery(QueryBuilders.functionScoreQuery()
 				.add(ScoreFunctionBuilders
 						.scriptFunction("_index['" + textFieldName + "']['" + term + "'].tf()"))
@@ -295,8 +423,9 @@ public class SearchControllerCache implements Serializable{
 		Long result = 0L; 
 		
 		// Get query term document count
-		SearchResponse response = client.prepareSearch(index)
-				.setTypes(type)
+		SearchResponse response = client.prepareSearch()
+				.setIndices(this.indices)
+				.setTypes(this.types)
 				.setQuery(QueryBuilders.matchQuery(textFieldName, term))
 				.setNoFields()
 				.get();
@@ -328,7 +457,12 @@ public class SearchControllerCache implements Serializable{
 	 * @param args
 	 */
 	public static void main(String args[]){
-		SearchControllerCache sc = new SearchControllerCache(INDEX_NAME, INDEX_TYPE, MAX_RESULTS, TEXT_FIELD_NAME);
+		ElasticClient sc = ElasticClientBuilder.createElasticClient()
+				.setIndices(INDEX_NAME)
+				.setTypes(INDEX_TYPE)
+				.setLimit(MAX_RESULTS)
+				.setField(TEXT_FIELD_NAME);
+		
 		String docNo = "AP890912-0225";
 		
 		System.out.println("len["+docNo+"]="+sc.getDocLength(docNo));

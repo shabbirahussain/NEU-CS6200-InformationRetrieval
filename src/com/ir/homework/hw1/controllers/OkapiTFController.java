@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw1.controllers.util.SearchControllerCache;
+import com.ir.homework.hw1.elasticutil.ElasticClient;
 import com.ir.homework.io.OutputWriter.OutputRecord;
 
 
@@ -20,11 +20,11 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 	
 	/**
 	 * constructor for re using cache across controllers
-	 * @param searchCache search cache object
+	 * @param elasticClient search cache object
 	 * @param maxResults maximum number of results
 	 */
-	public OkapiTFController(SearchControllerCache searchCache, Integer maxResults){
-		super(searchCache, maxResults);
+	public OkapiTFController(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
+		super(elasticClient, maxResults, addTransEnable);
 	}
 	
 	
@@ -36,14 +36,14 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 			
 			Map<String, Float> docScore = new HashMap<String, Float>();
 			for(String term: queryTerms){
-				Map<String, Float> tf = searchCache.getTermFrequency(term);
+				Map<String, Float> tf = elasticClient.getTermFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){
 					String docNo = tfe.getKey();
 					
 					Float tf_w_d    = tfe.getValue();
-					Float len_d     = super.searchCache.getDocLength(docNo);
-					Float avg_len_d = super.searchCache.getAvgDocLength();
+					Float len_d     = super.elasticClient.getDocLength(docNo);
+					Float avg_len_d = super.elasticClient.getAvgDocLength();
 
 					Float tf_d_q = docScore.getOrDefault(docNo, 0.0F);
 					/**Okapi TF
@@ -58,7 +58,8 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 					 *  $$ tf(d, q) = \sum_{w \in q} okapi\_tf(w, d) $$
 					 */
 					Float okapi_tf = (float) (tf_w_d / (tf_w_d + 0.5 + 1.5*(len_d/avg_len_d)));
-					okapi_tf = super.sigmoidSmoothing(okapi_tf); // Normalize score for multiple instances 
+					// Normalize score for multiple instances
+					okapi_tf  = super.additionalTransformation(term, okapi_tf);
 					tf_d_q += okapi_tf;
 					
 					docScore.put(docNo, tf_d_q);

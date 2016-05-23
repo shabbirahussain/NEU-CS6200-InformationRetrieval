@@ -16,7 +16,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw1.controllers.*;
-import com.ir.homework.hw1.controllers.util.SearchControllerCache;
+import com.ir.homework.hw1.elasticutil.ElasticClient;
+import com.ir.homework.hw1.elasticutil.ElasticClientBuilder;
 import com.ir.homework.io.OutputWriter;
 import com.ir.homework.io.QueryReader;
 import com.ir.homework.io.ResultEvaluator;
@@ -26,29 +27,37 @@ import com.ir.homework.io.ResultEvaluator;
  *
  */
 public final class Executor {
-	private static SearchControllerCache searchCache;
+	private static ElasticClient elasticClient;
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		long start = System.nanoTime(); 
 		List<SearchController> controllers = new LinkedList<SearchController>();
-		searchCache = loadOrCreateCache(SearchControllerCache.class, OBJECT_STORE_PATH);
+		elasticClient = loadOrCreateCache(ElasticClient.class, OBJECT_STORE_PATH)
+				.setIndices(INDEX_NAME)
+				.setTypes(INDEX_TYPE)
+				.setLimit(MAX_RESULTS)
+				.setField(TEXT_FIELD_NAME)
+				.setCache(ENABLE_TF_CACHE);
+		
+		
 		
 		//////////////////////// Controllers ////////////////////////////
 		// OkapiTF
-		controllers.add(new OkapiTFController(searchCache, MAX_RESULTS));
+		controllers.add(new OkapiTFController(elasticClient, MAX_RESULTS, ENABLE_ADD_NORMALIZATION));
 		
 		// TF-IDF
-		controllers.add(new TF_IDFController(searchCache, MAX_RESULTS));
+		controllers.add(new TF_IDFController(elasticClient, MAX_RESULTS, ENABLE_ADD_NORMALIZATION));
 		
 		// OkapiBM25
-		controllers.add(new OkapiBM25Controller(searchCache, MAX_RESULTS));
+		controllers.add(new OkapiBM25Controller(elasticClient, MAX_RESULTS, ENABLE_ADD_NORMALIZATION));
 		
 		// UnigramLM_LaplaceSmoothing
-		controllers.add(new UnigramLM_LaplaceSmoothing(searchCache, MAX_RESULTS));
+		controllers.add(new UnigramLM_LaplaceSmoothing(elasticClient, MAX_RESULTS, ENABLE_ADD_NORMALIZATION));
 		
 		////////////////////////////////////////////////////////////////
+		
 		Double correctnessScore;
 		for(SearchController sc : controllers){
 			System.out.println("\n================ " + sc.getClass().getSimpleName() + " ==========================");
@@ -59,7 +68,7 @@ public final class Executor {
 		
 		if(ENABLE_PERSISTENT_CACHE){
 			System.out.println("\n\nSaving cache for future use...");
-			saveObject(searchCache, OBJECT_STORE_PATH);
+			saveObject(elasticClient, OBJECT_STORE_PATH);
 		}
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1.0e-9;
@@ -85,12 +94,12 @@ public final class Executor {
 			ow.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
-				searchCache.resetStatististics();
+				elasticClient.resetStatististics();
 				if(!ENABLE_SILENT_MODE) System.out.print("Executing Q:"+ q.getKey());
 				records = sc.executeQuery(q);
 				for(OutputWriter.OutputRecord r: records)
 					ow.writeOutput(r);
-				if(!ENABLE_SILENT_MODE) System.out.println("\t CacheHits% = " + Math.round(100 * searchCache.cacheHits / (searchCache.cacheHits + searchCache.cacheMiss)));
+				if(!ENABLE_SILENT_MODE) System.out.println("\t CacheHits% = " + Math.round(100 * elasticClient.cacheHits / (elasticClient.cacheHits + elasticClient.cacheMiss)));
 			}
 			ow.close();
 			
@@ -145,23 +154,23 @@ public final class Executor {
 	 * Creates a new search controller cache
 	 * @return
 	 */
-	private static SearchControllerCache createSearchControllerCache(){
+	private static ElasticClient createSearchControllerCache(){
 		System.out.println("Creating new cache...");
-		SearchControllerCache result = new SearchControllerCache(INDEX_NAME, INDEX_TYPE, MAX_RESULTS, TEXT_FIELD_NAME);
+		ElasticClient result = ElasticClientBuilder.createElasticClient();
 		return result;
 	}
 	
 	/**
-	 * Loads or creates a SearchCache
+	 * Loads or creates a elasticClient
 	 * @param c class of object to be loaded
 	 * @param storePath full path of directory where objects are stored
 	 * @return Uncasted object of given class fetched from store
 	 */
-	private static SearchControllerCache loadOrCreateCache(Class c, String storePath){
-		SearchControllerCache result;
+	private static ElasticClient loadOrCreateCache(Class c, String storePath){
+		ElasticClient result;
 		if(ENABLE_PERSISTENT_CACHE){
 			System.out.println("Loading cache from: " + storePath);
-			result = (SearchControllerCache) loadObject(SearchControllerCache.class, storePath);
+			result = (ElasticClient) loadObject(ElasticClient.class, storePath);
 			if(result == null)
 				result = createSearchControllerCache();
 		}else{

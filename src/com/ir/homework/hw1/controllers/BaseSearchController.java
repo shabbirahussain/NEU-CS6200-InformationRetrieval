@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw1.controllers.util.SearchControllerCache;
+import com.ir.homework.hw1.elasticutil.ElasticClient;
 import com.ir.homework.io.OutputWriter;
 
 /**
@@ -19,16 +19,18 @@ import com.ir.homework.io.OutputWriter;
  */
 public abstract class BaseSearchController {
 	private Integer maxResults;
-	protected SearchControllerCache searchCache;
+	private Boolean addTransEnable;
+	protected ElasticClient elasticClient;
 	
 	/**
 	 * constructor for re using cache across controllers
-	 * @param searchCache
+	 * @param elasticClient
 	 * @param maxResults
 	 */
-	public BaseSearchController(SearchControllerCache searchCache, Integer maxResults){
-		this.searchCache = searchCache;
-		this.maxResults  = maxResults;
+	public BaseSearchController(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
+		this.elasticClient    = elasticClient;
+		this.maxResults     = maxResults;
+		this.addTransEnable = addTransEnable;
 	}
 
 	
@@ -73,8 +75,40 @@ public abstract class BaseSearchController {
 	 * @param value
 	 * @return smoothened value over sigmoid
 	 */
-	protected Float sigmoidSmoothing(Float value){
-		//value = (float) (10/(1+Math.pow(value, -1)));
+	private Float sigmoidSmoothing(Float value){
+		value = (float) (10/(1+Math.pow(value, -1)));
 		return value;
+	}
+	
+	/**
+	 * Assigns appropriate score to each term bases on its rarity
+	 * @param term string term to be evaluated against corpus
+	 * @return 
+	 */
+	private Float weightTermUniqeness(String term){
+		Float result = null;
+		
+		Long docCnt = this.elasticClient.getDocumentCount();
+		Long termDocCnt = this.elasticClient.getTermDocCount(term);
+		
+		result = ((Long)(docCnt / termDocCnt)).floatValue();
+		
+		return result;
+	}
+	
+	/**
+	 * Performs additional transformations on given term and score
+	 * @param term string term to calculate transformations
+	 * @param value value to be boosted
+	 * @return a weight adjusted result for a term
+	 */
+	protected Float additionalTransformation(String term, Float value){
+		if(!addTransEnable) return value;
+		
+		Float result = value;
+		//result *=  this.weightTermUniqeness(term); 
+		result  = this.sigmoidSmoothing(result);
+		
+		return result;
 	}
 }

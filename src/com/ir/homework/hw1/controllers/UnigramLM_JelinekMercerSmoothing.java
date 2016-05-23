@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw1.controllers.util.SearchControllerCache;
+import com.ir.homework.hw1.elasticutil.ElasticClient;
 import com.ir.homework.io.OutputWriter.OutputRecord;
 
 
@@ -21,11 +21,11 @@ public class UnigramLM_JelinekMercerSmoothing extends BaseSearchController imple
 	
 	/**
 	 * constructor for re using cache across controllers
-	 * @param searchCache search cache object
+	 * @param elasticClient search cache object
 	 * @param maxResults maximum number of results
 	 */
-	public UnigramLM_JelinekMercerSmoothing(SearchControllerCache searchCache, Integer maxResults){
-		super(searchCache, maxResults);
+	public UnigramLM_JelinekMercerSmoothing(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
+		super(elasticClient, maxResults, addTransEnable);
 	}
 	
 	
@@ -37,14 +37,14 @@ public class UnigramLM_JelinekMercerSmoothing extends BaseSearchController imple
 			
 			Map<String, Float> docScore = new HashMap<String, Float>();
 			for(String term: queryTerms){
-				Map<String, Float> tf = searchCache.getTermFrequency(term);
+				Map<String, Float> tf = elasticClient.getTermFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){
 					String docNo = tfe.getKey();
 					
 					Float tf_w_d    = tfe.getValue();
-					Float len_d     = super.searchCache.getDocLength(docNo);
-					Long  V			= super.searchCache.getVocabSize();
+					Float len_d     = super.elasticClient.getDocLength(docNo);
+					Long  V			= super.elasticClient.getVocabSize();
 
 					Float lm_jm_d_q = docScore.getOrDefault(docNo, 0.0F);
 					/** Unigram LM with Jelinek-Mercer smoothing

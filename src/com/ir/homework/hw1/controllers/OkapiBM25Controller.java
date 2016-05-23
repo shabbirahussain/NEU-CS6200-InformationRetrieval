@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw1.controllers.util.SearchControllerCache;
+import com.ir.homework.hw1.elasticutil.ElasticClient;
 import com.ir.homework.io.OutputWriter.OutputRecord;
 
 
@@ -23,11 +23,11 @@ public class OkapiBM25Controller extends BaseSearchController implements SearchC
 	
 	/**
 	 * constructor for re using cache across controllers
-	 * @param searchCache search cache object
+	 * @param elasticClient search cache object
 	 * @param maxResults maximum number of results
 	 */
-	public OkapiBM25Controller(SearchControllerCache searchCache, Integer maxResults){
-		super(searchCache, maxResults);
+	public OkapiBM25Controller(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
+		super(elasticClient, maxResults, addTransEnable);
 	}
 	
 	
@@ -39,17 +39,17 @@ public class OkapiBM25Controller extends BaseSearchController implements SearchC
 			
 			Map<String, Float> docScore = new HashMap<String, Float>();
 			for(String term: queryTerms){
-				Map<String, Float> tf = searchCache.getTermFrequency(term);
+				Map<String, Float> tf = elasticClient.getTermFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){
 					String docNo = tfe.getKey();
 					
 					Float tf_w_d    = tfe.getValue();
-					Float len_d     = super.searchCache.getDocLength(docNo);
-					Float avg_len_d = super.searchCache.getAvgDocLength();
+					Float len_d     = super.elasticClient.getDocLength(docNo);
+					Float avg_len_d = super.elasticClient.getAvgDocLength();
 					
-					Long D          = super.searchCache.getDocumentCount();
-					Long df_w       = super.searchCache.getTermDocCount(term);
+					Long D          = super.elasticClient.getDocumentCount();
+					Long df_w       = super.elasticClient.getTermDocCount(term);
 
 					Float bm25_d_q = docScore.getOrDefault(docNo, 0.0F);
 					/**Okapi BM25
@@ -60,7 +60,8 @@ public class OkapiBM25Controller extends BaseSearchController implements SearchC
 					 *  	$k_1$, $k_2$, and $b$ are constants. You can use the values from the slides, or try your own.
 					 */
 					Double d_bm25_d_q = Math.log((D + 0.5)/(df_w + 0.5)) * ((tf_w_d + K1 * tf_w_d)/(tf_w_d + K1 * ((1 - B) + (B * len_d/avg_len_d))));
-					d_bm25_d_q = super.sigmoidSmoothing(d_bm25_d_q.floatValue()).doubleValue();
+					// Normalize score for multiple instances
+					d_bm25_d_q  = super.additionalTransformation(term, d_bm25_d_q.floatValue()).doubleValue();
 					bm25_d_q += d_bm25_d_q.floatValue();
 					
 					docScore.put(docNo, bm25_d_q);

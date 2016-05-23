@@ -1,9 +1,7 @@
 /**
  * 
  */
-package com.ir.homework.io;
-
-import static com.ir.homework.hw1.Constants.*;
+package com.ir.homework.preprocessing;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -29,12 +27,15 @@ public final class FilePreprocessor {
 	private String dataSrcFilePath;
 	private String dataDstFilePath;
 	private String dataFilePrefix;
-	
-	// Constants class specific
-	private static final Boolean DEBUG = false;
 
 	private static Path tempFilePath = null;
 	
+	/**
+	 * Default constructor
+	 * @param dataSrcFilePath source folder path to read
+	 * @param dataDstFilePath destination folder path of processed files
+	 * @param dataFilePrefix data file prefix to use for preprocessing
+	 */
 	public FilePreprocessor(String dataSrcFilePath, String dataDstFilePath, String dataFilePrefix){
 		this.dataSrcFilePath = dataSrcFilePath;
 		this.dataDstFilePath = dataDstFilePath;
@@ -42,28 +43,10 @@ public final class FilePreprocessor {
 	}
 	
 	/**
-	 * @param args
-	 * @throws IOException 
+	 * Preprocesses files to make them XML compatible
+	 * @return error count while validating converted documents
+	 * @throws IOException
 	 */
-	public static void main(String[] args) throws IOException {
-		long start = System.nanoTime(); 
-		FilePreprocessor fp = new FilePreprocessor(PRE_PROCESS_SRC_PATH, PRE_PROCESS_DST_PATH, DATA_FILE_PREFIX);
-		
-		System.out.println("Pre processing files...");
-		System.out.println("[Info]: [Source = " + fp.dataSrcFilePath +"]");
-		System.out.println("[Info]: [Destination = " + fp.dataDstFilePath +"]");
-		
-		Integer errCnt = fp.preProcessFiles();
-		
-		System.out.println("[Info]: Number of Errors: "         + errCnt);
-		
-		double elapsedTimeInSec = (System.nanoTime() - start) * 1.0e-9;
-		System.out.println("Time Required=" + elapsedTimeInSec);
-		
-		// Load data into elastic search
-		DataLoader.main(null);
-	}
-	
 	public Integer preProcessFiles() throws IOException{
 		tempFilePath = Files.createTempFile("com.ir.preprocessor.",".temp");
 		
@@ -80,10 +63,7 @@ public final class FilePreprocessor {
 					File processedFile = preProcessFile(file, dataDstFilePath);
 					validateFileXML(processedFile);
 					
-				}catch(Exception e){
-					errCnt++;
-					if(DEBUG) e.printStackTrace(System.err);
-				}
+				}catch(Exception e){errCnt++;}
 			}
 		}
 		//System.out.println("[Info]: Number of file processed: " + fileCnt);
