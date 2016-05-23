@@ -24,8 +24,8 @@ public final class Constants {
 	public static final String PRE_PROCESS_DST_PATH = BASE_PATH + "/AP_DATA/ap89_collection";
 
 	public static final String OBJECT_STORE_PATH = BASE_PATH + "/AP_DATA/cache/";
-	//public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short.txt";
-	public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short copy.txt";
+	public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short.txt";
+	//public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short copy.txt";
 	
 	public static final String OUTPUT_FOLDR_PATH   = BASE_PATH + "/AP_DATA/results";
 	public static final String OUTPUT_FILE_PATH    = OUTPUT_FOLDR_PATH + "/output1000_";

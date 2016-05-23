@@ -125,6 +125,14 @@ public class ElasticClient implements Serializable{
 	// --------------------------- Getters ----------------------------
 	
 	/**
+	 * Fetches maximum results to be fetched
+	 * @return maximum results configured during client initialization
+	 */
+	public Integer getMaxResults(){
+		return this.maxResults;
+	}
+	
+	/**
 	 * Fetches and cashes average document length
 	 * @return
 	 */

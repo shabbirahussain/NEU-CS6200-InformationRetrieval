@@ -21,10 +21,9 @@ public class OkapiTFController extends BaseSearchController implements SearchCon
 	/**
 	 * constructor for re using cache across controllers
 	 * @param elasticClient search cache object
-	 * @param maxResults maximum number of results
 	 */
-	public OkapiTFController(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
-		super(elasticClient, maxResults, addTransEnable);
+	public OkapiTFController(ElasticClient elasticClient){
+		super(elasticClient);
 	}
 	
 	

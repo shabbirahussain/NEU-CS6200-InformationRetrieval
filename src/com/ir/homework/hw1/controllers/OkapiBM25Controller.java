@@ -24,10 +24,9 @@ public class OkapiBM25Controller extends BaseSearchController implements SearchC
 	/**
 	 * constructor for re using cache across controllers
 	 * @param elasticClient search cache object
-	 * @param maxResults maximum number of results
 	 */
-	public OkapiBM25Controller(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
-		super(elasticClient, maxResults, addTransEnable);
+	public OkapiBM25Controller(ElasticClient elasticClient){
+		super(elasticClient);
 	}
 	
 	

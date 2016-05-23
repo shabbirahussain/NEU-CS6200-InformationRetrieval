@@ -13,13 +13,13 @@ import java.util.Map.Entry;
 import com.ir.homework.hw1.elasticutil.ElasticClient;
 import com.ir.homework.io.OutputWriter;
 
+import static com.ir.homework.hw1.Constants.*;
+
 /**
  * @author shabbirhussain
  *
  */
 public abstract class BaseSearchController {
-	private Integer maxResults;
-	private Boolean addTransEnable;
 	protected ElasticClient elasticClient;
 	
 	/**
@@ -27,10 +27,8 @@ public abstract class BaseSearchController {
 	 * @param elasticClient
 	 * @param maxResults
 	 */
-	public BaseSearchController(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
+	public BaseSearchController(ElasticClient elasticClient){
 		this.elasticClient    = elasticClient;
-		this.maxResults     = maxResults;
-		this.addTransEnable = addTransEnable;
 	}
 
 	
@@ -65,7 +63,7 @@ public abstract class BaseSearchController {
 		for(Entry<String, Float> e : sortedMapList){
 			result.add(new OutputWriter.OutputRecord(queryNo, e.getKey(), i++, e.getValue()));
 			// Limit results to max results
-			if(i>maxResults) break;
+			if(i>elasticClient.getMaxResults()) break;
 		}
 		return result;
 	}
@@ -103,7 +101,7 @@ public abstract class BaseSearchController {
 	 * @return a weight adjusted result for a term
 	 */
 	protected Float additionalTransformation(String term, Float value){
-		if(!addTransEnable) return value;
+		if(!ENABLE_ADD_NORMALIZATION) return value;
 		
 		Float result = value;
 		//result *=  this.weightTermUniqeness(term); 

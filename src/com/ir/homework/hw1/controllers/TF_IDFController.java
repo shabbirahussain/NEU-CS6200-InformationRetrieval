@@ -21,10 +21,9 @@ public class TF_IDFController extends BaseSearchController implements SearchCont
 	/**
 	 * constructor for re using cache across controllers
 	 * @param elasticClient search cache object
-	 * @param maxResults maximum number of results
 	 */
-	public TF_IDFController(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
-		super(elasticClient, maxResults, addTransEnable);
+	public TF_IDFController(ElasticClient elasticClient){
+		super(elasticClient);
 	}
 	
 	

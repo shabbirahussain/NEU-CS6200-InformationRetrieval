@@ -21,10 +21,9 @@ public class UnigramLM_LaplaceSmoothing extends BaseSearchController implements 
 	/**
 	 * constructor for re using cache across controllers
 	 * @param elasticClient search cache object
-	 * @param maxResults maximum number of results
 	 */
-	public UnigramLM_LaplaceSmoothing(ElasticClient elasticClient, Integer maxResults, Boolean addTransEnable){
-		super(elasticClient, maxResults, addTransEnable);
+	public UnigramLM_LaplaceSmoothing(ElasticClient elasticClient){
+		super(elasticClient);
 	}
 	
 	

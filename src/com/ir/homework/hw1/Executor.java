@@ -45,16 +45,20 @@ public final class Executor {
 		
 		//////////////////////// Controllers ////////////////////////////
 		// OkapiTF
-		controllers.add(new OkapiTFController(elasticClient, MAX_RESULTS, ENABLE_ADD_NORMALIZATION));
+		controllers.add(new OkapiTFController(elasticClient));
 		
 		// TF-IDF
-		controllers.add(new TF_IDFController(elasticClient, MAX_RESULTS, ENABLE_ADD_NORMALIZATION));
+		controllers.add(new TF_IDFController(elasticClient));
 		
 		// OkapiBM25
-		controllers.add(new OkapiBM25Controller(elasticClient, MAX_RESULTS, ENABLE_ADD_NORMALIZATION));
+		controllers.add(new OkapiBM25Controller(elasticClient));
 		
 		// UnigramLM_LaplaceSmoothing
-		controllers.add(new UnigramLM_LaplaceSmoothing(elasticClient, MAX_RESULTS, ENABLE_ADD_NORMALIZATION));
+		controllers.add(new UnigramLM_LaplaceSmoothing(elasticClient));
+		
+		
+		// MetaSearchController
+		controllers.add(new MetaSearchController(elasticClient, controllers));
 		
 		////////////////////////////////////////////////////////////////
 		
