@@ -105,8 +105,6 @@ public final class Executor {
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
 				if(!ENABLE_SILENT_MODE) System.out.print("Executing Q:"+ q.getKey());
-				for(String s: q.getValue()) System.out.print("," + s);
-				System.out.println("");
 				
 				// additional query processing
 				if(ENABLE_STEMMING) q = queryAugmentor.stemQuery(q);

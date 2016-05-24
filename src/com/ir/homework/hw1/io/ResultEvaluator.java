@@ -37,11 +37,11 @@ public final class ResultEvaluator {
 	 * @throws IOException 
 	 */
 	public Double runEvaluation(String outFilePath, Boolean silent) throws IOException{
-		commands.add(outFilePath);
+		List<String> commandsCopy = new LinkedList<String>(commands);
+		commandsCopy.add(outFilePath);
 		
 		Runtime rt = Runtime.getRuntime();
-		//commands = {"ls", "-l"};
-		Process proc = rt.exec(commands.toArray(new String[commands.size()]));
+		Process proc = rt.exec(commandsCopy.toArray(new String[0]));
 
 		BufferedReader stdInput = new BufferedReader(new 
 		     InputStreamReader(proc.getInputStream()));

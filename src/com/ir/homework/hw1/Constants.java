@@ -8,8 +8,8 @@ public final class Constants {
 	public static final String PRE_PROCESS_DST_PATH = BASE_PATH + "/AP_DATA/ap89_collection";
 
 	public static final String OBJECT_STORE_PATH = BASE_PATH + "/AP_DATA/cache/";
-	public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short.txt";
-	//public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short copy.txt";
+	//public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short.txt";
+	public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short copy.txt";
 	
 	public static final String OUTPUT_FOLDR_PATH   = BASE_PATH + "/AP_DATA/results";
 	public static final String OUTPUT_FILE_PATH    = OUTPUT_FOLDR_PATH + "/output1000_";
@@ -35,7 +35,7 @@ public final class Constants {
 	public static final Boolean ENABLE_STEMMING = false;
 	public static final Boolean ENABLE_ADD_NORMALIZATION = false;
 	
-	public static final Integer MAX_RESULTS = 10000;
+	public static final Integer MAX_RESULTS = 10000; //maximum 10,000
 	
 	public static final String TEXT_FIELD_NAME = "TEXT";
 	
