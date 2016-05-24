@@ -116,20 +116,20 @@ public final class Executor {
 				records = sc.executeQuery(q);
 				for(OutputWriter.OutputRecord r: records)
 					ow.writeOutput(r);
-
 				
-				
-				System.out.print("Executing augmented query:" );
-				
-				// Augment the query terms
-				q = queryAugmentor.escapeQuery(queryAugmentor.expandQuery(q));
-				
-				for(String s: q.getValue()) System.out.print("," + s);
-				System.out.println("");
-				
-				records = sc.executeQuery(q);
-				for(OutputWriter.OutputRecord r: records)
-					owA.writeOutput(r);
+				if(ENABLE_PSEUDO_FEEDBACK){
+					System.out.print("Executing augmented query:" );
+					
+					// Augment the query terms
+					q = queryAugmentor.escapeQuery(queryAugmentor.expandQuery(q));
+					
+					for(String s: q.getValue()) System.out.print("," + s);
+					System.out.println("");
+					
+					records = sc.executeQuery(q);
+					for(OutputWriter.OutputRecord r: records)
+						owA.writeOutput(r);
+					}
 				//*/
 			}
 			ow.close();
@@ -139,9 +139,10 @@ public final class Executor {
 			if(!ENABLE_SILENT_MODE) 
 				System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
 			
-			result = resultEvaluator.runEvaluation(outFilePath, ENABLE_SILENT_MODE);
-			result = resultEvaluator.runEvaluation(outFilePathA, false);
-			
+			result = resultEvaluator.runEvaluation(outFilePath, false);
+			if(ENABLE_PSEUDO_FEEDBACK){
+				result = resultEvaluator.runEvaluation(outFilePathA, false);
+			}
 		} catch (ArrayIndexOutOfBoundsException | IOException e) {
 			e.printStackTrace();
 		}
