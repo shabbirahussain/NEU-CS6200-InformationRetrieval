@@ -1,7 +1,6 @@
 package com.ir.homework.hw1.util;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,6 +21,7 @@ public class QueryAugmentor {
 	private ElasticClient searchClient;
 	private PorterStemmer stemer;
 	private Integer toIndex;
+	private Integer numOfSignTerms;
 	
 	/**
 	 * Default constructor
@@ -31,7 +31,8 @@ public class QueryAugmentor {
 		this.searchClient = searchClient;
 		this.stemer = new PorterStemmer();
 		
-		this.toIndex = 1;
+		this.toIndex = 3;
+		this.numOfSignTerms = 5;
 	}
 	
 	/**
@@ -41,7 +42,7 @@ public class QueryAugmentor {
 	 * @return Tokenized query as an Entry 
 	 * @throws IOException 
 	 */
-	public Entry<String, String[]> expandQuery(Entry<String, String[]> query, List<OutputWriter.OutputRecord> outputRecord) throws IOException{
+	private Entry<String, String[]> expandQueryOld(Entry<String, String[]> query, List<OutputWriter.OutputRecord> outputRecord) throws IOException{
 		Map<String, Long> termMap = new HashMap<String, Long>(); 
 		List<String> terms = Arrays.asList(query.getValue());
 		
@@ -62,6 +63,40 @@ public class QueryAugmentor {
 		String[] qTerms = sortByValue(termMap).subList(0, this.toIndex).toArray(new String[0]);
 		
 		query.setValue(qTerms);
+		return query;
+	}
+	
+	/**
+	 * Expands query using top n documents
+	 * @param query given as a pair of key and tokens
+	 * @param outputRecord top records in output
+	 * @return Tokenized query as an Entry 
+	 * @throws IOException 
+	 */
+	public Entry<String, String[]> expandQuery(Entry<String, String[]> query){
+		List<String> terms  = Arrays.asList(query.getValue());
+		List<String> sTerms = searchClient.getSignificantTerms(terms, this.numOfSignTerms);
+		sTerms.addAll(terms);
+		
+		query.setValue(sTerms.toArray(new String[0]));
+		
+		return query;
+	}
+	
+	/**
+	 * Adds escape characters to the query
+	 * @param query
+	 * @return Escaped version of given query
+	 */
+	public Entry<String, String[]> escapeQuery(Entry<String, String[]> query){
+		List<String> terms  = Arrays.asList(query.getValue());
+		Set<String>  result = new HashSet<String>();
+		
+		for(String term : terms){
+			result.add(term.replaceAll("[^a-z]", " "));
+		}
+		
+		query.setValue(result.toArray(new String[0]));
 		return query;
 	}
 	
@@ -98,10 +133,4 @@ public class QueryAugmentor {
 		
 		return query;
 	}
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
-
 }

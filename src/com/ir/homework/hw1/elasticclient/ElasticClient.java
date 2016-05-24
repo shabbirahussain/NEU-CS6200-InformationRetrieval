@@ -4,6 +4,7 @@
 package com.ir.homework.hw1.elasticclient;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -95,4 +96,11 @@ public interface ElasticClient {
 	 */
 	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor);
 	
+	/**
+	 * Gets top n significant terms
+	 * @param term to search for
+	 * @param numberOfTerm number of significant term to fetch
+	 * @return
+	 */
+	public List<String> getSignificantTerms(List<String> term, Integer numberOfTerm);
 }

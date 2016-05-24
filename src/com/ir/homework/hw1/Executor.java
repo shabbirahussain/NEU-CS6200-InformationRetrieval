@@ -93,7 +93,7 @@ public final class Executor {
 		
 		QueryReader  qr  = new QueryReader(QUERY_FILE_PATH);
 		OutputWriter ow  = new OutputWriter( outFilePath);
-		//OutputWriter owA = new OutputWriter( outFilePathA);
+		OutputWriter owA = new OutputWriter( outFilePathA);
 		
 
 		QueryAugmentor queryAugmentor = new QueryAugmentor(elasticClient);
@@ -101,10 +101,14 @@ public final class Executor {
 		List<OutputWriter.OutputRecord> records;
 		try {
 			ow.open();
-			//owA.open();
+			owA.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
-				if(!ENABLE_SILENT_MODE) System.out.print("Executing Q:"+ q.getKey());
+				if(!ENABLE_SILENT_MODE) {
+					System.out.print("\nExecuting Q:"+ q.getKey());
+					for(String s: q.getValue()) System.out.print("," + s);
+					System.out.println("");
+				}
 				
 				// additional query processing
 				if(ENABLE_STEMMING) q = queryAugmentor.stemQuery(q);
@@ -114,11 +118,11 @@ public final class Executor {
 					ow.writeOutput(r);
 
 				
-				/*
+				
 				System.out.print("Executing augmented query:" );
 				
 				// Augment the query terms
-				q = queryAugmentor.expandQuery(q, records);
+				q = queryAugmentor.escapeQuery(queryAugmentor.expandQuery(q));
 				
 				for(String s: q.getValue()) System.out.print("," + s);
 				System.out.println("");
@@ -129,12 +133,14 @@ public final class Executor {
 				//*/
 			}
 			ow.close();
-			//owA.close();
+			owA.close();
 			
 			// run evaluation on output
-			if(!ENABLE_SILENT_MODE) System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
+			if(!ENABLE_SILENT_MODE) 
+				System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
+			
 			result = resultEvaluator.runEvaluation(outFilePath, ENABLE_SILENT_MODE);
-			//result = resultEvaluator.runEvaluation(outFilePathA, false);
+			result = resultEvaluator.runEvaluation(outFilePathA, false);
 			
 		} catch (ArrayIndexOutOfBoundsException | IOException e) {
 			e.printStackTrace();

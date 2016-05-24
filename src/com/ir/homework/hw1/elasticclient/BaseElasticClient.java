@@ -12,6 +12,8 @@ import static com.ir.homework.hw1.Constants.TEXT_FIELD_NAME;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -26,6 +28,7 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.significant.SignificantTerms;
 
 public class BaseElasticClient implements Serializable, ElasticClient{
 	// Serialization version Id
@@ -242,6 +245,30 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 			.get();
 		
 		result = response.getHits().getTotalHits();
+		return result;
+	}
+	
+	public List<String> getSignificantTerms(List<String> term, Integer numberOfTerm){
+		List<String> result = new LinkedList<String>(); 
+		
+		// Get query term document count
+		SearchResponse response = _client.prepareSearch()
+				.setIndices(this.indices)
+				.setTypes(this.types)
+				.setQuery(QueryBuilders.termsQuery(textFieldName, term))
+				.addAggregation(AggregationBuilders.significantTerms("SIG_TERM")
+						.field(textFieldName))
+				.setSize(numberOfTerm)
+				.setNoFields()
+				.get();
+		
+		if(response.status() == RestStatus.OK){
+			SignificantTerms sigTerms = response.getAggregations().get("SIG_TERM");
+			for(SignificantTerms.Bucket entry : sigTerms.getBuckets()){
+				String key   = entry.getKey().toString();
+				result.add(key);      // Term
+			}
+		}
 		return result;
 	}
 	
