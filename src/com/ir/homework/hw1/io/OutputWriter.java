@@ -65,23 +65,4 @@ public final class OutputWriter {
 		bw.write("Exp");
 		bw.newLine();
 	}
-	
-	/**
-	 * Main function for testing only
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		OutputWriter or=new OutputWriter(OUTPUT_FILE_PATH);
-		try {
-			or.open();
-			
-			or.writeOutput(new OutputRecord("13", "test-doc001", 1L, (float) 0.245));
-			
-			or.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-	}
-
 }

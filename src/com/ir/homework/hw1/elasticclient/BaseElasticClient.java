@@ -1,5 +1,14 @@
 package com.ir.homework.hw1.elasticclient;
 
+import static com.ir.homework.hw1.Constants.CLUSTER_NAME;
+import static com.ir.homework.hw1.Constants.ENABLE_PERSISTENT_CACHE;
+import static com.ir.homework.hw1.Constants.HOST;
+import static com.ir.homework.hw1.Constants.INDEX_NAME;
+import static com.ir.homework.hw1.Constants.INDEX_TYPE;
+import static com.ir.homework.hw1.Constants.MAX_RESULTS;
+import static com.ir.homework.hw1.Constants.PORT;
+import static com.ir.homework.hw1.Constants.TEXT_FIELD_NAME;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -15,6 +24,7 @@ import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 
 public class BaseElasticClient implements Serializable, ElasticClient{
@@ -126,17 +136,16 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 	
 	// ------------------------- Document Statistics ------------------
 	public Map<String,Float> getTermFrequency(String docNo){
-		if(true) return null;
 		// TODO
+		if(true) return null;
 		Map<String,Float> result = null;
 		SearchResponse response = _client.prepareSearch()
 			.setIndices(this.indices)
 			.setTypes(this.types)
-			.setQuery(QueryBuilders.functionScoreQuery()
-				.add(ScoreFunctionBuilders
-						.scriptFunction("_index['" + textFieldName + "']['" + docNo + "'].tf()"))
-				.boostMode("replace"))
-			.setSize(maxResults)
+			.setQuery(QueryBuilders.idsQuery(this.types)
+					.addIds(docNo))
+			.addScriptField("TERMS", (new Script("doc['" + textFieldName + "']")))
+			.setSize(10000)
 			.setNoFields()
 			.get();
 		
@@ -144,9 +153,12 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 			result = new HashMap<String,Float>();
 			SearchHit hit[]=response.getHits().hits();
 			for(SearchHit h:hit){
-				String key  = h.getId();
-				Float score = h.getScore();
-				if(score>0) result.put(key, score);
+				SearchHitField shf  = h.getFields().get("TERMS");
+				Float score = 0.0F;
+				for(Object sh : shf){
+					String key = sh.toString();
+					result.put(key, score);
+				}
 			}
 		}
 		return result;
@@ -231,5 +243,19 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		
 		result = response.getHits().getTotalHits();
 		return result;
+	}
+	
+	public static void main(String arg[]){
+		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
+				.setClusterName(CLUSTER_NAME)
+				.setHost(HOST)
+				.setPort(PORT)
+				.setIndices(INDEX_NAME)
+				.setTypes(INDEX_TYPE)
+				.setLimit(MAX_RESULTS)
+				.setCachedFetch(false)
+				.setField(TEXT_FIELD_NAME);
+		
+		eBuilder.build().getTermFrequency("AP890512-0154");
 	}
 }

@@ -22,6 +22,7 @@ import com.ir.homework.hw1.elasticclient.ElasticClientBuilder;
 import com.ir.homework.hw1.io.OutputWriter;
 import com.ir.homework.hw1.io.QueryReader;
 import com.ir.homework.hw1.io.ResultEvaluator;
+import com.ir.homework.hw1.util.QueryAugmentor;
 
 /**
  * @author shabbirhussain
@@ -29,6 +30,8 @@ import com.ir.homework.hw1.io.ResultEvaluator;
  */
 public final class Executor {
 	private static ElasticClient elasticClient;
+	private static ResultEvaluator resultEvaluator;
+	
 	/**
 	 * @param args
 	 */
@@ -57,7 +60,7 @@ public final class Executor {
 		controllers.add(new MetaSearchController(elasticClient, controllers));
 		
 		////////////////////////////////////////////////////////////////
-		
+		resultEvaluator = new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
 		Double correctnessScore;
 		for(SearchController sc : controllers){
 			System.out.println("\n================ " + sc.getClass().getSimpleName() + " ==========================");
@@ -84,27 +87,56 @@ public final class Executor {
 	 */
 	public static Double execute(SearchController sc){
 		Double result = null;
-		String outFilePath = OUTPUT_FILE_PATH + sc.getClass().getSimpleName() + ".txt";
+		String outFilePath  = OUTPUT_FILE_PATH + sc.getClass().getSimpleName() + ".txt";
+		String outFilePathA = OUTPUT_FILE_PATH + sc.getClass().getSimpleName() + "_.txt";
 		
-		QueryReader  qr = new QueryReader(QUERY_FILE_PATH, ENABLE_STEMMING);
-		OutputWriter ow = new OutputWriter( outFilePath);
+		
+		QueryReader  qr  = new QueryReader(QUERY_FILE_PATH);
+		OutputWriter ow  = new OutputWriter( outFilePath);
+		//OutputWriter owA = new OutputWriter( outFilePathA);
+		
+
+		QueryAugmentor queryAugmentor = new QueryAugmentor(elasticClient);
 		
 		List<OutputWriter.OutputRecord> records;
 		try {
 			ow.open();
+			//owA.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
-				if(!ENABLE_SILENT_MODE) System.out.println("Executing Q:"+ q.getKey());
+				if(!ENABLE_SILENT_MODE) System.out.print("Executing Q:"+ q.getKey());
+				for(String s: q.getValue()) System.out.print("," + s);
+				System.out.println("");
+				
+				// additional query processing
+				if(ENABLE_STEMMING) q = queryAugmentor.stemQuery(q);
+				
 				records = sc.executeQuery(q);
 				for(OutputWriter.OutputRecord r: records)
 					ow.writeOutput(r);
+
+				
+				/*
+				System.out.print("Executing augmented query:" );
+				
+				// Augment the query terms
+				q = queryAugmentor.expandQuery(q, records);
+				
+				for(String s: q.getValue()) System.out.print("," + s);
+				System.out.println("");
+				
+				records = sc.executeQuery(q);
+				for(OutputWriter.OutputRecord r: records)
+					owA.writeOutput(r);
+				//*/
 			}
 			ow.close();
-			
+			//owA.close();
 			
 			// run evaluation on output
 			if(!ENABLE_SILENT_MODE) System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
-			result = (new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS, outFilePath)).runEvaluation(ENABLE_SILENT_MODE);
+			result = resultEvaluator.runEvaluation(outFilePath, ENABLE_SILENT_MODE);
+			//result = resultEvaluator.runEvaluation(outFilePathA, false);
 			
 		} catch (ArrayIndexOutOfBoundsException | IOException e) {
 			e.printStackTrace();
@@ -148,26 +180,6 @@ public final class Executor {
 		return null;
 	}
 	
-	/**
-	 * Creates a new search controller cache
-	 * @return New instance of elastic client
-	 */
-	private static ElasticClient createElasticClient(){
-		System.out.println("Creating new elastic client...");
-		
-		ElasticClient result = ElasticClientBuilder.createElasticClientBuilder()
-				.setClusterName(CLUSTER_NAME)
-				.setHost(HOST)
-				.setPort(PORT)
-				.setIndices(INDEX_NAME)
-				.setTypes(INDEX_TYPE)
-				.setLimit(MAX_RESULTS)
-				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
-				.setField(TEXT_FIELD_NAME)
-				.build();
-		
-		return result;
-	}
 	
 	/**
 	 * Loads or creates a elasticClient

@@ -93,7 +93,7 @@ public final class FilePreprocessor {
 		String line;
 	    while ((line = brd.readLine()) != null) {
 	    	line = cleanupLines(line);
-	        bwr.write(line);
+	        bwr.write(line + " ");
 	    }
 		brd.close();
 	    
@@ -127,6 +127,7 @@ public final class FilePreprocessor {
 	private String cleanupLines(String line){
 		line = line.toLowerCase();
 		line = line.replaceAll("&amp;", "&");
+		
 		//line = line.replaceAll("[^a-z|0-9|&|<|>]", " ");
 		line = line.replaceAll("&", "&amp;");
 		return line;

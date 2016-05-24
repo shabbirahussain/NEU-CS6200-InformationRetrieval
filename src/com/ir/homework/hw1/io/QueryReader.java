@@ -18,17 +18,12 @@ public final class QueryReader {
 	private String qPath;
 	private Boolean stemQueryTerms;
 	
-	private PorterStemmer stemer;
-	
 	/**
 	 * Creates an object of Query reader with specified file path
 	 * @param qPath
 	 */
-	public QueryReader(String qPath, Boolean stemQueryTerms){
+	public QueryReader(String qPath){
 		this.qPath = qPath;
-		this.stemQueryTerms = stemQueryTerms;
-		
-		stemer = new PorterStemmer();
 	}
 	
 	/**
@@ -46,14 +41,12 @@ public final class QueryReader {
 			String split[]   = line.split("\\.", 2);
 			if(split.length==2){
 				String queryId   = split[0];
-				String tokens[]  = createTokens(split[1]);
+				String tokens[]  = createTokens(split[1].toLowerCase());
 				List<String> cleanTokens = new LinkedList<String>();
 				
 				for(int i=0;i<tokens.length; i++){
 					// Remove blank terms
 					if(tokens[i].trim().length()>0) {
-						// Stem query terms
-						if(stemQueryTerms) tokens[i] = stemer.stem(tokens[i]);
 						cleanTokens.add(tokens[i]);
 					}
 				}
@@ -81,7 +74,7 @@ public final class QueryReader {
 	 */
 	public static void main(String args[]){
 		try{
-			(new QueryReader(QUERY_FILE_PATH, ENABLE_STEMMING)).getQueryTokens();
+			(new QueryReader(QUERY_FILE_PATH)).getQueryTokens();
 		}catch(Exception e){e.printStackTrace();}
 	}
 }

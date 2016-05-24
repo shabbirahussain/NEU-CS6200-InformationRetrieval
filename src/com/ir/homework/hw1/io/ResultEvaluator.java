@@ -16,27 +16,32 @@ import java.util.List;
  * Evaluates the results generated using treckeval
  */
 public final class ResultEvaluator {
-	private String commands[];
+	private List<String> commands;
 
-	public ResultEvaluator(String evaluatorPath, String params[], String outFilePath){
-		List<String> commands = new LinkedList<String>();
-		commands.add(evaluatorPath);
-		commands.addAll(Arrays.asList(params));
-		commands.add(outFilePath);
-		
-		this.commands = commands.toArray(new String[commands.size()]);
+	/**
+	 * Default constructor
+	 * @param evaluatorPath
+	 * @param params
+	 */
+	public ResultEvaluator(String evaluatorPath, String params[]){
+		this.commands = new LinkedList<String>();
+		this.commands.add(evaluatorPath);
+		this.commands.addAll(Arrays.asList(params));
 	}
 	
 	/**
 	 * Runs evaluation script on output file
+	 * @param outFilePath is the path of output file to evaluate
 	 * @param silent when enabled suppresses the screen output
 	 * @return evaluation final score
 	 * @throws IOException 
 	 */
-	public Double runEvaluation(Boolean silent) throws IOException{
+	public Double runEvaluation(String outFilePath, Boolean silent) throws IOException{
+		commands.add(outFilePath);
+		
 		Runtime rt = Runtime.getRuntime();
 		//commands = {"ls", "-l"};
-		Process proc = rt.exec(commands);
+		Process proc = rt.exec(commands.toArray(new String[commands.size()]));
 
 		BufferedReader stdInput = new BufferedReader(new 
 		     InputStreamReader(proc.getInputStream()));
@@ -65,10 +70,10 @@ public final class ResultEvaluator {
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws IOException {
-		String outFile = (OUTPUT_FOLDR_PATH + "/output1000.txt");
+		String outFile = (OUTPUT_FOLDR_PATH + "/output1000_TF_IDFController.txt");
 		
-		ResultEvaluator re = new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS, outFile);
-		re.runEvaluation(false);
+		ResultEvaluator re = new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
+		re.runEvaluation(outFile, false);
 	}
 
 }
