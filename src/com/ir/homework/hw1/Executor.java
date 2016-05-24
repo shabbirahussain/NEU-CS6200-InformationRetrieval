@@ -16,9 +16,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw1.controllers.*;
-import com.ir.homework.hw1.elasticutil.CachedElasticClient;
-import com.ir.homework.hw1.elasticutil.ElasticClient;
-import com.ir.homework.hw1.elasticutil.ElasticClientBuilder;
+import com.ir.homework.hw1.elasticclient.CachedElasticClient;
+import com.ir.homework.hw1.elasticclient.ElasticClient;
+import com.ir.homework.hw1.elasticclient.ElasticClientBuilder;
 import com.ir.homework.hw1.io.OutputWriter;
 import com.ir.homework.hw1.io.QueryReader;
 import com.ir.homework.hw1.io.ResultEvaluator;
@@ -176,13 +176,26 @@ public final class Executor {
 	 * @return Uncasted object of given class fetched from store
 	 */
 	private static ElasticClient loadOrCreateCache(Class<?> c, String storePath){
-		ElasticClient result;
+		ElasticClient result = null;
+		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
+				.setClusterName(CLUSTER_NAME)
+				.setHost(HOST)
+				.setPort(PORT)
+				.setIndices(INDEX_NAME)
+				.setTypes(INDEX_TYPE)
+				.setLimit(MAX_RESULTS)
+				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
+				.setField(TEXT_FIELD_NAME);
+		
 		if(ENABLE_PERSISTENT_CACHE){
 			System.out.println("Loading cache from: " + storePath);
-			result = (ElasticClient) loadObject(c, storePath);
-			if(result != null) return result;
+			result = (ElasticClient) loadObject(c, storePath);	
 		}
-		result = createElasticClient();
+		if(result != null) 
+			result = eBuilder.build(result);
+		else
+			result = eBuilder.build();
+			
 		return result;
 	}
 }

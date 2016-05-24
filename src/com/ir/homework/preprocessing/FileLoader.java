@@ -13,7 +13,7 @@ import javax.xml.parsers.*;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
-import com.ir.homework.hw1.elasticutil.ElasticClient;
+import com.ir.homework.hw1.elasticclient.ElasticClient;
 
 /**
  * @author shabbirhussain

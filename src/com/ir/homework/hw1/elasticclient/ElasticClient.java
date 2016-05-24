@@ -1,11 +1,13 @@
 /**
  * 
  */
-package com.ir.homework.hw1.elasticutil;
+package com.ir.homework.hw1.elasticclient;
 
 import java.io.IOException;
 import java.util.Map;
 
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 
@@ -85,5 +87,12 @@ public interface ElasticClient {
 	 * @return Number of documents in corpus
 	 */
 	Long getDocCount();
+	
+	/**
+	 * Attaches client and bulk processor
+	 * @param client
+	 * @param bulkProcessor
+	 */
+	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor);
 	
 }

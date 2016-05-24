@@ -1,4 +1,4 @@
-package com.ir.homework.hw1.elasticutil;
+package com.ir.homework.hw1.elasticclient;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -117,8 +117,27 @@ public class ElasticClientBuilder {
 	
 	// ------------------------ Builder -------------------------------
 	
+	/**
+	 * Builds a new client from information provided so far
+	 * @return ElasticClient
+	 */
 	public ElasticClient build(){
 		ElasticClient result = null;
+		if (this.cachedFetch)
+			result = (new CachedElasticClient(this.indices, this.types, true, this.size, this.field));
+		else
+			result = (new BaseElasticClient(this.indices, this.types, true, this.size, this.field));
+		
+		this.build(result);
+		return result;
+	}
+	
+	/**
+	 * Builds transport clients and initialized them on elasticClient
+	 * @param elasticClient
+	 * @return
+	 */
+	public ElasticClient build(ElasticClient elasticClient){
 		try {
 			Client client = TransportClient.builder().settings(settings.build()).build()
 			        .addTransportAddress(
@@ -151,14 +170,9 @@ public class ElasticClientBuilder {
 			            BackoffPolicy.exponentialBackoff(TimeValue.timeValueMillis(100), 3)) 
 			        .build();
 			
-			if (this.cachedFetch){
-				result = new CachedElasticClient(client, bulkProcessor, this.indices, this.types, true, this.size, this.field);
-			}else{
-				result = new BaseElasticClient(client, bulkProcessor, this.indices, this.types, true, this.size, this.field);
-			}
-			
-			
-		} catch (UnknownHostException e) {e.printStackTrace();}
-		return result;
+			elasticClient.attachClients(client, bulkProcessor);
+		}catch (UnknownHostException e) {e.printStackTrace();}
+		
+		return elasticClient;
 	}
 }

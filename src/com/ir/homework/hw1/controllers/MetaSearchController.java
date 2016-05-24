@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw1.elasticutil.ElasticClient;
+import com.ir.homework.hw1.elasticclient.ElasticClient;
 import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
 
 

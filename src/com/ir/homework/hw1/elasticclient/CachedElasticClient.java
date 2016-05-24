@@ -1,6 +1,4 @@
-package com.ir.homework.hw1.elasticutil;
-
-import static com.ir.homework.hw1.Constants.*;
+package com.ir.homework.hw1.elasticclient;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -67,8 +65,8 @@ public class CachedElasticClient extends BaseElasticClient{
 	 * @param limit maximum number of records to fetch
 	 * @param field payload field name to query
 	 */
-	public CachedElasticClient(Client client, BulkProcessor bulkProcessor, String indices, String types, Boolean enableBulkProcessing, Integer limit, String field ){
-		super(client, bulkProcessor, indices, types, enableBulkProcessing, limit, field);
+	public CachedElasticClient(String indices, String types, Boolean enableBulkProcessing, Integer limit, String field ){
+		super(indices, types, enableBulkProcessing, limit, field);
 		termStatsMap = new HashMap<String, TermStats>();
 		docStatsMap  = new HashMap<String, DocStats>();
 	}

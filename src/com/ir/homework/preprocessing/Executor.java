@@ -5,9 +5,9 @@ package com.ir.homework.preprocessing;
 
 import static com.ir.homework.hw1.Constants.*;
 
-import com.ir.homework.hw1.elasticutil.BaseElasticClient;
-import com.ir.homework.hw1.elasticutil.ElasticClient;
-import com.ir.homework.hw1.elasticutil.ElasticClientBuilder;
+import com.ir.homework.hw1.elasticclient.BaseElasticClient;
+import com.ir.homework.hw1.elasticclient.ElasticClient;
+import com.ir.homework.hw1.elasticclient.ElasticClientBuilder;
 
 /**
  * @author shabbirhussain

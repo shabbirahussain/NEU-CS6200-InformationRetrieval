@@ -1,7 +1,5 @@
 package com.ir.homework.hw1;
 
-import org.elasticsearch.common.unit.ByteSizeUnit;
-
 public final class Constants {
 	private static final String BASE_PATH = "/Users/shabbirhussain/Data/IRData";
 	
@@ -24,7 +22,7 @@ public final class Constants {
 	
 	public static final String DATA_FILE_PREFIX = "ap";
 	
-	public static final String  HOST = "192.168.1.105"; //"localhost";
+	public static final String  HOST = "localhost";//"192.168.1.105"; //"localhost";
 	public static final Integer PORT = 9300;
 	public static final String CLUSTER_NAME = "dead-pool";
 	
@@ -37,7 +35,7 @@ public final class Constants {
 	public static final Boolean ENABLE_STEMMING = false;
 	public static final Boolean ENABLE_ADD_NORMALIZATION = false;
 	
-	public static final Integer MAX_RESULTS = 500;
+	public static final Integer MAX_RESULTS = 100;
 	
 	public static final String TEXT_FIELD_NAME = "TEXT";
 	

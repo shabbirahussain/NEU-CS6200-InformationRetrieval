@@ -1,4 +1,4 @@
-package com.ir.homework.hw1.elasticutil;
+package com.ir.homework.hw1.elasticclient;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -42,10 +42,7 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 	 * @param limit maximum number of records to fetch
 	 * @param field payload field name to query
 	 */
-	public BaseElasticClient(Client client, BulkProcessor bulkProcessor, String indices, String types, Boolean enableBulkProcessing, Integer limit, String field ){
-		_client        = client;
-		_bulkProcessor = bulkProcessor;
-		
+	public BaseElasticClient(String indices, String types, Boolean enableBulkProcessing, Integer limit, String field ){
 		this.indices = indices;
 		this.types   = types;
 		this.maxResults = limit;
@@ -55,6 +52,12 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		this.enableBulkProcessing = true;
 	}
 	
+	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor){
+		_client        = client;
+		_bulkProcessor = bulkProcessor;
+		
+		return this;
+	}
 
 	// --------------------------- Loaders ----------------------------
 	
