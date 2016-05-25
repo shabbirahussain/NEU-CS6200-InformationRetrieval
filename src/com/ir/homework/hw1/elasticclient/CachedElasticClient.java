@@ -191,7 +191,7 @@ public class CachedElasticClient extends BaseElasticClient{
 		// Calculate new results
 		result = (new TermStats(super.getDocFrequency(term), 
 								super.getDocCount(term),
-								null, //super.getSignificantTerms(term, numberOfTerm)));
+								super.getSignificantTerms(term, numberOfTerm),
 								super.getBGProbability(term)));
 		
 		// Cache it for further use

@@ -293,8 +293,7 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 	}
 	
 	public List<String> getSignificantTerms(String term, Integer numberOfTerm) throws IOException{
-		List<String> result = new LinkedList<String>(); 
-		String stemmedTerm = stemer.stem(term).toString();
+		List<String> result = new LinkedList<String>();
 		
 		// Get query term document count
 		SearchResponse response = _client.prepareSearch()
@@ -303,23 +302,21 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 				.setQuery(QueryBuilders.termsQuery(textFieldName, term))
 				.addAggregation(AggregationBuilders.significantTerms("SIG_TERM")
 						.field(textFieldName))
-				.setSize(numberOfTerm * 10)
+				.setSize(numberOfTerm * 100)
 				.setNoFields()
 				.get();
 		
-		if(response.status() == RestStatus.OK){
-			SignificantTerms sigTerms = response.getAggregations().get("SIG_TERM");
-			for(SignificantTerms.Bucket entry : sigTerms.getBuckets()){
-				String key   = entry.getKey().toString();
-				key = stemer.stem(key).toString();
-				key = key.replaceAll("[^a-z]", " ").trim();
-				
-				if(!key.equals(stemmedTerm) && !result.contains(key)){
-					result.add(key);      // Term
-				}
-				if(result.size() >= numberOfTerm) break;
+		SignificantTerms sigTerms = response.getAggregations().get("SIG_TERM");
+		for(SignificantTerms.Bucket entry : sigTerms.getBuckets()){
+			String key   = entry.getKey().toString();
+			key = key.replaceAll("[^a-z]", " ").trim();
+			
+			if(!key.equals(term) && !result.contains(key)){
+				result.add(key);      // Term
 			}
+			if(result.size() >= numberOfTerm) break;
 		}
+	
 		return result;
 	}
 	

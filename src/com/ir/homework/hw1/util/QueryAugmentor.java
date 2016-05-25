@@ -37,8 +37,8 @@ public class QueryAugmentor {
 		this.stopWordsSet = stopWordsSet;
 		
 		this.toIndex = 3;
-		this.numOfSignTerms = 5;
-		this.expansionThreshold = 0.5F;
+		this.numOfSignTerms = 2;
+		this.expansionThreshold = 1F;
 	}
 	
 	/**
@@ -51,6 +51,7 @@ public class QueryAugmentor {
 	 * @throws InterruptedException 
 	 */
 	public Entry<String, String[]> expandQuery(Entry<String, String[]> query, List<OutputWriter.OutputRecord> outputRecord) throws IOException, InterruptedException, ExecutionException{
+		// TODO 
 		Map<String, Long> termMap = new HashMap<String, Long>(); 
 		List<String> terms = Arrays.asList(query.getValue());
 		
@@ -81,6 +82,9 @@ public class QueryAugmentor {
 	 * @throws IOException 
 	 */
 	public Entry<String, String[]> expandQuery(Entry<String, String[]> query) throws IOException{
+		// Stem original query 
+		query = this.stemQuery(query);
+		
 		List<String> terms  = Arrays.asList(query.getValue());
 		List<Float>  score  = new LinkedList<Float>();
 		List<String> sTerms = new LinkedList<String>();
@@ -91,19 +95,35 @@ public class QueryAugmentor {
 			score.add(s);
 			sampleSpace += s;
 		}
-		System.out.println("");
+
 		for(int i=0;i<terms.size();i++){
 			Float s = score.get(i) / sampleSpace;
-			System.out.print(s+"\t"+terms.get(i));
+			String term = terms.get(i);
+
 			if(s<this.expansionThreshold){
-				System.out.print(" +");
-				sTerms.addAll(searchClient.getSignificantTerms(terms.get(i), this.numOfSignTerms));
+				List<String> sigTermsRaw = searchClient.getSignificantTerms(term, 10);
+				if(sigTermsRaw !=null ) sTerms.addAll(sigTermsRaw);
 			}
-			System.out.println("");
+		}
+		
+		// Rank terms with rarity
+		Map<String, Float> termMap = new HashMap<String, Float>();
+		for(String term: sTerms){
+			Float s = weightTermUniqeness(term);
+			termMap.put(term, s);
+		}
+		
+		List<Entry<String, Float>> sortedMap = this.sortByValue(termMap);
+		sTerms = new LinkedList<String>();
+		Integer i=0;
+		for(Entry<String, Float> e : sortedMap){
+			String term = e.getKey();
+			sTerms.add(term);
+			if((++i) >= numOfSignTerms) break;
 		}
 		sTerms.addAll(terms);
-		query.setValue(sTerms.toArray(new String[0]));
 		
+		query.setValue(sTerms.toArray(new String[0]));
 		return query;
 	}
 	
@@ -117,7 +137,7 @@ public class QueryAugmentor {
 		Float result = null;
 		Long termDocCnt = this.searchClient.getDocCount(term)+1;
 		
-		result = ((Double)(1.0 / termDocCnt)).floatValue();
+		result = ((Double)(1000.0 / termDocCnt)).floatValue();
 		
 		return result;
 	}

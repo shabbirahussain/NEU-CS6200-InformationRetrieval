@@ -106,17 +106,22 @@ public final class Executor {
 			owA.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
+				if(!(QUERY_NUMBER == null || QUERY_NUMBER == "") 
+						&& !q.getKey().contains(QUERY_NUMBER))
+					continue;
+				
 				// Remove stop words from query
 				q = queryAugmentor.cleanStopWordsFromQuery(q);
+
+				
+				// additional query processing
+				if(ENABLE_STEMMING) q = queryAugmentor.stemQuery(q);
 				
 				if(!ENABLE_SILENT_MODE) {
 					System.out.print("Executing  Q:"+ q.getKey() + " [");
 					for(String s: q.getValue()) System.out.print("," + s);
 					System.out.println("]");
 				}
-				
-				// additional query processing
-				if(ENABLE_STEMMING) q = queryAugmentor.stemQuery(q);
 				
 				records = sc.executeQuery(q);
 				for(OutputWriter.OutputRecord r: records)
@@ -138,7 +143,7 @@ public final class Executor {
 					for(OutputWriter.OutputRecord r: records)
 						owA.writeOutput(r);
 					
-					break;
+					//break;
 				}
 				
 				//*/
