@@ -57,12 +57,14 @@ public final class Executor {
 		// OkapiBM25
 		controllers.add(new OkapiBM25Controller(elasticClient));
 		
-		// UnigramLM_LaplaceSmoothing
+		// UnigramLM LaplaceSmoothing
 		controllers.add(new UnigramLM_LaplaceSmoothing(elasticClient));
 		
+		// UnigramLM Jelinek-Mercer smoothing
+		controllers.add(new UnigramLM_JelinekMercer(elasticClient));
 		
 		// MetaSearchController
-		controllers.add(new MetaSearchController(elasticClient, controllers));
+		//controllers.add(new MetaSearchController(elasticClient, controllers));
 		
 		////////////////////////////////////////////////////////////////
 		
@@ -127,7 +129,7 @@ public final class Executor {
 					// Augment the query terms
 					q = queryAugmentor.cleanStopWordsFromQuery(
 							queryAugmentor.escapeQuery(
-								queryAugmentor.expandQuery(q, records)));
+								queryAugmentor.expandQuery(q)));
 					
 					for(String s: q.getValue()) System.out.print("," + s);
 					System.out.println("]");
@@ -153,7 +155,7 @@ public final class Executor {
 				System.out.println("\nEnhanced Query:");
 				result = resultEvaluator.runEvaluation(outFilePathA, true);
 			}
-		} catch (ArrayIndexOutOfBoundsException | IOException | InterruptedException | ExecutionException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return result;

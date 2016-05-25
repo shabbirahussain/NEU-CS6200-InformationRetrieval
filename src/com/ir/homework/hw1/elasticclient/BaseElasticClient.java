@@ -16,29 +16,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.lucene.index.TermsEnum;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.termvectors.TermVectorsRequest;
 import org.elasticsearch.action.termvectors.TermVectorsRequest.FilterSettings;
-import org.elasticsearch.action.termvectors.TermVectorsRequestBuilder;
 import org.elasticsearch.action.termvectors.TermVectorsResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.significant.SignificantTerms;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 
 import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.stemmer.Stemmer;
@@ -183,7 +177,7 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		while(terms.next() != null){
 			String term = terms.term().utf8ToString();
 			Float value = ((Long)terms.totalTermFreq()).floatValue();
-			//System.out.println(sb + "\t=" + value);
+			System.out.println(term + "\t=" + value);
 			result.put(term, value);
 		}
 	
@@ -329,6 +323,25 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		return result;
 	}
 	
+	@Override
+	public Double getBGProbability(String term) {
+		Double result = null; 
+		
+		// Get query term document count
+		SearchResponse response = _client.prepareSearch()
+				.setIndices(this.indices)
+				.setTypes(this.types)
+				.setQuery(QueryBuilders.matchAllQuery())
+				.addAggregation(AggregationBuilders
+						.sum("BG_PROB")
+						.script((new Script("_index['" + textFieldName + "']['" + term + "'].tf()"
+								+ "/ (1 + doc['" + textFieldName + "'].values.size())"))))
+				.setNoFields()
+				.get();
+		result = (Double) response.getAggregations().get("BG_PROB").getProperty("value");
+		return result;
+	}
+	
 	public static void main(String arg[]) throws IOException, InterruptedException, ExecutionException{
 		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
 				.setClusterName(CLUSTER_NAME)
@@ -341,8 +354,10 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 				.setField(TEXT_FIELD_NAME);
 		
 		BaseElasticClient ec = (BaseElasticClient) eBuilder.build();
-		ec.getTermFrequency("AP890220-0147", 9F,500F);
+		//ec.getTermFrequency("AP890220-0147", 9F,500F);
 		System.out.println(ec.stemer.stem("atomic"));
-		System.out.println(ec.getSignificantTerms("atomic", 10));
+		System.out.println(ec.getSignificantTerms("atom", 10));
+		System.out.println(ec.getBGProbability("atomic"));
 	}
+
 }

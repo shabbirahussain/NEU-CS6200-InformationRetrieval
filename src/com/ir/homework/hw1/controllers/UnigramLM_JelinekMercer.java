@@ -16,13 +16,15 @@ import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
  * @author shabbirhussain
  *
  */
-public class UnigramLM_LaplaceSmoothing extends BaseSearchController{
+public class UnigramLM_JelinekMercer extends BaseSearchController{
+	// Probability smoothing factor between 0 - 1
+	private static final Float λ = 0.5F;
 	
 	/**
 	 * constructor for re using cache across controllers
 	 * @param elasticClient search cache object
 	 */
-	public UnigramLM_LaplaceSmoothing(ElasticClient elasticClient){
+	public UnigramLM_JelinekMercer(ElasticClient elasticClient){
 		super(elasticClient);
 	}
 	
@@ -38,6 +40,16 @@ public class UnigramLM_LaplaceSmoothing extends BaseSearchController{
 			Map<String, Float>   docScore = new HashMap<String, Float>();
 			Map<String, Integer> docCount = new HashMap<String, Integer>();
 			for(String term: queryTerms){
+				
+				/** Unigram LM with Jelinek-Mercer smoothing
+				 *  This is a similar language model, except that here we smooth a foreground document language model with a background model from the entire corpus
+				 * 	  $$ lm\_jm(d, q) = \sum_{w \in q} \log p\_jm(w|d) \\ p\_jm(w|d) = \lambda \frac{tf_{w,d}}{len(d)} + (1 - \lambda) \frac{\sum_{d'} tf_{w,d'}}{\sum_{d'} len(d')} $$
+				 *  Where:
+				 *    $\lambda \in (0, 1)$ is a smoothing parameter which specifies the mixture of the foreground and background distributions.
+				 *
+				 *  Think carefully about how to efficiently obtain the background model here. If you wish, you can instead estimate the corpus probability using $\frac{cf_w}{V}$.
+				 */
+				Double bgProbability  = elasticClient.getBGProbability(term);
 				Map<String, Float> tf = elasticClient.getDocFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){
@@ -45,19 +57,14 @@ public class UnigramLM_LaplaceSmoothing extends BaseSearchController{
 					
 					Float tf_w_d    = tfe.getValue();
 					Long  len_d     = super.elasticClient.getTermCount(docNo);
-
-					Float lm_laplace_d_q = docScore.getOrDefault(docNo, 0.0F);
-					/** Unigram LM with Laplace smoothing
-					 * This is a language model with Laplace (“add-one”) smoothing. We will use maximum likelihood estimates of the query based on a multinomial model “trained” on the document. The matching score is as follows.
-					 *  $$ lm\_laplace(d, q) = \sum_{w \in q} \log p\_laplace(w|d) \\ p\_laplace(w|d) = \frac{tf_{w,d} + 1}{len(d) + V} $$
-					 *  Where:
-					 *  	$V$ is the vocabulary size – the total number of unique terms in the collection.
-					 */
+					Float lm_jm_d_q = docScore.getOrDefault(docNo, 0.0F);
 					
-					Float p_laplace = (tf_w_d + 1)/ (len_d + V);
-					lm_laplace_d_q += ((Double)Math.log(p_laplace)).floatValue();
+					Float fgProbability = (tf_w_d / len_d);
 					
-					docScore.put(docNo, lm_laplace_d_q);
+					Double p_jm_w_d = (λ * fgProbability) + (1 - λ) * (bgProbability - fgProbability);
+					lm_jm_d_q += ((Double)Math.log(p_jm_w_d)).floatValue();
+					
+					docScore.put(docNo, lm_jm_d_q);
 					docCount.put(docNo, docCount.getOrDefault(docNo, 0) + 1);
 				}
 			}

@@ -39,7 +39,9 @@ public final class Executor {
 			System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 			
 			System.out.println("\n\nLoading Data...");
-			(new FileLoader(elasticClient, PRE_PROCESS_DST_PATH, DATA_FILE_PREFIX)).startLoad();
+			Long result = (new FileLoader(elasticClient, PRE_PROCESS_DST_PATH, DATA_FILE_PREFIX))
+					.startLoad();
+			System.out.println("Num of records inserted=" + result);
 			System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 			
 		} catch (Exception e) {e.printStackTrace();}

@@ -33,11 +33,13 @@ public class CachedElasticClient extends BaseElasticClient{
 		public Map<String, Float> docFrequncyMap;
 		public Long termDocCount;
 		public List<String> relatedTerms;
+		public Double bgProbability;
 		
-		public TermStats(Map<String, Float> docFrequncyMap, Long termDocCount, List<String> relatedTerms){
+		public TermStats(Map<String, Float> docFrequncyMap, Long termDocCount, List<String> relatedTerms, Double bgProbability){
 			this.docFrequncyMap = docFrequncyMap;
 			this.termDocCount   = termDocCount;
 			this.relatedTerms   = relatedTerms;
+			this.bgProbability  = bgProbability;
 		}
 	}
 	
@@ -189,7 +191,8 @@ public class CachedElasticClient extends BaseElasticClient{
 		// Calculate new results
 		result = (new TermStats(super.getDocFrequency(term), 
 								super.getDocCount(term),
-								null));//super.getSignificantTerms(term, numberOfTerm)));
+								null, //super.getSignificantTerms(term, numberOfTerm)));
+								super.getBGProbability(term)));
 		
 		// Cache it for further use
 		termStatsMap.put(term, result);
@@ -220,6 +223,11 @@ public class CachedElasticClient extends BaseElasticClient{
 		docStatsMap.put(docNo, result);
 		
 		return result;
+	}
+	
+	@Override
+	public Double getBGProbability(String term) {
+		return termStatsMap.get(term).bgProbability;
 	}
 
 	//  ==================== Cache statistics ====================
