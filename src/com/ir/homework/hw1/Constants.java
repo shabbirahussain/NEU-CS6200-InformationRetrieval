@@ -22,7 +22,7 @@ public final class Constants {
 	// Word assosiations
 	
 	public static final String DATA_FILE_PREFIX = "ap";
-	public static final String QUERY_NUMBER = "";
+	public static final String QUERY_NUMBER = "98"; // Good docs = [98, 93, 58, 59, 100] 
 	
 	public static final String  HOST = "localhost";//"192.168.1.105"; //"localhost";
 	public static final Integer PORT = 9300;
@@ -37,6 +37,8 @@ public final class Constants {
 	public static final Boolean ENABLE_STEMMING = true;
 	public static final Boolean ENABLE_PSEUDO_FEEDBACK = true;
 	public static final Boolean ENABLE_ADD_NORMALIZATION = true;
+	
+	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
 	
 	public static final Integer MAX_RESULTS = 10000; 
 	

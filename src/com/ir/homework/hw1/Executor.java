@@ -145,24 +145,43 @@ public final class Executor {
 					
 					//break;
 				}
+				if(EVALUATE_INDIVIDUAL_Q){
+					ow.close(); owA.close();
+					evaluate(outFilePath, outFilePathA);
+					ow.open(); owA.open();
+				}
 				
 				//*/
 			}
-			ow.close();
-			owA.close();
+			ow.close(); owA.close();
 			
-			// run evaluation on output
-			if(!ENABLE_SILENT_MODE) 
-				System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
+			evaluate(outFilePath, outFilePathA);
 			
-			result = resultEvaluator.runEvaluation(outFilePath, true);
-			if(ENABLE_PSEUDO_FEEDBACK){
-				System.out.println("\nEnhanced Query:");
-				result = resultEvaluator.runEvaluation(outFilePathA, true);
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return result;
+	}
+	
+	/**
+	 * Executes evaluations
+	 * @param outFilePath is the full path of un-enhanced query output
+	 * @param outFilePathA is the full path of enhanced query output
+	 * @return
+	 * @throws IOException
+	 */
+	private static Double evaluate(String outFilePath, String outFilePathA) throws IOException{
+		Double result = null;
+		// run evaluation on output
+		if(!ENABLE_SILENT_MODE) 
+			System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
+		
+		result = resultEvaluator.runEvaluation(outFilePath, true);
+		if(ENABLE_PSEUDO_FEEDBACK){
+			System.out.println("\nEnhanced Query:");
+			result = resultEvaluator.runEvaluation(outFilePathA, true);
+		}
+		System.out.println("");
 		return result;
 	}
 	
