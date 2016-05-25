@@ -19,7 +19,6 @@ import opennlp.tools.stemmer.PorterStemmer;
 
 public final class QueryReader {
 	private String qPath;
-	private Boolean stemQueryTerms;
 	
 	/**
 	 * Creates an object of Query reader with specified file path

@@ -23,6 +23,7 @@ import com.ir.homework.hw1.elasticclient.ElasticClientBuilder;
 import com.ir.homework.hw1.io.OutputWriter;
 import com.ir.homework.hw1.io.QueryReader;
 import com.ir.homework.hw1.io.ResultEvaluator;
+import com.ir.homework.hw1.io.StopWordReader;
 import com.ir.homework.hw1.util.QueryAugmentor;
 
 /**
@@ -33,11 +34,13 @@ public final class Executor {
 	private static ElasticClient elasticClient;
 	private static ResultEvaluator resultEvaluator;
 	private static QueryAugmentor queryAugmentor;
+	private static StopWordReader stopWordReader;
 	
 	/**
 	 * @param args
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		long start = System.nanoTime(); 
 		List<SearchController> controllers = new LinkedList<SearchController>();
 
@@ -62,18 +65,16 @@ public final class Executor {
 		controllers.add(new MetaSearchController(elasticClient, controllers));
 		
 		////////////////////////////////////////////////////////////////
+		
+		stopWordReader  = new StopWordReader(STOP_WORDS_FILE_PATH);
 		resultEvaluator = new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
-		queryAugmentor  = new QueryAugmentor(elasticClient, STOP_WORDS_FILE_PATH);
+		queryAugmentor  = new QueryAugmentor(elasticClient, stopWordReader.geStopWords());
 		
 		Double correctnessScore;
 		for(SearchController sc : controllers){
 			System.out.println("\n================ " + sc.getClass().getSimpleName() + " ==========================");
 			correctnessScore = execute(sc);
-			
-			saveObject(elasticClient, OBJECT_STORE_PATH);
 		}
-		
-		
 		saveObject(elasticClient, OBJECT_STORE_PATH);
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1.0e-9;
@@ -97,8 +98,6 @@ public final class Executor {
 		OutputWriter ow  = new OutputWriter( outFilePath);
 		OutputWriter owA = new OutputWriter( outFilePathA);
 		
-
-		
 		List<OutputWriter.OutputRecord> records;
 		try {
 			ow.open();
@@ -109,9 +108,9 @@ public final class Executor {
 				q = queryAugmentor.cleanStopWordsFromQuery(q);
 				
 				if(!ENABLE_SILENT_MODE) {
-					System.out.print("\nExecuting  Q:"+ q.getKey());
+					System.out.print("Executing  Q:"+ q.getKey() + " [");
 					for(String s: q.getValue()) System.out.print("," + s);
-					System.out.println("");
+					System.out.println("]");
 				}
 				
 				// additional query processing
@@ -123,7 +122,7 @@ public final class Executor {
 				
 				if(ENABLE_PSEUDO_FEEDBACK){
 					if(!ENABLE_SILENT_MODE) 
-						System.out.print("Executing PQ:"+ q.getKey());
+						System.out.print("Executing PQ:"+ q.getKey() + " [");
 					
 					// Augment the query terms
 					q = queryAugmentor.cleanStopWordsFromQuery(
@@ -131,7 +130,7 @@ public final class Executor {
 								queryAugmentor.expandQuery(q, records)));
 					
 					for(String s: q.getValue()) System.out.print("," + s);
-					System.out.println("");
+					System.out.println("]");
 					
 					records = sc.executeQuery(q);
 					for(OutputWriter.OutputRecord r: records)

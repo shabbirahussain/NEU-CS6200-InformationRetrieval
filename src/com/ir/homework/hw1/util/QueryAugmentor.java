@@ -34,13 +34,10 @@ public class QueryAugmentor {
 	 * @param searchClient elastic search client to use
 	 * @param stopWordsFilePath is the path of stop words file
 	 */
-	public QueryAugmentor(ElasticClient searchClient, String stopWordsFilePath){
+	public QueryAugmentor(ElasticClient searchClient, Set<String> stopWordsSet){
 		this.searchClient = searchClient;
 		this.stemer = new PorterStemmer();
-		
-		try {
-			this.stopWordsSet = geStopWords(stopWordsFilePath);
-		} catch (IOException e) {e.printStackTrace();}
+		this.stopWordsSet = stopWordsSet;
 		
 		this.toIndex = 3;
 		this.numOfSignTerms = 5;
@@ -197,22 +194,4 @@ public class QueryAugmentor {
 		return query;
 	} 
 	
-	/**
-	 * Reads and returns list of stop words
-	 * @param stopFilePath is the full path of stopwords file
-	 * @return Set of stop words
-	 * @throws IOException 
-	 */
-	private Set<String> geStopWords(String stopFilePath) throws IOException{
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(stopFilePath)));
-		Set<String> result = new HashSet<String>();
-		
-		String line;
-		while((line=br.readLine())!= null){
-			line = line.trim();
-			result.add(line);
-		}
-		
-		return result;
-	}
 }

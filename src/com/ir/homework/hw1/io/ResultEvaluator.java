@@ -49,21 +49,23 @@ public final class ResultEvaluator {
 		BufferedReader stdError = new BufferedReader(new 
 		     InputStreamReader(proc.getErrorStream()));
 		
-		Double result = null;
+		Double result = null, avgPrecision = null, rPrecision = null;
 		// read the output from the command
 		String line = null, lastLine = "";
 		while ((line = stdInput.readLine()) != null) {
 			if(!silent) System.out.println(line);
 			
 			if(lastLine.contains("R-Precision"))
-				System.out.println("====> R-Precision      : " + line.replace("Exact:", "").trim());
-			else if(lastLine.contains("Average precision")){
-				result = Double.parseDouble(line);
-				System.out.println("====> Average precision: " + line.trim());
-			}
+				avgPrecision = Double.parseDouble(line.replace("Exact:", "").trim());
+			else if(lastLine.contains("Average precision"))
+				rPrecision = Double.parseDouble(line);
+			
 			lastLine = line;
 		}
+		System.out.println("====> Average precision: " + avgPrecision + "\t R-Precision: " + rPrecision);
 
+		result = avgPrecision;
+		
 		// read any errors from the attempted command
 		while ((line = stdError.readLine()) != null) {
 		    System.err.println(line);
