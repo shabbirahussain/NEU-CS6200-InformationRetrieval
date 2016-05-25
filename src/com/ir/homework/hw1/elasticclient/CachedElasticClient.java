@@ -3,15 +3,24 @@ package com.ir.homework.hw1.elasticclient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.significant.SignificantTerms;
 
 
 public class CachedElasticClient extends BaseElasticClient{
 	// Serialization version Id
 	private static final long serialVersionUID = 1L;
+	private Integer numberOfTerm = 10;
 	
 	// -------------------- Storage cache -----------------------------
 	/**
@@ -23,10 +32,12 @@ public class CachedElasticClient extends BaseElasticClient{
 		
 		public Map<String, Float> docFrequncyMap;
 		public Long termDocCount;
+		public List<String> relatedTerms;
 		
-		public TermStats(Map<String, Float> docFrequncyMap, Long termDocCount){
+		public TermStats(Map<String, Float> docFrequncyMap, Long termDocCount, List<String> relatedTerms){
 			this.docFrequncyMap = docFrequncyMap;
 			this.termDocCount   = termDocCount;
+			this.relatedTerms   = relatedTerms;
 		}
 	}
 	
@@ -72,6 +83,12 @@ public class CachedElasticClient extends BaseElasticClient{
 	}
 	
 	// --------------------------- Getters ----------------------------
+	
+	@Override
+	public List<String> getSignificantTerms(String term, Integer numberOfTerm) throws IOException{
+		this.numberOfTerm = numberOfTerm;
+		return this.getTermStats(term).relatedTerms;
+	}
 	
 	@Override
 	public Float getAvgDocLen(){
@@ -132,8 +149,20 @@ public class CachedElasticClient extends BaseElasticClient{
 	}
 	
 	@Override
-	public Map<String,Float> getTermFrequency(String docNo){
-		return this.getDocStats(docNo).termFrequncyMap;
+	public Map<String,Float> getTermFrequency(String docNo, Float minScore, Float maxScore) throws IOException, InterruptedException, ExecutionException{
+		DocStats result = this.getDocStats(docNo);
+		if(result.termFrequncyMap != null){
+			this.cacheHits++;
+			return result.termFrequncyMap;
+		}
+		this.cacheMiss++;
+		result.termFrequncyMap = super.getTermFrequency(docNo, minScore, maxScore);
+		return result.termFrequncyMap;
+	}
+	
+	@Override
+	public Map<String,Float> getTermFrequency(String docNo) throws IOException, InterruptedException, ExecutionException{
+		return this.getTermFrequency(docNo, 0.0F, Float.MAX_VALUE);
 	}
 	
 	@Override
@@ -158,7 +187,9 @@ public class CachedElasticClient extends BaseElasticClient{
 		this.cacheMiss++;
 		
 		// Calculate new results
-		result = (new TermStats(super.getDocFrequency(term), super.getDocCount(term)));
+		result = (new TermStats(super.getDocFrequency(term), 
+								super.getDocCount(term),
+								null));//super.getSignificantTerms(term, numberOfTerm)));
 		
 		// Cache it for further use
 		termStatsMap.put(term, result);
@@ -182,7 +213,8 @@ public class CachedElasticClient extends BaseElasticClient{
 		this.cacheMiss++;
 		
 		// Calculate new results
-		result = (new DocStats(super.getTermFrequency(docNo), super.getTermCount(docNo)));
+		result = (new DocStats( null,//super.getTermFrequency(docNo),
+								super.getTermCount(docNo)));
 		
 		// Cache it for further use
 		docStatsMap.put(docNo, result);

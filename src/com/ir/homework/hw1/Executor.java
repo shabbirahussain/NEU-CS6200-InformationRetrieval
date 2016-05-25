@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 
 import com.ir.homework.hw1.controllers.*;
 import com.ir.homework.hw1.elasticclient.CachedElasticClient;
@@ -31,6 +32,7 @@ import com.ir.homework.hw1.util.QueryAugmentor;
 public final class Executor {
 	private static ElasticClient elasticClient;
 	private static ResultEvaluator resultEvaluator;
+	private static QueryAugmentor queryAugmentor;
 	
 	/**
 	 * @param args
@@ -61,18 +63,18 @@ public final class Executor {
 		
 		////////////////////////////////////////////////////////////////
 		resultEvaluator = new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
+		queryAugmentor  = new QueryAugmentor(elasticClient, STOP_WORDS_FILE_PATH);
+		
 		Double correctnessScore;
 		for(SearchController sc : controllers){
 			System.out.println("\n================ " + sc.getClass().getSimpleName() + " ==========================");
 			correctnessScore = execute(sc);
-			System.out.println("==> Correctness Score: " + correctnessScore);
-		}
-		
-		
-		if(ENABLE_PERSISTENT_CACHE){
-			System.out.println("\n\nSaving cache for future use...");
+			
 			saveObject(elasticClient, OBJECT_STORE_PATH);
 		}
+		
+		
+		saveObject(elasticClient, OBJECT_STORE_PATH);
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1.0e-9;
 		System.out.println("Time Required=" + elapsedTimeInSec);
@@ -96,7 +98,6 @@ public final class Executor {
 		OutputWriter owA = new OutputWriter( outFilePathA);
 		
 
-		QueryAugmentor queryAugmentor = new QueryAugmentor(elasticClient);
 		
 		List<OutputWriter.OutputRecord> records;
 		try {
@@ -104,8 +105,11 @@ public final class Executor {
 			owA.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
+				// Remove stop words from query
+				q = queryAugmentor.cleanStopWordsFromQuery(q);
+				
 				if(!ENABLE_SILENT_MODE) {
-					System.out.print("\nExecuting Q:"+ q.getKey());
+					System.out.print("\nExecuting  Q:"+ q.getKey());
 					for(String s: q.getValue()) System.out.print("," + s);
 					System.out.println("");
 				}
@@ -118,10 +122,13 @@ public final class Executor {
 					ow.writeOutput(r);
 				
 				if(ENABLE_PSEUDO_FEEDBACK){
-					System.out.print("Executing augmented query:" );
+					if(!ENABLE_SILENT_MODE) 
+						System.out.print("Executing PQ:"+ q.getKey());
 					
 					// Augment the query terms
-					q = queryAugmentor.escapeQuery(queryAugmentor.expandQuery(q));
+					q = queryAugmentor.cleanStopWordsFromQuery(
+							queryAugmentor.escapeQuery(
+								queryAugmentor.expandQuery(q, records)));
 					
 					for(String s: q.getValue()) System.out.print("," + s);
 					System.out.println("");
@@ -129,7 +136,10 @@ public final class Executor {
 					records = sc.executeQuery(q);
 					for(OutputWriter.OutputRecord r: records)
 						owA.writeOutput(r);
-					}
+					
+					break;
+				}
+				
 				//*/
 			}
 			ow.close();
@@ -139,11 +149,12 @@ public final class Executor {
 			if(!ENABLE_SILENT_MODE) 
 				System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
 			
-			result = resultEvaluator.runEvaluation(outFilePath, false);
+			result = resultEvaluator.runEvaluation(outFilePath, true);
 			if(ENABLE_PSEUDO_FEEDBACK){
-				result = resultEvaluator.runEvaluation(outFilePathA, false);
+				System.out.println("\nEnhanced Query:");
+				result = resultEvaluator.runEvaluation(outFilePathA, true);
 			}
-		} catch (ArrayIndexOutOfBoundsException | IOException e) {
+		} catch (ArrayIndexOutOfBoundsException | IOException | InterruptedException | ExecutionException e) {
 			e.printStackTrace();
 		}
 		return result;
@@ -155,6 +166,9 @@ public final class Executor {
 	 * @param storePath full path of directory where objects are stored
 	 */
 	private static void saveObject(Object object, String storePath){
+		if(!ENABLE_PERSISTENT_CACHE) return;
+		System.out.println("\n\nSaving cache for future use...");
+		
 		String fullFilePath = storePath + object.getClass().getName() + ".ser";
 		
 		ObjectOutputStream oos;

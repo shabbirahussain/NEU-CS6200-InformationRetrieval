@@ -32,8 +32,11 @@ public class UnigramLM_LaplaceSmoothing extends BaseSearchController{
 		try {
 			String queryNo   = query.getKey();
 			String []queryTerms = query.getValue();
+
+			Long  V			= super.elasticClient.getVocabSize();
 			
-			Map<String, Float> docScore = new HashMap<String, Float>();
+			Map<String, Float>   docScore = new HashMap<String, Float>();
+			Map<String, Integer> docCount = new HashMap<String, Integer>();
 			for(String term: queryTerms){
 				Map<String, Float> tf = elasticClient.getDocFrequency(term);
 				
@@ -42,7 +45,6 @@ public class UnigramLM_LaplaceSmoothing extends BaseSearchController{
 					
 					Float tf_w_d    = tfe.getValue();
 					Long  len_d     = super.elasticClient.getTermCount(docNo);
-					Long  V			= super.elasticClient.getVocabSize();
 
 					Float lm_laplace_d_q = docScore.getOrDefault(docNo, 0.0F);
 					/** Unigram LM with Laplace smoothing
@@ -53,12 +55,26 @@ public class UnigramLM_LaplaceSmoothing extends BaseSearchController{
 					 */
 					
 					Float p_laplace = (tf_w_d + 1)/ (len_d + V);
-					// Normalize score for multiple instances
-					p_laplace  = super.additionalTransformation(term, p_laplace);
 					lm_laplace_d_q += ((Double)Math.log(p_laplace)).floatValue();
 					
 					docScore.put(docNo, lm_laplace_d_q);
+					docCount.put(docNo, docCount.getOrDefault(docNo, 0));
 				}
+			}
+			
+			// penalize for missing term
+			Integer lenQuery = queryTerms.length;
+					
+			for(Entry<String, Float> doc: docScore.entrySet()){
+				String docNo = doc.getKey();
+				Long  len_d  = super.elasticClient.getTermCount(docNo);
+
+				Float lm_laplace_d_q = doc.getValue();
+				Double d_lm_laplace_d_q = (lenQuery - docCount.get(docNo)) 
+						* Math.log( 1.0 / (len_d * V));
+				
+				lm_laplace_d_q += d_lm_laplace_d_q.floatValue();
+				docScore.put(docNo, lm_laplace_d_q);
 			}
 			return super.prepareOutput(queryNo, docScore);
 		} catch (Exception e1) {e1.printStackTrace();}

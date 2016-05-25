@@ -6,6 +6,7 @@ package com.ir.homework.hw1.elasticclient;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.client.Client;
@@ -49,8 +50,24 @@ public interface ElasticClient {
 	 * Gets term frequency
 	 * @param docNo document to be searched for
 	 * @return Term and count mapping for the given document
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
+	 * @throws IOException 
 	 */
-	Map<String,Float> getTermFrequency(String docNo);
+	Map<String,Float> getTermFrequency(String docNo) throws IOException, InterruptedException, ExecutionException;
+	
+	/**
+	 * Gets term frequency
+	 * @param docNo document to be searched for
+	 * @param minScore is the minimum score to fetch
+	 * @param is the maximum score to fetch
+	 * @return Term and count mapping for the given document
+	 * @throws IOException 
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
+	 */
+	Map<String,Float> getTermFrequency(String docNo, Float minScore, Float maxScore) throws IOException, InterruptedException, ExecutionException;
+	
 	
 	/**
 	 * Gets document length in terms of count of terms
@@ -101,6 +118,7 @@ public interface ElasticClient {
 	 * @param term to search for
 	 * @param numberOfTerm number of significant term to fetch
 	 * @return
+	 * @throws IOException 
 	 */
-	public List<String> getSignificantTerms(List<String> term, Integer numberOfTerm);
+	public List<String> getSignificantTerms(String term, Integer numberOfTerm) throws IOException;
 }

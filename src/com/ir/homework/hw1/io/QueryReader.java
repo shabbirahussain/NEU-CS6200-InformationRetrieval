@@ -7,9 +7,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 import opennlp.tools.stemmer.PorterStemmer;
 
@@ -66,7 +69,6 @@ public final class QueryReader {
 	private static String[] createTokens(String query){
 		return query.split("(?i)[^a-z|0-9]");
 	}
-	
 	
 	/**
 	 * Main function for testing only

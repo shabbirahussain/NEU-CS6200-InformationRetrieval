@@ -48,11 +48,19 @@ public final class ResultEvaluator {
 
 		BufferedReader stdError = new BufferedReader(new 
 		     InputStreamReader(proc.getErrorStream()));
-
+		
+		Double result = null;
 		// read the output from the command
-		String line = null, lastLine = null;
+		String line = null, lastLine = "";
 		while ((line = stdInput.readLine()) != null) {
 			if(!silent) System.out.println(line);
+			
+			if(lastLine.contains("R-Precision"))
+				System.out.println("====> R-Precision      : " + line.replace("Exact:", "").trim());
+			else if(lastLine.contains("Average precision")){
+				result = Double.parseDouble(line);
+				System.out.println("====> Average precision: " + line.trim());
+			}
 			lastLine = line;
 		}
 
@@ -61,7 +69,6 @@ public final class ResultEvaluator {
 		    System.err.println(line);
 		}
 
-		Double result = Double.parseDouble(lastLine.replaceAll("Exact:", ""));
 		return result;
 	}
 	
@@ -73,7 +80,7 @@ public final class ResultEvaluator {
 		String outFile = (OUTPUT_FOLDR_PATH + "/output1000_TF_IDFController.txt");
 		
 		ResultEvaluator re = new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
-		re.runEvaluation(outFile, false);
+		re.runEvaluation(outFile, true);
 	}
 
 }

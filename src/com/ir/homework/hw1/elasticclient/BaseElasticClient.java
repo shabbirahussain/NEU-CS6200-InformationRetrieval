@@ -1,7 +1,6 @@
 package com.ir.homework.hw1.elasticclient;
 
 import static com.ir.homework.hw1.Constants.CLUSTER_NAME;
-import static com.ir.homework.hw1.Constants.ENABLE_PERSISTENT_CACHE;
 import static com.ir.homework.hw1.Constants.HOST;
 import static com.ir.homework.hw1.Constants.INDEX_NAME;
 import static com.ir.homework.hw1.Constants.INDEX_TYPE;
@@ -15,12 +14,22 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
+import org.apache.lucene.index.TermsEnum;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.termvectors.TermVectorsRequest;
+import org.elasticsearch.action.termvectors.TermVectorsRequest.FilterSettings;
+import org.elasticsearch.action.termvectors.TermVectorsRequestBuilder;
+import org.elasticsearch.action.termvectors.TermVectorsResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.rest.RestStatus;
@@ -29,6 +38,10 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.significant.SignificantTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+
+import opennlp.tools.stemmer.PorterStemmer;
+import opennlp.tools.stemmer.Stemmer;
 
 public class BaseElasticClient implements Serializable, ElasticClient{
 	// Serialization version Id
@@ -43,7 +56,7 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 
 	private static Client _client = null;
 	private static BulkProcessor _bulkProcessor = null;
-	
+	private static Stemmer stemer;
 	
 	/**
 	 * Default constructor
@@ -63,6 +76,7 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		this.enableBulkProcessing = enableBulkProcessing;
 		
 		this.enableBulkProcessing = true;
+		this.stemer = new PorterStemmer();
 	}
 	
 	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor){
@@ -138,33 +152,46 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 	}
 	
 	// ------------------------- Document Statistics ------------------
-	public Map<String,Float> getTermFrequency(String docNo){
-		// TODO
-		if(true) return null;
+	public Map<String,Float> getTermFrequency(String docNo, Float minScore, Float maxScore) throws IOException, InterruptedException, ExecutionException{
+		// TODO optimize this function
+		
 		Map<String,Float> result = null;
-		SearchResponse response = _client.prepareSearch()
-			.setIndices(this.indices)
-			.setTypes(this.types)
-			.setQuery(QueryBuilders.idsQuery(this.types)
-					.addIds(docNo))
-			.addScriptField("TERMS", (new Script("doc['" + textFieldName + "']")))
-			.setSize(10000)
-			.setNoFields()
+		FilterSettings filters = new FilterSettings();
+		filters.minDocFreq = minScore.intValue();
+		filters.maxDocFreq = maxScore.intValue();
+		
+		TermVectorsResponse response = _client.termVectors(
+				(new TermVectorsRequest())
+				.id(docNo)
+				.index(this.indices)
+				.type(this.types)
+				.selectedFields(textFieldName)
+				.filterSettings(filters))
 			.get();
 		
-		if(response.status() == RestStatus.OK){
-			result = new HashMap<String,Float>();
-			SearchHit hit[]=response.getHits().hits();
-			for(SearchHit h:hit){
-				SearchHitField shf  = h.getFields().get("TERMS");
-				Float score = 0.0F;
-				for(Object sh : shf){
-					String key = sh.toString();
-					result.put(key, score);
-				}
-			}
+		result = new HashMap<String,Float>();
+		org.apache.lucene.index.TermsEnum terms = response
+				.getFields()
+				.terms(textFieldName)
+				.iterator();
+		/*
+		XContentBuilder jsonBuilder = JsonXContent.contentBuilder();
+		response.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
+		String rawJson = jsonBuilder.string();
+		System.out.println(rawJson);
+		*/
+		while(terms.next() != null){
+			String term = terms.term().utf8ToString();
+			Float value = ((Long)terms.totalTermFreq()).floatValue();
+			//System.out.println(sb + "\t=" + value);
+			result.put(term, value);
 		}
+	
 		return result;
+	}
+	
+	public Map<String,Float> getTermFrequency(String docNo) throws IOException, InterruptedException, ExecutionException{
+		return this.getTermFrequency(docNo, 0.0F, Float.MAX_VALUE);
 	}
 	
 	public Long getTermCount(String docNo){
@@ -194,25 +221,48 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 	// ---------------------- Term statistics -------------------------
 	public Map<String,Float> getDocFrequency(String term) throws IOException{
 		Map<String,Float> result = null;
-		SearchResponse response = _client.prepareSearch()
+		
+		TimeValue scrollTimeValue = new TimeValue(60000);
+		Integer  windowMaxResults = 10000; 
+		if(maxResults < 10000){
+			windowMaxResults = maxResults;
+		}
+		
+		SearchRequestBuilder builder = _client.prepareSearch()
 			.setIndices(this.indices)
 			.setTypes(this.types)
 			.setQuery(QueryBuilders.functionScoreQuery()
 				.add(ScoreFunctionBuilders
 						.scriptFunction("_index['" + textFieldName + "']['" + term + "'].tf()"))
 				.boostMode("replace"))
-			.setSize(maxResults)
-			.setNoFields()
-			.get();
+			.setSize(windowMaxResults)
+	        .setScroll(scrollTimeValue)
+			.setNoFields();
+
+		SearchResponse response = builder.get();
 		
-		if(response.status() == RestStatus.OK){
-			result = new HashMap<String,Float>();
+		// Scan for results
+		Integer resultsSoFar = 0;
+		result = new HashMap<String,Float>();
+		while(true){
+			if((response.status() != RestStatus.OK) 
+					|| (response.getHits().getHits().length == 0)
+					|| (resultsSoFar >= maxResults))
+				break;
+			resultsSoFar += response.getHits().getHits().length;
+			
 			SearchHit hit[]=response.getHits().hits();
 			for(SearchHit h:hit){
 				String key  = h.getId();
 				Float score = h.getScore();
 				if(score>0) result.put(key, score);
 			}
+			
+			// fetch next window
+			response = _client.prepareSearchScroll(response.getScrollId())
+					.setScroll(scrollTimeValue)
+					.get();
+			
 		}
 		return result;
 	}
@@ -248,8 +298,9 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		return result;
 	}
 	
-	public List<String> getSignificantTerms(List<String> term, Integer numberOfTerm){
+	public List<String> getSignificantTerms(String term, Integer numberOfTerm) throws IOException{
 		List<String> result = new LinkedList<String>(); 
+		String stemmedTerm = stemer.stem(term).toString();
 		
 		// Get query term document count
 		SearchResponse response = _client.prepareSearch()
@@ -258,7 +309,7 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 				.setQuery(QueryBuilders.termsQuery(textFieldName, term))
 				.addAggregation(AggregationBuilders.significantTerms("SIG_TERM")
 						.field(textFieldName))
-				.setSize(numberOfTerm)
+				.setSize(numberOfTerm * 10)
 				.setNoFields()
 				.get();
 		
@@ -266,13 +317,19 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 			SignificantTerms sigTerms = response.getAggregations().get("SIG_TERM");
 			for(SignificantTerms.Bucket entry : sigTerms.getBuckets()){
 				String key   = entry.getKey().toString();
-				result.add(key);      // Term
+				key = stemer.stem(key).toString();
+				key = key.replaceAll("[^a-z]", " ").trim();
+				
+				if(!key.equals(stemmedTerm) && !result.contains(key)){
+					result.add(key);      // Term
+				}
+				if(result.size() >= numberOfTerm) break;
 			}
 		}
 		return result;
 	}
 	
-	public static void main(String arg[]){
+	public static void main(String arg[]) throws IOException, InterruptedException, ExecutionException{
 		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
 				.setClusterName(CLUSTER_NAME)
 				.setHost(HOST)
@@ -283,6 +340,9 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 				.setCachedFetch(false)
 				.setField(TEXT_FIELD_NAME);
 		
-		eBuilder.build().getTermFrequency("AP890512-0154");
+		BaseElasticClient ec = (BaseElasticClient) eBuilder.build();
+		ec.getTermFrequency("AP890220-0147", 9F,500F);
+		System.out.println(ec.stemer.stem("atomic"));
+		System.out.println(ec.getSignificantTerms("atomic", 10));
 	}
 }

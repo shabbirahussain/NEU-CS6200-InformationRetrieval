@@ -1,6 +1,9 @@
 package com.ir.homework.hw1.util;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -11,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import com.ir.homework.hw1.elasticclient.ElasticClient;
 import com.ir.homework.hw1.io.OutputWriter;
@@ -22,17 +26,25 @@ public class QueryAugmentor {
 	private PorterStemmer stemer;
 	private Integer toIndex;
 	private Integer numOfSignTerms;
+	private Float expansionThreshold;
+	private Set<String> stopWordsSet;
 	
 	/**
 	 * Default constructor
 	 * @param searchClient elastic search client to use
+	 * @param stopWordsFilePath is the path of stop words file
 	 */
-	public QueryAugmentor(ElasticClient searchClient){
+	public QueryAugmentor(ElasticClient searchClient, String stopWordsFilePath){
 		this.searchClient = searchClient;
 		this.stemer = new PorterStemmer();
 		
+		try {
+			this.stopWordsSet = geStopWords(stopWordsFilePath);
+		} catch (IOException e) {e.printStackTrace();}
+		
 		this.toIndex = 3;
 		this.numOfSignTerms = 5;
+		this.expansionThreshold = 0.5F;
 	}
 	
 	/**
@@ -41,23 +53,24 @@ public class QueryAugmentor {
 	 * @param outputRecord top records in output
 	 * @return Tokenized query as an Entry 
 	 * @throws IOException 
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
 	 */
-	private Entry<String, String[]> expandQueryOld(Entry<String, String[]> query, List<OutputWriter.OutputRecord> outputRecord) throws IOException{
+	public Entry<String, String[]> expandQuery(Entry<String, String[]> query, List<OutputWriter.OutputRecord> outputRecord) throws IOException, InterruptedException, ExecutionException{
 		Map<String, Long> termMap = new HashMap<String, Long>(); 
 		List<String> terms = Arrays.asList(query.getValue());
 		
 		for(int i=0; i<this.toIndex && i<outputRecord.size(); i++){
 			Set<String> sudoTerms = this.searchClient
-					.getTermFrequency(outputRecord.get(i).docNo)
+					.getTermFrequency(outputRecord.get(i).docNo, 5F, 10F)
 					.keySet();
 			System.out.println("Processing doc=" + outputRecord.get(i).docNo + "\tsize=" + sudoTerms.size() + "\tmapsize=" + termMap.size());
 			for(String sudoTerm: sudoTerms){
 				sudoTerm = sudoTerm.replaceAll("[^a-z]", "");
 				if(terms.contains(sudoTerm)) continue;
-				System.out.println(sudoTerm);
-				Long score = this.searchClient.getDocCount(sudoTerm);
+				Long sudoScore = this.searchClient.getDocCount(sudoTerm);
 				
-				if(score>1) termMap.put(sudoTerm, score);
+				termMap.put(sudoTerm, sudoScore);
 			}
 		}
 		String[] qTerms = sortByValue(termMap).subList(0, this.toIndex).toArray(new String[0]);
@@ -73,14 +86,46 @@ public class QueryAugmentor {
 	 * @return Tokenized query as an Entry 
 	 * @throws IOException 
 	 */
-	public Entry<String, String[]> expandQuery(Entry<String, String[]> query){
+	public Entry<String, String[]> expandQuery(Entry<String, String[]> query) throws IOException{
 		List<String> terms  = Arrays.asList(query.getValue());
-		List<String> sTerms = searchClient.getSignificantTerms(terms, this.numOfSignTerms);
-		sTerms.addAll(terms);
+		List<Float>  score  = new LinkedList<Float>();
+		List<String> sTerms = new LinkedList<String>();
 		
+		Float sampleSpace = 0F;
+		for(String term : terms){
+			Float s = weightTermUniqeness(term);
+			score.add(s);
+			sampleSpace += s;
+		}
+		System.out.println("");
+		for(int i=0;i<terms.size();i++){
+			Float s = score.get(i) / sampleSpace;
+			System.out.print(s+"\t"+terms.get(i));
+			if(s<this.expansionThreshold){
+				System.out.print(" +");
+				sTerms.addAll(searchClient.getSignificantTerms(terms.get(i), this.numOfSignTerms));
+			}
+			System.out.println("");
+		}
+		sTerms.addAll(terms);
 		query.setValue(sTerms.toArray(new String[0]));
 		
 		return query;
+	}
+	
+	/**
+	 * Assigns appropriate score to each term bases on its rarity
+	 * @param term string term to be evaluated against corpus
+	 * @return Term significance
+	 * @throws IOException 
+	 */
+	private Float weightTermUniqeness(String term) throws IOException{
+		Float result = null;
+		Long termDocCnt = this.searchClient.getDocCount(term)+1;
+		
+		result = ((Double)(1.0 / termDocCnt)).floatValue();
+		
+		return result;
 	}
 	
 	/**
@@ -132,5 +177,42 @@ public class QueryAugmentor {
 		query.setValue(uTokens.toArray(new String[0]));
 		
 		return query;
+	}
+	
+	/**
+	 * Removes stop words from query
+	 * @param query given as a pair of key and tokens
+	 * @return Tokenized query as an Entry 
+	 * @throws IOException 
+	 */
+	public Entry<String, String[]> cleanStopWordsFromQuery(Entry<String, String[]> query) throws IOException{
+		List<String> tokens = Arrays.asList(query.getValue());
+		Set<String> uTokens = new HashSet<String>();
+		
+		for(String t: tokens){
+			if(!this.stopWordsSet.contains(t.trim())) uTokens.add(t);
+		}
+		query.setValue(uTokens.toArray(new String[0]));
+		
+		return query;
+	} 
+	
+	/**
+	 * Reads and returns list of stop words
+	 * @param stopFilePath is the full path of stopwords file
+	 * @return Set of stop words
+	 * @throws IOException 
+	 */
+	private Set<String> geStopWords(String stopFilePath) throws IOException{
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(stopFilePath)));
+		Set<String> result = new HashSet<String>();
+		
+		String line;
+		while((line=br.readLine())!= null){
+			line = line.trim();
+			result.add(line);
+		}
+		
+		return result;
 	}
 }
