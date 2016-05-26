@@ -60,7 +60,7 @@ public class OkapiBM25Controller extends BaseSearchController{
 					 */
 					Double d_bm25_d_q = Math.log((D + 0.5)/(df_w + 0.5)) * ((tf_w_d + K1 * tf_w_d)/(tf_w_d + K1 * ((1 - B) + (B * len_d/avg_len_d))));
 					// Normalize score for multiple instances
-					d_bm25_d_q  = super.additionalTransformation(term, d_bm25_d_q.floatValue()).doubleValue();
+					// d_bm25_d_q  = super.additionalTransformation(term, d_bm25_d_q.floatValue()).doubleValue();
 					bm25_d_q += d_bm25_d_q.floatValue();
 					
 					docScore.put(docNo, bm25_d_q);

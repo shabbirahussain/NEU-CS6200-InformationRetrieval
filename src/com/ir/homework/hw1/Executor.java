@@ -63,8 +63,11 @@ public final class Executor {
 		// UnigramLM Jelinek-Mercer smoothing
 		controllers.add(new UnigramLM_JelinekMercer(elasticClient));
 		
+		// UnigramLM Jelinek-Mercer smoothing (Background shortcut)
+		//controllers.add(new UnigramLM_JelinekMercer1(elasticClient));
+				
 		// MetaSearchController
-		//controllers.add(new MetaSearchController(elasticClient, controllers));
+		controllers.add(new MetaSearchController(elasticClient, controllers));
 		
 		////////////////////////////////////////////////////////////////
 		
@@ -72,15 +75,19 @@ public final class Executor {
 		resultEvaluator = new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
 		queryAugmentor  = new QueryAugmentor(elasticClient, stopWordReader.geStopWords());
 		
+		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+		
 		Double correctnessScore;
 		for(SearchController sc : controllers){
 			System.out.println("\n================ " + sc.getClass().getSimpleName() + " ==========================");
 			correctnessScore = execute(sc);
 		}
+		
+		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+		
 		saveObject(elasticClient, OBJECT_STORE_PATH);
 		
-		double elapsedTimeInSec = (System.nanoTime() - start) * 1.0e-9;
-		System.out.println("Time Required=" + elapsedTimeInSec);
+		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
 	
 	/**

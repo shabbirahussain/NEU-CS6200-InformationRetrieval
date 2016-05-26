@@ -356,5 +356,4 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		System.out.println(ec.getSignificantTerms("atom", 10));
 		System.out.println(ec.getBGProbability("atomic"));
 	}
-
 }

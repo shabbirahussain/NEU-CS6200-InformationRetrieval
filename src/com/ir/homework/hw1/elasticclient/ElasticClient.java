@@ -123,7 +123,7 @@ public interface ElasticClient {
 	public List<String> getSignificantTerms(String term, Integer numberOfTerm) throws IOException;
 
 	/**
-	 * Returns summation of background probability of a term
+	 * Gets summation of background probability of a term
 	 * @param term to search for
 	 * @return Total background probability
 	 */

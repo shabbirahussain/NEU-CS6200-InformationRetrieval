@@ -16,7 +16,7 @@ import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
  * @author shabbirhussain
  *
  */
-public class UnigramLM_JelinekMercer extends BaseSearchController{
+public class UnigramLM_JelinekMercer1 extends BaseSearchController{
 	// Probability smoothing factor between 0 - 1
 	private static final Float λ = 0.5F;
 	
@@ -24,7 +24,7 @@ public class UnigramLM_JelinekMercer extends BaseSearchController{
 	 * constructor for re using cache across controllers
 	 * @param elasticClient search cache object
 	 */
-	public UnigramLM_JelinekMercer(ElasticClient elasticClient){
+	public UnigramLM_JelinekMercer1(ElasticClient elasticClient){
 		super(elasticClient);
 	}
 	
@@ -39,9 +39,6 @@ public class UnigramLM_JelinekMercer extends BaseSearchController{
 			
 			Map<String, Float>   docScore = new HashMap<String, Float>();
 			Map<String, Integer> docCount = new HashMap<String, Integer>();
-			
-			Float bgDocLenSum = super.elasticClient.getAvgDocLen() * super.elasticClient.getDocCount();
-			
 			for(String term: queryTerms){
 				
 				/** Unigram LM with Jelinek-Mercer smoothing
@@ -52,9 +49,8 @@ public class UnigramLM_JelinekMercer extends BaseSearchController{
 				 *
 				 *  Think carefully about how to efficiently obtain the background model here. If you wish, you can instead estimate the corpus probability using $\frac{cf_w}{V}$.
 				 */
-				
-				Long  bgDocCount  = super.elasticClient.getDocCount(term);
-				Map<String, Float> tf = super.elasticClient.getDocFrequency(term);
+				Double bgProbability  = elasticClient.getBGProbability(term);
+				Map<String, Float> tf = elasticClient.getDocFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){
 					String docNo = tfe.getKey();
@@ -63,10 +59,9 @@ public class UnigramLM_JelinekMercer extends BaseSearchController{
 					Long  len_d     = super.elasticClient.getTermCount(docNo);
 					Float lm_jm_d_q = docScore.getOrDefault(docNo, 0.0F);
 					
-					float bgProbability = (bgDocCount - tf_w_d) / (bgDocLenSum - len_d);
 					Float fgProbability = (tf_w_d / len_d);
 					
-					Float p_jm_w_d = (λ * fgProbability) + ((1 - λ) * bgProbability);
+					Double p_jm_w_d = (λ * fgProbability) + (1 - λ) * (bgProbability - fgProbability);
 					lm_jm_d_q += ((Double)Math.log(p_jm_w_d)).floatValue();
 					
 					docScore.put(docNo, lm_jm_d_q);

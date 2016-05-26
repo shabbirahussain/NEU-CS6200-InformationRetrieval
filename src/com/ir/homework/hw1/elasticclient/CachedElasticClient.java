@@ -35,6 +35,13 @@ public class CachedElasticClient extends BaseElasticClient{
 		public List<String> relatedTerms;
 		public Double bgProbability;
 		
+		/**
+		 * Default constructor for term statistics
+		 * @param docFrequncyMap is the count of terms in each document
+		 * @param termDocCount is the count of documents the term is found
+		 * @param relatedTerms is the list if related terms
+		 * @param bgProbability is the probability of background 
+		 */
 		public TermStats(Map<String, Float> docFrequncyMap, Long termDocCount, List<String> relatedTerms, Double bgProbability){
 			this.docFrequncyMap = docFrequncyMap;
 			this.termDocCount   = termDocCount;
@@ -53,6 +60,11 @@ public class CachedElasticClient extends BaseElasticClient{
 		public Map<String, Float> termFrequncyMap;
 		public Long docTermCount;
 		
+		/**
+		 * Default constructor of document statistics
+		 * @param termFrequncyMap is the count of terms in a single document
+		 * @param docTermCount is the number of documents that term is found in
+		 */
 		public DocStats(Map<String, Float> termFrequncyMap, Long docTermCount){
 			this.termFrequncyMap = termFrequncyMap;
 			this.docTermCount    = docTermCount;
@@ -229,7 +241,7 @@ public class CachedElasticClient extends BaseElasticClient{
 	public Double getBGProbability(String term) {
 		return termStatsMap.get(term).bgProbability;
 	}
-
+	
 	//  ==================== Cache statistics ====================
 	public Integer cacheHits = 0;
 	public Integer cacheMiss = 0;
