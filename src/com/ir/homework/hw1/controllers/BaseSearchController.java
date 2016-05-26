@@ -75,7 +75,7 @@ public abstract class BaseSearchController implements SearchController{
 	 * @return smoothened value over sigmoid
 	 */
 	private Float sigmoidSmoothing(Float value){
-		value = (float) (10/(1+Math.pow(value, -1)));
+		value = (float) (1/(1+Math.pow(value, -1)));
 		return value;
 	}
 	
