@@ -112,8 +112,7 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		response = _client.prepareSearch()
 				.setIndices(this.indices)
 				.setTypes(this.types)
-				.addAggregation(
-						AggregationBuilders
+				.addAggregation(AggregationBuilders
 						.avg("AVG_LEN")
 						.script(new Script("doc['" + textFieldName + "'].values.size()")))
 				.setNoFields()
@@ -300,7 +299,8 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 				.setIndices(this.indices)
 				.setTypes(this.types)
 				.setQuery(QueryBuilders.termsQuery(textFieldName, term))
-				.addAggregation(AggregationBuilders.significantTerms("SIG_TERM")
+				.addAggregation(AggregationBuilders
+						.significantTerms("SIG_TERM")
 						.field(textFieldName))
 				.setSize(numberOfTerm * 100)
 				.setNoFields()
@@ -317,6 +317,29 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 			if(result.size() >= numberOfTerm) break;
 		}
 	
+		return result;
+	}
+	
+	@Override
+	public Long getTotalTermCount(String term) {
+		Long result = null;
+		
+		// Get query term document count
+		SearchResponse response = _client.prepareSearch()
+				.setIndices(this.indices)
+				.setTypes(this.types)
+				.setQuery(QueryBuilders.termsQuery(textFieldName, term))
+				.addAggregation(AggregationBuilders
+						.sum("TOT_TF")
+						.script(new Script("_index['" + textFieldName + "']['" + term + "'].tf()")))
+				.setSize(0)
+				.setNoFields()
+				.get();
+
+		result = ((Double) response.getAggregations()
+					.get("TOT_TF")
+					.getProperty("value"))
+				.longValue();
 		return result;
 	}
 	

@@ -128,4 +128,11 @@ public interface ElasticClient {
 	 * @return Total background probability
 	 */
 	Double getBGProbability(String term);
+
+	/**
+	 * Gets total number of times a term occurs in the corpus
+	 * @param term to search for
+	 * @return Number of times term is observed from index
+	 */
+	Long getTotalTermCount(String term);
 }

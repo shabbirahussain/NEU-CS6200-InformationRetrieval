@@ -53,7 +53,7 @@ public class UnigramLM_JelinekMercer extends BaseSearchController{
 				 *  Think carefully about how to efficiently obtain the background model here. If you wish, you can instead estimate the corpus probability using $\frac{cf_w}{V}$.
 				 */
 				
-				Long  bgDocCount  = super.elasticClient.getDocCount(term);
+				Long  bgDocCount      = super.elasticClient.getTotalTermCount(term);
 				Map<String, Float> tf = super.elasticClient.getDocFrequency(term);
 				
 				for(Entry<String, Float> tfe: tf.entrySet()){

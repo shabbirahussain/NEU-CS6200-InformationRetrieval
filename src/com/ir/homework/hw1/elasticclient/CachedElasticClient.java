@@ -33,20 +33,20 @@ public class CachedElasticClient extends BaseElasticClient{
 		public Map<String, Float> docFrequncyMap;
 		public Long termDocCount;
 		public List<String> relatedTerms;
-		public Double bgProbability;
+		public Long totTermCnt;
 		
 		/**
 		 * Default constructor for term statistics
 		 * @param docFrequncyMap is the count of terms in each document
 		 * @param termDocCount is the count of documents the term is found
 		 * @param relatedTerms is the list if related terms
-		 * @param bgProbability is the probability of background 
+		 * @param totTermCnt is the total frequency of the term in corpus
 		 */
-		public TermStats(Map<String, Float> docFrequncyMap, Long termDocCount, List<String> relatedTerms, Double bgProbability){
+		public TermStats(Map<String, Float> docFrequncyMap, Long termDocCount, List<String> relatedTerms, Long totTermCnt){
 			this.docFrequncyMap = docFrequncyMap;
 			this.termDocCount   = termDocCount;
 			this.relatedTerms   = relatedTerms;
-			this.bgProbability  = bgProbability;
+			this.totTermCnt     = totTermCnt;
 		}
 	}
 	
@@ -204,7 +204,7 @@ public class CachedElasticClient extends BaseElasticClient{
 		result = (new TermStats(super.getDocFrequency(term), 
 								super.getDocCount(term),
 								super.getSignificantTerms(term, numberOfTerm),
-								super.getBGProbability(term)));
+								super.getTotalTermCount(term)));
 		
 		// Cache it for further use
 		termStatsMap.put(term, result);
@@ -238,8 +238,8 @@ public class CachedElasticClient extends BaseElasticClient{
 	}
 	
 	@Override
-	public Double getBGProbability(String term) {
-		return termStatsMap.get(term).bgProbability;
+	public Long getTotalTermCount(String term){
+		return termStatsMap.get(term).totTermCnt;
 	}
 	
 	//  ==================== Cache statistics ====================
