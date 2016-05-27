@@ -63,9 +63,6 @@ public final class Executor {
 		// UnigramLM Jelinek-Mercer smoothing
 		controllers.add(new UnigramLM_JelinekMercer(elasticClient));
 		
-		// UnigramLM Jelinek-Mercer smoothing (Background shortcut)
-		//controllers.add(new UnigramLM_JelinekMercer1(elasticClient));
-				
 		// MetaSearchController
 		controllers.add(new MetaSearchController(elasticClient, controllers));
 		

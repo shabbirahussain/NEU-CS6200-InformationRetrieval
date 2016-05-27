@@ -64,7 +64,7 @@ public class TF_IDFController extends BaseSearchController{
 					Float okapi_tf = (float) (tf_w_d / (tf_w_d + 0.5 + 1.5*(len_d/avg_len_d)));
 					// Normalize score for multiple instances
 					okapi_tf  = super.additionalTransformation(term, okapi_tf);
-					tfidf_d_q += (float) (okapi_tf * Math.log(D / df_w));
+					tfidf_d_q += (float) (okapi_tf * Math.log(D / df_w + 1));
 
 					docScore.put(docNo, tfidf_d_q);
 				}

@@ -35,12 +35,12 @@ public final class Constants {
 	public static final Boolean ENABLE_PERSISTENT_CACHE = true;
 	public static final Boolean ENABLE_SILENT_MODE = false;
 	public static final Boolean ENABLE_STEMMING = true;
-	public static final Boolean ENABLE_PSEUDO_FEEDBACK = true;
-	public static final Boolean ENABLE_ADD_NORMALIZATION = true;
+	public static final Boolean ENABLE_PSEUDO_FEEDBACK = false;
+	public static final Boolean ENABLE_ADD_NORMALIZATION = false;
 	
 	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
 	
-	public static final Integer MAX_RESULTS = 10000; 
+	public static final Integer MAX_RESULTS = 40000; 
 	
 	public static final String TEXT_FIELD_NAME = "TEXT";
 	

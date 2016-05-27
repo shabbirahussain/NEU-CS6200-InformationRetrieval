@@ -23,7 +23,6 @@ public class QueryAugmentor {
 	private PorterStemmer stemer;
 	private Integer toIndex;
 	private Integer numOfSignTerms;
-	private Float expansionThreshold;
 	private Set<String> stopWordsSet;
 	
 	/**
@@ -37,8 +36,7 @@ public class QueryAugmentor {
 		this.stopWordsSet = stopWordsSet;
 		
 		this.toIndex = 3;
-		this.numOfSignTerms = 2;
-		this.expansionThreshold = 1F;
+		this.numOfSignTerms = 3;
 	}
 	
 	/**
@@ -86,35 +84,39 @@ public class QueryAugmentor {
 		query = this.stemQuery(query);
 		
 		List<String> terms  = Arrays.asList(query.getValue());
-		List<Float>  score  = new LinkedList<Float>();
-		List<String> sTerms = new LinkedList<String>();
+		Map<String, Double> sTermsMap = new HashMap<String, Double>();
 		
-		Float sampleSpace = 0F;
-		for(String term : terms){
-			Float s = weightTermUniqeness(term);
-			score.add(s);
-			sampleSpace += s;
-		}
-
 		for(int i=0;i<terms.size();i++){
-			Float s = score.get(i) / sampleSpace;
 			String term = terms.get(i);
-
-			if(s<this.expansionThreshold){
-				List<String> sigTermsRaw = searchClient.getSignificantTerms(term, 10);
-				if(sigTermsRaw !=null ) sTerms.addAll(sigTermsRaw);
+			Double termBGProb = searchClient.getBGProbability(term);
+			
+			List<String> sigTermsRaw = searchClient.getSignificantTerms(term, 10);
+			if(sigTermsRaw !=null ) {
+				for(String sTerm : sigTermsRaw){
+					Double sTermBGProb = searchClient.getBGProbability(sTerm);
+					
+					// new terms should increase the domain not limit them ?
+					if(termBGProb<sTermBGProb){
+						Double termScore = sTermsMap.getOrDefault(sTerm, 1.0);
+						termScore += sTermBGProb;
+						termScore /=2.0; // more terms better the score
+						sTermsMap.put(sTerm, termScore);
+					}	
+				}
 			}
 		}
 		
 		// Rank terms with rarity
-		Map<String, Float> termMap = new HashMap<String, Float>();
+		/*Map<String, Float> termMap = new HashMap<String, Float>();
 		for(String term: sTerms){
 			Float s = weightTermUniqeness(term);
 			termMap.put(term, s);
-		}
+		}//*/
 		
-		List<Entry<String, Float>> sortedMap = this.sortByValue(termMap);
-		sTerms = new LinkedList<String>();
+		List<Entry<String, Float>> sortedMap = this.sortByValue(sTermsMap);
+		//System.out.println(sortedMap);
+		
+		List<String> sTerms = new LinkedList<String>();
 		Integer i=0;
 		for(Entry<String, Float> e : sortedMap){
 			String term = e.getKey();
@@ -187,7 +189,7 @@ public class QueryAugmentor {
 		for(String t: tokens){
 			uTokens.add(stemer.stem(t));
 		}
-		uTokens.addAll(tokens);
+		//uTokens.addAll(tokens);
 		query.setValue(uTokens.toArray(new String[0]));
 		
 		return query;
@@ -210,5 +212,4 @@ public class QueryAugmentor {
 		
 		return query;
 	} 
-	
 }

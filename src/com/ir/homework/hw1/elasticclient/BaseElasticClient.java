@@ -355,11 +355,11 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 				.addAggregation(AggregationBuilders
 						.sum("BG_PROB")
 						.script((new Script("_index['" + textFieldName + "']['" + term + "'].tf()"
-								+ "/ (1 + doc['" + textFieldName + "'].values.size())"))))
+								+ ""))))
 				.setNoFields()
 				.get();
 		result = (Double) response.getAggregations().get("BG_PROB").getProperty("value");
-		return result;
+		return Math.log(result);
 	}
 	
 	public static void main(String arg[]) throws IOException, InterruptedException, ExecutionException{
@@ -375,8 +375,18 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		
 		BaseElasticClient ec = (BaseElasticClient) eBuilder.build();
 		//ec.getTermFrequency("AP890220-0147", 9F,500F);
-		System.out.println(ec.stemer.stem("atomic"));
-		System.out.println(ec.getSignificantTerms("atom", 10));
-		System.out.println(ec.getBGProbability("atomic"));
+		testSignificant(ec, "atomic");
+		testSignificant(ec, "downstream");
+		testSignificant(ec, "opec");
+		System.out.println(ec.getBGProbability("downstream"));
+		System.out.println(ec.getBGProbability("marlar"));
+		System.out.println(ec.getBGProbability("coahoma"));
+		System.out.println(ec.getBGProbability("opec"));
+		System.out.println(ec.getBGProbability("petroleum"));
+	}
+	
+	private static void testSignificant(BaseElasticClient ec, String term) throws IOException{
+		term = ec.stemer.stem(term).toString();
+		System.out.println("" + term + " => " + ec.getSignificantTerms(term, 10));
 	}
 }
