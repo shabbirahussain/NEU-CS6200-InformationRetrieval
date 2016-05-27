@@ -26,7 +26,7 @@ public final class Constants {
 	
 	public static final String  HOST = "localhost";//"192.168.1.105"; //"localhost";
 	public static final Integer PORT = 9300;
-	public static final String CLUSTER_NAME = "dead-pool";
+	public static final String  CLUSTER_NAME = "dead-pool";
 	
 	public static final String INDEX_NAME = "ap_dataset";
 	public static final String INDEX_TYPE = "document";
@@ -36,7 +36,8 @@ public final class Constants {
 	public static final Boolean ENABLE_SILENT_MODE = false;
 	public static final Boolean ENABLE_STEMMING = true;
 	public static final Boolean ENABLE_PSEUDO_FEEDBACK = false;
-	public static final Boolean ENABLE_ADD_NORMALIZATION = false;
+	public static final Boolean ENABLE_ADD_NORMALIZATION = true;
+	public static final Boolean ENABLE_FULL_TREC_OUTPUT = true;
 	
 	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
 	

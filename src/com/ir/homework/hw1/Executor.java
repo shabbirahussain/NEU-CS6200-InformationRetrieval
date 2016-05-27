@@ -180,10 +180,10 @@ public final class Executor {
 		if(!ENABLE_SILENT_MODE) 
 			System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
 		
-		result = resultEvaluator.runEvaluation(outFilePath, true);
+		result = resultEvaluator.runEvaluation(outFilePath, ENABLE_FULL_TREC_OUTPUT);
 		if(ENABLE_PSEUDO_FEEDBACK){
 			System.out.println("\nEnhanced Query:");
-			result = resultEvaluator.runEvaluation(outFilePathA, true);
+			result = resultEvaluator.runEvaluation(outFilePathA, ENABLE_FULL_TREC_OUTPUT);
 		}
 		System.out.println("");
 		return result;

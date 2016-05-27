@@ -53,7 +53,7 @@ public final class ResultEvaluator {
 		// read the output from the command
 		String line = null, lastLine = "";
 		while ((line = stdInput.readLine()) != null) {
-			if(!silent) System.out.println(line);
+			if(silent) System.out.println(line);
 			
 			if(lastLine.contains("R-Precision"))
 				avgPrecision = Double.parseDouble(line.replace("Exact:", "").trim());

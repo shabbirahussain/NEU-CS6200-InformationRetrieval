@@ -62,15 +62,20 @@ public class FileLoader {
 				for(int i=0; i<docs.getLength(); i++, cnt++){
 					Element elem = (Element) docs.item(i);
 					String DOCNO = elem.getElementsByTagName("docno").item(0).getTextContent().trim().toUpperCase();
-					String TEXT  = elem.getElementsByTagName("text" ).item(0).getTextContent().trim();
-					
+					org.w3c.dom.NodeList texts = elem.getElementsByTagName("text");
+					StringBuilder TEXT = new StringBuilder();
+					for(int j=0; j<texts.getLength(); j++){
+						TEXT = TEXT.append(" "); 
+						TEXT = TEXT.append(elem.getElementsByTagName("text" ).item(j).getTextContent().trim());
+					}
 					XContentBuilder builder = jsonBuilder()
 							.startObject()
 						        .field("DOCNO", DOCNO)
-						        .field("TEXT" , TEXT)
+						        .field("TEXT" , TEXT.toString())
 						    .endObject();
 					
 					elasticClient.loadData(DOCNO, builder);
+				
 				}
 			}
 		}
