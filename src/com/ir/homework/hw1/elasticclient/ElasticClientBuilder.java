@@ -16,6 +16,8 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
+import static com.ir.homework.hw1.Constants.*;
+
 public class ElasticClientBuilder {
 	private Builder settings;
 	private Boolean cachedFetch;
@@ -124,9 +126,9 @@ public class ElasticClientBuilder {
 	public ElasticClient build(){
 		ElasticClient result = null;
 		if (this.cachedFetch)
-			result = (new CachedElasticClient(this.indices, this.types, true, this.size, this.field));
+			result = (new CachedElasticClient(this.indices, this.types, ENABLE_BULK_INSERT, this.size, this.field));
 		else
-			result = (new BaseElasticClient(this.indices, this.types, true, this.size, this.field));
+			result = (new BaseElasticClient(this.indices, this.types, ENABLE_BULK_INSERT, this.size, this.field));
 		
 		this.build(result);
 		return result;

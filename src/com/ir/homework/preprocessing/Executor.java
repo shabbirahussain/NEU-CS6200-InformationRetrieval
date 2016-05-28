@@ -35,12 +35,13 @@ public final class Executor {
 		try {
 			
 			System.out.println("\n\nPreprocessing File...");
-			(new FilePreprocessor(PRE_PROCESS_SRC_PATH, PRE_PROCESS_DST_PATH, DATA_FILE_PREFIX)).preProcessFiles();
+			//(new FilePreprocessor(PRE_PROCESS_SRC_PATH, PRE_PROCESS_DST_PATH, DATA_FILE_PREFIX)).preProcessFiles();
 			System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 			
 			System.out.println("\n\nLoading Data...");
 			Long result = (new FileLoader(elasticClient, PRE_PROCESS_DST_PATH, DATA_FILE_PREFIX))
 					.startLoad();
+			
 			System.out.println("Num of records inserted=" + result);
 			System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 			

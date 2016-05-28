@@ -68,8 +68,6 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		this.maxResults = limit;
 		this.textFieldName = field;
 		this.enableBulkProcessing = enableBulkProcessing;
-		
-		this.enableBulkProcessing = true;
 		this.stemer = new PorterStemmer();
 	}
 	
@@ -96,6 +94,7 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 	}
 	
 	public void commit(){
+		_bulkProcessor.flush();
 		_bulkProcessor.close();
 	}
 	

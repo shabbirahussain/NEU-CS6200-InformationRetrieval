@@ -31,11 +31,11 @@ public final class Constants {
 	public static final String INDEX_NAME = "ap_dataset";
 	public static final String INDEX_TYPE = "document";
 	
-	public static final Boolean ENABLE_BULK_INSERT = true;
+	public static final Boolean ENABLE_BULK_INSERT = false;
 	public static final Boolean ENABLE_PERSISTENT_CACHE = true;
 	public static final Boolean ENABLE_SILENT_MODE = false;
 	public static final Boolean ENABLE_STEMMING = true;
-	public static final Boolean ENABLE_PSEUDO_FEEDBACK = false;
+	public static final Boolean ENABLE_PSEUDO_FEEDBACK = true;
 	public static final Boolean ENABLE_ADD_NORMALIZATION = false;
 	public static final Boolean ENABLE_FULL_TREC_OUTPUT = true;
 	
