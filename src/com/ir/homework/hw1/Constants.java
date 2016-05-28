@@ -8,8 +8,8 @@ public final class Constants {
 	public static final String PRE_PROCESS_DST_PATH = BASE_PATH + "/AP_DATA/ap89_collection";
 
 	public static final String OBJECT_STORE_PATH = BASE_PATH + "/AP_DATA/cache/";
-	//public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short.txt";
-	public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short copy.txt";
+	public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short.txt";
+	//public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short copy.txt";
 	
 	public static final String STOP_WORDS_FILE_PATH = BASE_PATH + "/AP_DATA/stoplist.txt";
 	public static final String OUTPUT_FOLDR_PATH    = BASE_PATH + "/AP_DATA/results";
@@ -36,12 +36,13 @@ public final class Constants {
 	public static final Boolean ENABLE_SILENT_MODE = false;
 	public static final Boolean ENABLE_STEMMING = true;
 	public static final Boolean ENABLE_PSEUDO_FEEDBACK = true;
-	public static final Boolean ENABLE_ADD_NORMALIZATION = false;
-	public static final Boolean ENABLE_FULL_TREC_OUTPUT = true;
+	public static final Boolean ENABLE_ADD_NORMALIZATION = true;
+	public static final Boolean ENABLE_FULL_TREC_OUTPUT = false;
 	
 	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
 	
 	public static final Integer MAX_RESULTS = 40000; 
+	public static final Integer MAX_RESULTS_OUTPUT = 1000;
 	
 	public static final String TEXT_FIELD_NAME = "TEXT";
 	

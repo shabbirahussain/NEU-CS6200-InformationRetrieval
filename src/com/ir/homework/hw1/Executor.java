@@ -128,8 +128,9 @@ public final class Executor {
 				}
 				
 				records = sc.executeQuery(q);
-				for(OutputWriter.OutputRecord r: records)
-					ow.writeOutput(r);
+				
+				for(int i=0; i<records.size() && i<MAX_RESULTS_OUTPUT; i++)
+					ow.writeOutput(records.get(i));
 				
 				if(ENABLE_PSEUDO_FEEDBACK){
 					if(!ENABLE_SILENT_MODE) 
@@ -144,8 +145,8 @@ public final class Executor {
 					System.out.println("]");
 					
 					records = sc.executeQuery(q);
-					for(OutputWriter.OutputRecord r: records)
-						owA.writeOutput(r);
+					for(int i=0; i<records.size() && i<MAX_RESULTS_OUTPUT; i++)
+						owA.writeOutput(records.get(i));
 					
 					//break;
 				}
