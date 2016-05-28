@@ -18,7 +18,7 @@ import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
  */
 public class UnigramLM_JelinekMercer extends BaseSearchController{
 	// Probability smoothing factor between 0 - 1
-	private static final Float λ = 0.5F;
+	private static final Float λ = 0.7F;
 	
 	/**
 	 * constructor for re using cache across controllers

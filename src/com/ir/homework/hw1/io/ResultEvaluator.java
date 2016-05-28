@@ -56,9 +56,9 @@ public final class ResultEvaluator {
 			if(silent) System.out.println(line);
 			
 			if(lastLine.contains("R-Precision"))
-				avgPrecision = Double.parseDouble(line.replace("Exact:", "").trim());
+				rPrecision = Double.parseDouble(line.replace("Exact:", "").trim());
 			else if(lastLine.contains("Average precision"))
-				rPrecision = Double.parseDouble(line);
+				avgPrecision = Double.parseDouble(line);
 			
 			lastLine = line;
 		}

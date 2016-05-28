@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.ir.homework.hw1.util;
+package com.ir.homework.testing;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
