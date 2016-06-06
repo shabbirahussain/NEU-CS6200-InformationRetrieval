@@ -1,13 +1,11 @@
 /**
  * 
  */
-package com.ir.homework.preprocessing;
+package com.ir.homework.hw1.preprocessing;
 
-import static com.ir.homework.hw1.Constants.*;
-
-import com.ir.homework.hw1.elasticclient.BaseElasticClient;
 import com.ir.homework.hw1.elasticclient.ElasticClient;
 import com.ir.homework.hw1.elasticclient.ElasticClientBuilder;
+import static com.ir.homework.hw1.Constants.*;
 
 /**
  * @author shabbirhussain

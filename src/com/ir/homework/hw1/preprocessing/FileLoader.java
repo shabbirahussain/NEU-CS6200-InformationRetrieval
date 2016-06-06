@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.ir.homework.preprocessing;
+package com.ir.homework.hw1.preprocessing;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
 

@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
-import com.ir.homework.hw1.controllers.*;
 import com.ir.homework.hw1.elasticclient.CachedElasticClient;
 import com.ir.homework.hw1.elasticclient.ElasticClient;
 import com.ir.homework.hw1.elasticclient.ElasticClientBuilder;
@@ -24,6 +23,7 @@ import com.ir.homework.hw1.io.OutputWriter;
 import com.ir.homework.hw1.io.QueryReader;
 import com.ir.homework.hw1.io.ResultEvaluator;
 import com.ir.homework.hw1.io.StopWordReader;
+import com.ir.homework.hw1.models.*;
 import com.ir.homework.hw1.util.QueryAugmentor;
 
 /**

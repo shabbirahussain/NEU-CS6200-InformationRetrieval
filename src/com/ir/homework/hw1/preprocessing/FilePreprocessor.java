@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.ir.homework.preprocessing;
+package com.ir.homework.hw1.preprocessing;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.ir.homework.hw1.controllers;
+package com.ir.homework.hw1.models;
 
 import java.util.HashMap;
 import java.util.LinkedList;

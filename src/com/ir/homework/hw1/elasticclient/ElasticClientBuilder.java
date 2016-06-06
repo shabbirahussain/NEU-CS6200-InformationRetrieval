@@ -124,11 +124,10 @@ public class ElasticClientBuilder {
 	 * @return ElasticClient
 	 */
 	public ElasticClient build(){
-		ElasticClient result = null;
+		ElasticClient result = new BaseElasticClient(this.indices, this.types, ENABLE_BULK_INSERT, this.size, this.field);
+		
 		if (this.cachedFetch)
-			result = (new CachedElasticClient(this.indices, this.types, ENABLE_BULK_INSERT, this.size, this.field));
-		else
-			result = (new BaseElasticClient(this.indices, this.types, ENABLE_BULK_INSERT, this.size, this.field));
+			result = new CachedElasticClient(result);
 		
 		this.build(result);
 		return result;
