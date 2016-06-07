@@ -70,7 +70,7 @@ public final class Executor {
 		
 		stopWordReader  = new StopWordReader(STOP_WORDS_FILE_PATH);
 		resultEvaluator = new ResultEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS);
-		queryAugmentor  = new QueryAugmentor(elasticClient, stopWordReader.geStopWords());
+		queryAugmentor  = new QueryAugmentor(elasticClient, stopWordReader.getStopWords());
 		
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		

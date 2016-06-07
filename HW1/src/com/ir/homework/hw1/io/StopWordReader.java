@@ -23,7 +23,7 @@ public final class StopWordReader {
 	 * @return Set of stop words
 	 * @throws IOException 
 	 */
-	public Set<String> geStopWords() throws IOException{
+	public Set<String> getStopWords() throws IOException{
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(this.stopWordsFilePath)));
 		Set<String> result = new HashSet<String>();
 		
@@ -32,6 +32,7 @@ public final class StopWordReader {
 			line = line.trim();
 			result.add(line);
 		}
+		br.close();
 		return result;
 	}
 }

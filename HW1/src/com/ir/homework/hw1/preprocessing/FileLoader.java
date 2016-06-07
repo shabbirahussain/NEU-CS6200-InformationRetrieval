@@ -19,7 +19,7 @@ import com.ir.homework.hw1.elasticclient.ElasticClient;
  * @author shabbirhussain
  * Loads data into elasticsearch index
  */
-public class FileLoader {
+final class FileLoader {
 	private String dataFilePath;
 	private String dataFilePrefix;
 	

@@ -23,7 +23,7 @@ import org.xml.sax.SAXException;
  * @author shabbirhussain
  * Pre processes the file to make them normalized and usable in XML processing
  */
-public final class FilePreprocessor {
+final class FilePreprocessor {
 	private String dataSrcFilePath;
 	private String dataDstFilePath;
 	private String dataFilePrefix;
