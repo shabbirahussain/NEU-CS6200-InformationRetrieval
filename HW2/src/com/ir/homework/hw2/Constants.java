@@ -6,7 +6,8 @@ public final class Constants {
 	public static final String DATA_PATH  = BASE_PATH + "/AP_DATA/ap89_collection";
 	public static final String INPUT_PATH = BASE_PATH + "/AP_DATA_RO/ap89_collection";
 	public static final String INDEX_PATH = BASE_PATH + "/AP_DATA/indexes";
-
+	public static final String OBJECT_STORE_PATH = BASE_PATH + "/AP_DATA/cache/";
+	
 	public static final String INDEX_ID = "ap_dataset/document";
 	
 	public static final String STOP_WORDS_FILE_PATH = BASE_PATH + "/AP_DATA/stoplist.txt";

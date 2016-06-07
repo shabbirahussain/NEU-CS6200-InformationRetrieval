@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.ir.homework.hw2.cache.Translator;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 
 /**
@@ -20,6 +21,7 @@ abstract class IndexModel implements Serializable{
 	// Serialization version id
 	private static final long serialVersionUID = 1L;
 	private Tokenizer   tokenizer;
+	private Translator translator;
 	 
 	//            field       term        docID   freq
 	protected Map<String, Map<String, Map<String, Integer>>> fieldTermDocMap;
@@ -28,8 +30,9 @@ abstract class IndexModel implements Serializable{
 	 * Default constructor
 	 * @param indexID is the unique identifier of the index
 	 */
-	public IndexModel(Tokenizer tokenizer){
+	public IndexModel(Tokenizer tokenizer, Translator translator){
 		this.tokenizer  = tokenizer;
+		this.translator = translator;
 		this.fieldTermDocMap = new HashMap<String, Map<String, Map<String, Integer>>>();
 	}
 	
@@ -39,6 +42,8 @@ abstract class IndexModel implements Serializable{
 	 * @param data text data to be indexed in form of field value tuples
 	 */
 	public void loadData(String docID, Map<String, String> data){
+		docID = this.translator.translateDocID(docID).toString();
+		
 		// for each field in data
 		for(Entry<String, String> e: data.entrySet()){
 			String field = e.getKey();
