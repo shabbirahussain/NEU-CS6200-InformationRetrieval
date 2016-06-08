@@ -25,7 +25,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
-import com.ir.homework.hw2.cache.Translator;
+import com.ir.homework.hw2.cache.CacheManager;
 import com.ir.homework.hw2.indexers.IndexManager;
 import com.ir.homework.hw2.tokenizers.DefaultTokenizer;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
@@ -37,15 +37,15 @@ import static com.ir.homework.hw2.Constants.*;
  *
  */
 public final class Executor{
-	private static Set<String> stopWords = new HashSet<String>();
-	private static Tokenizer  tokenizer;
-	private static Translator translator;
+	private static Set<String>  stopWords = new HashSet<String>();
+	private static Tokenizer    tokenizer;
+	private static CacheManager translator;
 	
 	/**
 	 * @param args
-	 * @throws Exception 
+	 * @throws Throwable 
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Throwable {
 		long start = System.nanoTime(); 
 		
 		if(ENABLE_STOPWORD_FILTER) stopWords   = getStopWords();
@@ -69,38 +69,41 @@ public final class Executor{
 				
 				cnt += Executor.loadFile(idxManager, file);
 				if((cnt / BATCH_SIZE)>1){
-					idxManager.writeIndex();
+					idxManager.flush();
 					limit++;
+					cnt = 0;
+					
 					// Create new instance of index manager
 					idxManager = new IndexManager(INDEX_ID, ++idxVer, tokenizer, translator);
 				}
 			}
-			if(limit>2)break; 
 		}
-		saveObject(translator, OBJECT_STORE_PATH);
+		idxManager.flush();
 		
+		saveObject(translator, OBJECT_STORE_PATH);
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
 		mergeIndices(1, idxVer);
-
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
 	
-	public static void mergeIndices(Integer idxVerStart, Integer idxVerStop) throws Exception{
+	public static void mergeIndices(Integer idxVerStart, Integer idxVerStop) throws Throwable{
 		System.out.println("[Info]: Merging files:" +  idxVerStart + "-" + idxVerStop);
 		if ((idxVerStop - idxVerStart) <1) return; // do nothing
 		
 		Integer idxVer = idxVerStop;
 		for(int i=idxVerStart; i<=(idxVerStop-1); i+=2){
-			System.out.println(i);
 			IndexManager idxManager = new IndexManager(INDEX_ID, ++idxVer, tokenizer, translator);
 			IndexManager idx1 = new IndexManager(INDEX_ID, i  , tokenizer, translator);
 			IndexManager idx2 = new IndexManager(INDEX_ID, i+1, tokenizer, translator);
 			
-			idxManager.mergeIndices(idx1, idx2);
+			System.out.println(i + " + " + (i+1) + " => " + idxVer);
 			
-			idx1.deleteIndex();
-			idx2.deleteIndex();
+			idxManager.mergeIndices(idx1, idx2);
+			idxManager.flush();
+			
+			idx1.deleteIndex(true);
+			idx2.deleteIndex(true);
 		}
 		mergeIndices(idxVerStop + 1, idxVer);
 	}
@@ -172,7 +175,7 @@ public final class Executor{
 			}
 			//dataMap.put("HEAD", head.toString());
 			
-			client.loadData(DOCNO, dataMap);
+			client.putData(DOCNO, dataMap);
 		}
 		return i;
 	}
@@ -223,15 +226,15 @@ public final class Executor{
 	 * @param storePath full path of directory where objects are stored
 	 * @return Uncasted object of given class fetched from store
 	 */
-	private static Translator loadOrCreateCache(String storePath){
-		Translator result = null;
+	private static CacheManager loadOrCreateCache(String storePath){
+		CacheManager result = null;
 		if(ENABLE_PERSISTENT_CACHE){
 			System.out.println("Loading cache from: " + storePath);
-			result = (Translator) loadObject(Translator.class, storePath);	
+			result = (CacheManager) loadObject(CacheManager.class, storePath);	
 		}
 		if(result != null) return result;
 		
-		result = new Translator();
+		result = new CacheManager();
 		return result;
 	}
 }

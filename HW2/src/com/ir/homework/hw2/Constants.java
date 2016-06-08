@@ -13,7 +13,7 @@ public final class Constants {
 	public static final String STOP_WORDS_FILE_PATH = BASE_PATH + "/AP_DATA/stoplist.txt";
 	
 
-	public static final Integer BATCH_SIZE = 1000;
+	public static final Integer BATCH_SIZE = 3000;
 	public static final Boolean ENABLE_STEMMING = true;
 	public static final Boolean ENABLE_STOPWORD_FILTER = true;
 	// Word assosiations

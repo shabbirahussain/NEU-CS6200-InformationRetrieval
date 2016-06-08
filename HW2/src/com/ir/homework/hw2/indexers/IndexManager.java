@@ -3,24 +3,10 @@
  */
 package com.ir.homework.hw2.indexers;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.Flushable;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
 import java.io.Serializable;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -31,8 +17,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.ir.homework.hw2.cache.Translator;
-import com.ir.homework.hw2.indexers.IndexModel;
+import com.ir.homework.hw2.cache.CacheManager;
+import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 import static com.ir.homework.hw2.Constants.*;
 
@@ -40,15 +26,17 @@ import static com.ir.homework.hw2.Constants.*;
  * @author shabbirhussain
  *
  */
-public class IndexManager extends IndexModel {
+public class IndexManager implements Serializable, Flushable{
 	// Serialization version ID
 	private static final long serialVersionUID = 1L;
-
+	
+	private Tokenizer    tokenizer;
+	private CacheManager translator;
 	private Integer instanceID;
 	private String  datFilePath;
 	private String  indexPath;
 	
-	private Set<String> fieldSet;
+	public Set<String> fieldSet;
 	private Map<String, CatalogManager>  catalogMap;
 	
 	/**
@@ -57,8 +45,9 @@ public class IndexManager extends IndexModel {
 	 * @param instanceID is the unique identifier of instance or thread
 	 * @param tokenizer tokenizer used for current index
 	 */
-	public IndexManager(String indexID, Integer instanceID, Tokenizer tokenizer, Translator translator) {
-		super(tokenizer, translator);
+	public IndexManager(String indexID, Integer instanceID, Tokenizer tokenizer, CacheManager translator) {
+		this.tokenizer  = tokenizer;
+		this.translator = translator;
 		
 		this.instanceID = instanceID;
 		this.indexPath  = INDEX_PATH + "/" + indexID;
@@ -67,9 +56,99 @@ public class IndexManager extends IndexModel {
 		// Create directory structure
 		(new File(indexPath)).mkdirs();
 		
+		this.catalogMap = new HashMap<String, CatalogManager>();
+		
 		this.fieldSet    = this.readFields();
+		
 	}
 	
+
+	/**
+	 * Merges two indices using api
+	 * @param idx1 First index to merge
+	 * @param idx2 Second index to merge
+	 * @throws Exception 
+	 */
+	public void mergeIndices(IndexManager idx1, IndexManager idx2) throws Exception{
+		this.fieldSet.addAll(idx1.fieldSet);
+		this.fieldSet.addAll(idx2.fieldSet);
+		
+		for(String field: this.fieldSet){
+			CatalogManager cm = this.getCatalogManager(field);
+			
+			Set<String> terms = new HashSet<String>();
+			terms.addAll(idx1.getTerms(field));
+			terms.addAll(idx2.getTerms(field));
+			
+			for(String term: terms){
+				Map<String, DocInfo> docsInfo1 = idx1.getTermPositionVector(field, term);
+				Map<String, DocInfo> docsInfo2 = idx2.getTermPositionVector(field, term);
+				
+				docsInfo1.putAll(docsInfo2);
+				
+				cm.putData(term, docsInfo1);
+			}
+		}
+	}
+	
+	
+	/**
+	 * Returns terms present in index
+	 * @param field is the field to search for
+	 * @return Set of terms present in the index
+	 * @throws IOException 
+	 */
+	public Set<String> getTerms(String field) throws IOException{
+		return this.getCatalogManager(field).getTerms();
+	}
+	
+	
+	/**
+	 * Term frequency vector is retrieved from catalog and data file of this instance
+	 * @param field is the field to search for
+	 * @param term is the term to search for
+	 * @return Doc info wrapper object
+	 * @throws Exception 
+	 */
+	public Map<String, DocInfo> getTermPositionVector(String field, String term) throws Exception{
+		return this.getCatalogManager(field).readEntry(term);
+	}
+	
+	/**
+	 * Writes index to the internal buffer
+	 * @param docID is the document id to be indexed
+	 * @param data is the data to be indexed in terms of fields and values
+	 * @throws IOException
+	 */
+	public final void putData(String docID, Map<String, String> data) throws IOException{
+		for(Entry<String, String> fieldDat : data.entrySet()){
+			this.fieldSet.add(fieldDat.getKey());
+			
+			CatalogManager cm = this.getCatalogManager(fieldDat.getKey());
+			cm.putData(docID, fieldDat.getValue());
+		}
+	}
+	
+	/**
+	 * Cleans the index file
+	 * @param confirmDelete is the delete physical file confirmation
+	 * @throws Throwable 
+	 */
+	public final void deleteIndex(Boolean confirmDelete) throws Throwable{
+		for(String field : this.fieldSet){
+			this.getCatalogManager(field).deleteIndex(confirmDelete);
+		}
+	}
+	
+	@Override
+	public final void flush() throws IOException{
+		for(String field: this.fieldSet){
+			this.getCatalogManager(field).flush();
+		}
+	}
+	
+	// ----------------------------------------------------------------
+
 	/**
 	 * Gets list of fields indexed
 	 * @return List of field names
@@ -85,133 +164,6 @@ public class IndexManager extends IndexModel {
 				result.add(nameSplit[1]);
 			}
 		}
-		return result;
-	}
-	
-
-	/**
-	 * Merges two indices using api
-	 * @param idx1 First index to merge
-	 * @param idx2 Second index to merge
-	 * @throws Exception 
-	 */
-	public void mergeIndices(IndexManager idx1, IndexManager idx2) throws Exception{
-		Set<String> fields = new HashSet<String>();
-		fields.addAll(idx1.loadCatMap().keySet());
-		fields.addAll(idx2.loadCatMap().keySet());
-		
-		for(String field: fields){
-			
-			String datFileName = this.getDatFileName(field);
-			String catFileName = this.getCatFileName(field);
-			
-			RandomAccessFile datFile = new RandomAccessFile(datFileName, "rw");
-			BufferedWriter   catFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(catFileName)));
-			
-			Set<String> terms = new HashSet<String>();
-			terms.addAll(idx1.getTermsList(field));
-			terms.addAll(idx2.getTermsList(field));
-			
-			for(String term: terms){
-				Map<String, Integer> tfMap = new HashMap<String, Integer>();
-				
-				System.out.println("term="+term);
-				tfMap.putAll(idx1.getTF(field, term));
-				tfMap.putAll(idx2.getTF(field, term));
-				System.out.println("tfmap="+tfMap);
-				
-				StringBuilder buffer = new StringBuilder();
-				buffer.append(term + ":");
-				
-				catFile.write(term + ":");
-				catFile.write(((Long)datFile.getFilePointer()).toString() + ":");
-				
-				// For each document for that term sorted by TD desc
-				for(Entry<String, Integer> docTF : this.sortByValue(tfMap)){
-					buffer.append(docTF.getKey() + ":" + docTF.getValue() + ":");
-				}
-				buffer.append("\n");
-				
-				datFile.writeChars(buffer.toString());
-				catFile.write("\n");
-			}
-			datFile.close();
-			catFile.close();
-		}
-	}
-	
-	public void write(){
-		
-	}
-	
-	
-	
-	/**
-	 * Writes index to the disk any existing indices will be overwritten
-	 * @throws IOException
-	 */
-	public void writeIndex() throws IOException{
-		this.fieldSet.addAll(super.fieldTermDocMap.keySet());
-		
-		for(String field : this.fieldSet){
-			String datFileName = this.getDatFileName(field);
-			String catFileName = this.getCatFileName(field);
-			
-			RandomAccessFile datFile = new RandomAccessFile(datFileName, "rw");
-			BufferedWriter   catFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(catFileName)));
-			
-			
-			// For each term 
-			for(Entry<String, Map<String, Integer>> term: fields.getValue().entrySet()){
-				StringBuilder buffer = new StringBuilder();
-				buffer.append(term.getKey() + ":");
-				
-				catFile.write(term.getKey() + ":");
-				catFile.write(((Long)datFile.getFilePointer()).toString() + ":");
-				
-				// For each document for that term sorted by TD desc
-				for(Entry<String, Integer> docTF : this.sortByValue(term.getValue())){
-					buffer.append(docTF.getKey() + ":" + docTF.getValue() + ":");
-				}
-				buffer.append("\n");
-				datFile.writeChars(buffer.toString().replaceAll("[^\\d:]", ""));
-				
-				catFile.write("\n");
-			}
-			datFile.close();
-			catFile.close();
-		}
-	}
-	
-	/**
-	 * Term frequency vector is retrieved from catalog and data file of this instance
-	 * @param field is the field to search for
-	 * @param term is the term to search for
-	 * @return Gets TF for given term from index
-	 * @throws Exception 
-	 */
-	public Map<String, Integer> getTF(String field, String term) throws Exception{
-		if(this.fieldCatMap == null) this.loadCatMap();
-		Map<String, Integer> result = new HashMap<String, Integer>();
-		
-		Long pos = this.fieldCatMap.get(field).get(term);
-		if(pos==null) return result; // no entries found in index
-		
-		String datFileName = this.getDatFileName(field);
-		RandomAccessFile datFile = new RandomAccessFile(datFileName, "r");
-		
-		datFile.seek(pos);
-		String dat = datFile.readLine();
-		String[] docTF = dat.split(":");
-			
-		for(int i=0; i<docTF.length-1; i+=2){
-			String tf = docTF[i+1].replaceAll("[^\\d]", "");
-			System.out.println(tf);
-			if(!tf.equals("")) result.put(docTF[i], Integer.parseInt(tf));
-			
-		}
-		datFile.close();
-
 		return result;
 	}
 	
@@ -232,37 +184,23 @@ public class IndexManager extends IndexModel {
 	     return list;
 	}
 	
-	
-
-	
-	/**
-	 * Gets the list of terms present in the index
-	 * @param field is the name of field to search for
-	 * @return List of terms
-	 * @throws IOException 
-	 */
-	private Set<String> getTermsList(String field) throws IOException{
-		Map<String, Long> catMap = this.fieldCatMap.get(field);
-		if(catMap != null) return catMap.keySet();
-		
-		loadCatMap();
-		return getTermsList(field);
-	}
-
-	/**
-	 * Cleans the index file
-	 * @throws IOException 
-	 */
-	public final void deleteIndex() throws IOException{
-		Set<String> fields = this.fieldCatMap.keySet();
-		for(String field : fields){
-			Files.deleteIfExists(Paths.get(getDatFileName(field)));
-			Files.deleteIfExists(Paths.get(getCatFileName(field)));
-		}
-	}
 	//-----------------------------------------------------------------
-	private getCatalogManager(String term){
-		this.catalogMap.getOrDefault(term, new CatalogManager(term, term));
+	/**
+	 * Fetches a handler for a cataloged index
+	 * @param field is the field name to query
+	 * @return Object of catalog manager
+	 * @throws IOException 
+	 */
+	private final CatalogManager getCatalogManager(String field) throws IOException{
+		CatalogManager result = this.catalogMap.get(field);
+		if(result != null) return result;
+		
+		result = new CatalogManager(field, 
+				this.datFilePath,
+				this.tokenizer, 
+				this.translator);
+		
+		this.catalogMap.put(field, result);
+		return result;
 	}
-	
 }
