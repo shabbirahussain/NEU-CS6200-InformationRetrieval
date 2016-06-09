@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
 import com.ir.homework.hw2.metainfo.MetaInfoController;
+import com.ir.homework.hw2.metainfo.MetaInfoControllers;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 import static com.ir.homework.hw2.Constants.*;
 
@@ -32,7 +33,6 @@ public class IndexManager implements Serializable, Flushable{
 	
 	private String indexID;
 	private Tokenizer    tokenizer;
-	private MetaInfoController translator;
 	private Integer instanceID;
 	private String  datFilePath;
 	private String  indexPath;
@@ -50,7 +50,6 @@ public class IndexManager implements Serializable, Flushable{
 		this.indexID    = indexID;
 		this.instanceID = instanceID;
 		this.tokenizer  = null;
-		this.translator = null;
 		
 		this.indexPath   = INDEX_PATH + "/" + indexID;
 		this.datFilePath = indexPath + "/" + instanceID;
@@ -63,7 +62,6 @@ public class IndexManager implements Serializable, Flushable{
 		this.fieldSet    = this.readFields();
 		
 	}
-	
 
 	/**
 	 * Merges two indices using api
@@ -73,7 +71,7 @@ public class IndexManager implements Serializable, Flushable{
 	 * @throws Throwable 
 	 */
 	public IndexManager mergeIndices(Integer index2, Integer batchSize, Boolean deleteOnMerge) throws Throwable{
-		Integer newIdxID = translator.getNextIndexID();
+		Integer newIdxID = MetaInfoControllers.getNextIndexID(this.indexID);
 		
 		IndexManager idxM = new IndexManager(this.indexID, newIdxID);
 		IndexManager idx2 = new IndexManager(this.indexID, index2  );
@@ -104,9 +102,8 @@ public class IndexManager implements Serializable, Flushable{
 			}
 			cm.flush();
 		}
-		translator.setLastStableIndexID(newIdxID);
-		idxM.setMetaInfoModel(this.translator)
-			.setTokenizer(this.tokenizer)
+		
+		idxM.setTokenizer(this.tokenizer)
 			.fieldSet = this.fieldSet;
 		
 		idx2.finalize(deleteOnMerge);
@@ -125,7 +122,14 @@ public class IndexManager implements Serializable, Flushable{
 	public Set<String> getTerms(String field) throws IOException{
 		return this.getCatalogManager(field).getTerms();
 	}
-	
+
+	/**
+	 * Gets the current instance ID
+	 * @return Unique instance identifier
+	 */
+	public Integer getInstanceID(){
+		return this.instanceID;
+	}
 	
 	/**
 	 * Term frequency vector is retrieved from catalog and data file of this instance
@@ -137,6 +141,8 @@ public class IndexManager implements Serializable, Flushable{
 	public Map<String, DocInfo> getTermPositionVector(String field, String term) throws Exception{
 		return this.getCatalogManager(field).readEntry(term);
 	}
+	
+	// -------------------- Setters -----------------------------------
 	
 	/**
 	 * Sets the term position vector
@@ -184,16 +190,6 @@ public class IndexManager implements Serializable, Flushable{
 	
 	
 	// ----------------------------------------------------------------
-
-	/**
-	 * Sets the cache manager for the index
-	 * @param cacheManager is the cache manager to set
-	 * @return IndexManager
-	 */
-	public IndexManager setMetaInfoModel(MetaInfoController cacheManager){
-		this.translator = cacheManager;
-		return this;
-	}
 	
 	/**
 	 * Sets the tokenizer for the index
@@ -254,7 +250,7 @@ public class IndexManager implements Serializable, Flushable{
 		result = new CatalogManager(field, 
 				this.datFilePath,
 				this.tokenizer, 
-				this.translator);
+				MetaInfoControllers.getMetaInfoController(this.indexID));
 		
 		this.catalogMap.put(field, result);
 		return result;

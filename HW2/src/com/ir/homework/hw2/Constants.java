@@ -18,9 +18,12 @@ public final class Constants {
 	public static final Boolean ENABLE_FULL_DOC_ID = true;
 	public static final Boolean ENABLE_AUTO_CLEAN = true;
 	
+	public static final String DATA_FILE_PREFIX = "ap";
+	public static final String DONE_FILE_SUFFIX = ".done";
+	public static final String TOKENIZER_REGEXP = "(\\w+(\\.?\\w+)*)";
+	
 	// Word assosiations
 	
-	public static final String DATA_FILE_PREFIX = "ap";
 	
 	public static final String  HOST = "localhost";//"192.168.1.105"; //"localhost";
 	public static final Integer PORT = 9300;

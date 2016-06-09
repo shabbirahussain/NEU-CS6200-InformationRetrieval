@@ -30,16 +30,6 @@ public class MetaInfoController implements Serializable{
 		this.stableIdxID = 0;
 	}
 	
-	/**
-	 * Sets the stable index id to the latest one. The id can only be incremented. Any obsolete updates will be discarded.
-	 * @param id is the given id of the stable index
-	 * @return
-	 */
-	public MetaInfoController setLastStableIndexID(Integer id){
-		if(this.stableIdxID == null || this.stableIdxID < id) 
-			this.stableIdxID = id;
-		return this;
-	}
 	
 	/**
 	 * Adds new index to usable list. With data from higher index id considered more reliable. 
@@ -61,16 +51,23 @@ public class MetaInfoController implements Serializable{
 		return this;
 	}
 	
+	/**
+	 * Sets usable indices for future use
+	 * @param indexIDList is the list of index id to be set as usable
+	 * @return MetaInfoController
+	 */
+	public MetaInfoController setUsableIndices(List<Integer> indexIDList){
+		this.usableIndexIds = indexIDList;
+		return this;
+	}
 	// ----------------------------------------------------------------
 	
-
-	
 	/**
-	 * Returns last confirmed index id which is complete and ready to use
-	 * @return
+	 * Returns the list of usable indices. A usable index is a index which has been successfully written to disk completely and is ready to use.
+	 * @return List of usable index
 	 */
-	public Integer getLastStableIndexID(){
-		return this.stableIdxID;
+	public List<Integer> getUsableIndices(){
+		return this.usableIndexIds;
 	}
 	
 	/**
@@ -81,13 +78,6 @@ public class MetaInfoController implements Serializable{
 		return ++this.masterIdxID;
 	}
 	
-	/**
-	 * Gets the current index file version ID
-	 * @return New master index ID
-	 */
-	public Integer getCurrIndexID(){
-		return this.masterIdxID;
-	}
 	
 	// -------------------- Compressor and translators ----------------
 	

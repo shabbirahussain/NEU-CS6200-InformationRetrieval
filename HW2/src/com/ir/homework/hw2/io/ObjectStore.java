@@ -56,6 +56,8 @@ public abstract class ObjectStore {
 	 * @param storePath full path of directory where objects are stored
 	 */
 	public static void saveObject(Object object, String objStorePath){
+		//System.out.println("Saving to " + objStorePath);
+		
 		String fullFilePath = objStorePath + object.getClass().getName() + ".ser";
 		
 		ObjectOutputStream oos;
