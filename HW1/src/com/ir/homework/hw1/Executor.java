@@ -5,20 +5,15 @@ package com.ir.homework.hw1;
 
 import static com.ir.homework.hw1.Constants.*;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 
-import com.ir.homework.hw1.elasticclient.CachedElasticClient;
 import com.ir.homework.hw1.elasticclient.ElasticClient;
 import com.ir.homework.hw1.elasticclient.ElasticClientBuilder;
+import com.ir.homework.hw1.io.ObjectStore;
 import com.ir.homework.hw1.io.OutputWriter;
 import com.ir.homework.hw1.io.QueryReader;
 import com.ir.homework.hw1.io.ResultEvaluator;
@@ -43,9 +38,20 @@ public final class Executor {
 	public static void main(String[] args) throws IOException {
 		long start = System.nanoTime(); 
 		List<SearchController> controllers = new LinkedList<SearchController>();
-
-		elasticClient = loadOrCreateCache(CachedElasticClient.class, OBJECT_STORE_PATH);
+		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
+				.setClusterName(CLUSTER_NAME)
+				.setHost(HOST)
+				.setPort(PORT)
+				.setIndices(INDEX_NAME)
+				.setTypes(INDEX_TYPE)
+				.setLimit(MAX_RESULTS)
+				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
+				.setField(TEXT_FIELD_NAME);
 		
+		if(ENABLE_PERSISTENT_CACHE){
+			System.out.println("Loading cache...");
+			elasticClient = (ElasticClient) ObjectStore.getOrDefault(eBuilder.build());
+		}eBuilder.build(elasticClient);
 		
 		//////////////////////// Controllers ////////////////////////////
 		// OkapiTF
@@ -74,15 +80,14 @@ public final class Executor {
 		
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
-		Double correctnessScore;
 		for(SearchController sc : controllers){
 			System.out.println("\n================ " + sc.getClass().getSimpleName() + " ==========================");
-			correctnessScore = execute(sc);
+			execute(sc);
 		}
 		
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
-		saveObject(elasticClient, OBJECT_STORE_PATH);
+		ObjectStore.saveObject(elasticClient);
 		
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
@@ -187,76 +192,6 @@ public final class Executor {
 			result = resultEvaluator.runEvaluation(outFilePathA, ENABLE_FULL_TREC_OUTPUT);
 		}
 		System.out.println("");
-		return result;
-	}
-	
-	/**
-	 * Saves a serializable object
-	 * @param object object to be stored
-	 * @param storePath full path of directory where objects are stored
-	 */
-	private static void saveObject(Object object, String storePath){
-		if(!ENABLE_PERSISTENT_CACHE) return;
-		System.out.println("\n\nSaving cache for future use...");
-		
-		String fullFilePath = storePath + object.getClass().getName() + ".ser";
-		
-		ObjectOutputStream oos;
-		try {
-			oos = new ObjectOutputStream(new FileOutputStream(fullFilePath));
-			oos.writeObject(object);
-			oos.close();
-		} catch (IOException e) {e.printStackTrace();}
-		return;
-	}
-	
-	/**
-	 * 
-	 * @param c class of object to be loaded
-	 * @param storePath full path of directory where objects are stored
-	 * @return Uncasted object of given class fetched from store
-	 */
-	private static Object loadObject(Class c, String storePath){
-		String fullFilePath = storePath + c.getName() + ".ser";
-		Object result;
-		try{
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fullFilePath));
-			result = ois.readObject();
-			ois.close();
-			
-			return result;
-		}catch(ClassNotFoundException | IOException e){}
-		return null;
-	}
-	
-	
-	/**
-	 * Loads or creates a elasticClient
-	 * @param c class of object to be loaded
-	 * @param storePath full path of directory where objects are stored
-	 * @return Uncasted object of given class fetched from store
-	 */
-	private static ElasticClient loadOrCreateCache(Class<?> c, String storePath){
-		ElasticClient result = null;
-		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
-				.setClusterName(CLUSTER_NAME)
-				.setHost(HOST)
-				.setPort(PORT)
-				.setIndices(INDEX_NAME)
-				.setTypes(INDEX_TYPE)
-				.setLimit(MAX_RESULTS)
-				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
-				.setField(TEXT_FIELD_NAME);
-		
-		if(ENABLE_PERSISTENT_CACHE){
-			System.out.println("Loading cache from: " + storePath);
-			result = (ElasticClient) loadObject(c, storePath);	
-		}
-		if(result != null) 
-			result = eBuilder.build(result);
-		else
-			result = eBuilder.build();
-			
 		return result;
 	}
 }

@@ -23,7 +23,7 @@ import java.util.Map;
 
 import java.util.Map.Entry;
 
-import com.ir.homework.hw2.cache.CacheManager;
+import com.ir.homework.hw2.metainfo.MetaInfoController;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 import static com.ir.homework.hw2.Constants.*;
 
@@ -34,7 +34,7 @@ public class CatalogManager implements Serializable, Flushable{
 	private static final Integer MAX_DOCS_PER_TERM = Integer.MAX_VALUE;
 	
 	private Tokenizer    tokenizer;
-	private CacheManager translator;
+	private MetaInfoController translator;
 	private String       datFilePath;
 	private String       fieldName;
 	private FileChannel  datFileRW;
@@ -85,7 +85,7 @@ public class CatalogManager implements Serializable, Flushable{
 	 * @param translator 
 	 * @throws IOException 
 	 */
-	public CatalogManager(String myName, String  datFilePath, Tokenizer tokenizer, CacheManager translator) throws IOException{
+	public CatalogManager(String myName, String  datFilePath, Tokenizer tokenizer, MetaInfoController translator) throws IOException{
 		this.datFilePath = datFilePath;
 		this.fieldName   = myName;
 		this.tokenizer   = tokenizer;

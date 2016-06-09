@@ -6,15 +6,10 @@ package com.ir.homework.hw2;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,12 +21,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
-import com.ir.homework.hw2.cache.CacheManager;
 import com.ir.homework.hw2.indexers.IndexManager;
+import com.ir.homework.hw2.metainfo.MetaInfoController;
+import com.ir.homework.hw2.metainfo.MetaInfoControllers;
 import com.ir.homework.hw2.tokenizers.DefaultTokenizer;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 
-import opennlp.tools.stemmer.PorterStemmer;
 
 import static com.ir.homework.hw2.Constants.*;
 
@@ -42,7 +37,7 @@ import static com.ir.homework.hw2.Constants.*;
 public final class Executor{
 	private static Set<String>  stopWords = new HashSet<String>();
 	private static Tokenizer    tokenizer;
-	private static CacheManager translator;
+	private static MetaInfoController translator;
 	
 	/**
 	 * @param args
@@ -55,7 +50,8 @@ public final class Executor{
 		tokenizer = (new DefaultTokenizer("(\\w+(\\.?\\w+)*)"))
 				.setStemming(ENABLE_STEMMING)
 				.setStopWordsFilter(stopWords);
-		translator = loadOrCreateCache(OBJECT_STORE_PATH);
+		
+		translator = MetaInfoControllers.getMetaInfoController(INDEX_ID);
 		
 		
 		File folder = new File(DATA_PATH);
@@ -92,7 +88,7 @@ public final class Executor{
 		mergeIndices();
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
-		saveObject(translator, OBJECT_STORE_PATH);
+		MetaInfoControllers.saveMetaInfo();
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 				
 	}
@@ -123,7 +119,7 @@ public final class Executor{
 	private static IndexManager getIndexManager(Integer idxVer){
 		return (new IndexManager(INDEX_ID, idxVer))
 				.setTokenizer(tokenizer)
-				.setCacheManager(translator);
+				.setMetaInfoModel(translator);
 	}
 	
 	
@@ -193,67 +189,10 @@ public final class Executor{
 						.getTextContent()
 						.trim());
 			}
-			//dataMap.put("HEAD", head.toString());
+			dataMap.put("HEAD", head.toString());
 			
 			client.putData(DOCNO, dataMap);
 		}
 		return i;
-	}
-	
-	/**
-	 * Saves a serializable object
-	 * @param object object to be stored
-	 * @param storePath full path of directory where objects are stored
-	 */
-	private static void saveObject(Object object, String storePath){
-		if(!ENABLE_PERSISTENT_CACHE) return;
-		System.out.println("\n\nSaving cache for future use...");
-		
-		String fullFilePath = storePath + object.getClass().getName() + ".ser";
-		
-		ObjectOutputStream oos;
-		try {
-			oos = new ObjectOutputStream(new FileOutputStream(fullFilePath));
-			oos.writeObject(object);
-			oos.close();
-		} catch (IOException e) {e.printStackTrace();}
-		return;
-	}
-	
-	/**
-	 * 
-	 * @param c class of object to be loaded
-	 * @param storePath full path of directory where objects are stored
-	 * @return Uncasted object of given class fetched from store
-	 */
-	private static Object loadObject(Class c, String storePath){
-		String fullFilePath = storePath + c.getName() + ".ser";
-		Object result;
-		try{
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fullFilePath));
-			result = ois.readObject();
-			ois.close();
-			
-			return result;
-		}catch(ClassNotFoundException | IOException e){}
-		return null;
-	}
-	
-	/**
-	 * Loads or creates a elasticClient
-	 * @param c class of object to be loaded
-	 * @param storePath full path of directory where objects are stored
-	 * @return Uncasted object of given class fetched from store
-	 */
-	private static CacheManager loadOrCreateCache(String storePath){
-		CacheManager result = null;
-		if(ENABLE_PERSISTENT_CACHE){
-			System.out.println("Loading cache from: " + storePath);
-			result = (CacheManager) loadObject(CacheManager.class, storePath);	
-		}
-		if(result != null) return result;
-		
-		result = new CacheManager();
-		return result;
 	}
 }

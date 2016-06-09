@@ -1,22 +1,30 @@
-package com.ir.homework.hw2.cache;
+package com.ir.homework.hw2.metainfo;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
-public class CacheManager implements Serializable{
+/**
+ * Stores meta information Model about indices and helps facilitate interprocess communication
+ * @author shabbirhussain
+ */
+public class MetaInfoController implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private Map<String, Integer> docInternalIDLookup;
 	private Map<Integer, String> docBusinessIDLookup;
 	private Integer masterIdxID; 
 	private Integer stableIdxID;
+	private List<Integer> usableIndexIds;
 	
 	/**
 	 * Default constructor
 	 */
-	public CacheManager(){
+	public MetaInfoController(){
 		this.docInternalIDLookup = new HashMap<String, Integer>();
 		this.docBusinessIDLookup = new HashMap<Integer, String>();
+		this.usableIndexIds      = new LinkedList<Integer>();
 		
 		this.masterIdxID = 0;
 		this.stableIdxID = 0;
@@ -27,12 +35,31 @@ public class CacheManager implements Serializable{
 	 * @param id is the given id of the stable index
 	 * @return
 	 */
-	public CacheManager setLastStableIndexID(Integer id){
+	public MetaInfoController setLastStableIndexID(Integer id){
 		if(this.stableIdxID == null || this.stableIdxID < id) 
 			this.stableIdxID = id;
 		return this;
 	}
 	
+	/**
+	 * Adds new index to usable list. With data from higher index id considered more reliable. 
+	 * @param indexID is the unique index number/ version number
+	 * @return MetaInfoController
+	 */
+	public MetaInfoController addUsableIndex(Integer indexID){
+		this.usableIndexIds.add(indexID);
+		return this;
+	}
+	
+	/**
+	 * Marks a index obsolete. Obsolete indices are no longer valid for use
+	 * @param indexID is the unique index number/ version number
+	 * @return MetaInfoController
+	 */
+	public MetaInfoController markIndexObsolete(Integer indexID){
+		this.usableIndexIds.remove(indexID);
+		return this;
+	}
 	
 	// ----------------------------------------------------------------
 	
@@ -62,7 +89,7 @@ public class CacheManager implements Serializable{
 		return this.masterIdxID;
 	}
 	
-	
+	// -------------------- Compressor and translators ----------------
 	
 	/** 
 	 * Creates or loads a unique ID for each document

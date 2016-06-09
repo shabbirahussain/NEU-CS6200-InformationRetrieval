@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.ir.homework.hw2.cache.CacheManager;
 import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
+import com.ir.homework.hw2.metainfo.MetaInfoController;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 import static com.ir.homework.hw2.Constants.*;
 
@@ -32,7 +32,7 @@ public class IndexManager implements Serializable, Flushable{
 	
 	private String indexID;
 	private Tokenizer    tokenizer;
-	private CacheManager translator;
+	private MetaInfoController translator;
 	private Integer instanceID;
 	private String  datFilePath;
 	private String  indexPath;
@@ -105,7 +105,7 @@ public class IndexManager implements Serializable, Flushable{
 			cm.flush();
 		}
 		translator.setLastStableIndexID(newIdxID);
-		idxM.setCacheManager(this.translator)
+		idxM.setMetaInfoModel(this.translator)
 			.setTokenizer(this.tokenizer)
 			.fieldSet = this.fieldSet;
 		
@@ -190,7 +190,7 @@ public class IndexManager implements Serializable, Flushable{
 	 * @param cacheManager is the cache manager to set
 	 * @return IndexManager
 	 */
-	public IndexManager setCacheManager(CacheManager cacheManager){
+	public IndexManager setMetaInfoModel(MetaInfoController cacheManager){
 		this.translator = cacheManager;
 		return this;
 	}
