@@ -56,9 +56,16 @@ public class IndexBatchLoader implements Runnable {
 			while(true){
 				System.out.println("Starting new batch load...");
 				
-				Integer idxVer = MetaInfoControllers.getNextIndexID(INDEX_ID);
-				fileLader.loadFiles(getIndexManager(idxVer));
-				MetaInfoControllers.addUsableIndex(INDEX_ID, idxVer);
+				Integer idxVer = 0;
+				IndexManager indexManager = null;
+				if(fileLader.newFilesAvailable()){
+					idxVer = MetaInfoControllers.getNextIndexID(INDEX_ID);
+					indexManager = getIndexManager(idxVer);
+					
+					fileLader.loadFiles(indexManager);
+
+					MetaInfoControllers.addUsableIndex(INDEX_ID, idxVer);
+				}
 				
 				System.out.println("Batch load sleeping...");
 				Thread.sleep(REFRESH_INTERVAL);

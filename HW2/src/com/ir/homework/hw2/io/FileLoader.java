@@ -30,11 +30,26 @@ import com.ir.homework.hw2.indexers.IndexManager;
  */
 public class FileLoader {
 	/**
+	 * @return True is new files are available for loading
+	 */
+	public Boolean newFilesAvailable(){
+		File folder = new File(DATA_PATH);
+		File[] listOfFiles = folder.listFiles();
+		for (File file : listOfFiles) {
+			if (file.isFile()
+					&& file.getName().startsWith(DATA_FILE_PREFIX)
+					&& !file.getName().endsWith(DONE_FILE_SUFFIX)) 
+				return true;
+		}
+		return false;
+	}
+	
+	/**
 	 * Loads files to client provided
 	 * @param idxManager is the index manager client to which data has to be loaded
 	 * @throws Throwable 
 	 */
-	public void loadFiles(IndexManager idxManager) throws Throwable {
+	public Integer loadFiles(IndexManager idxManager) throws Throwable {
 		System.out.println("\n\n \t\t ********** New Batch *************\n\n");;
 	
 		File folder = new File(DATA_PATH);
@@ -56,6 +71,7 @@ public class FileLoader {
 		}
 		idxManager.flush();
 		idxManager.finalize(false);
+		return cnt;
 	}
 	/**
 	 * Parses the document into XML doc
