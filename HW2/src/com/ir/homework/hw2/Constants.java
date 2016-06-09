@@ -16,6 +16,9 @@ public final class Constants {
 	public static final Integer BATCH_SIZE = 3000;
 	public static final Boolean ENABLE_STEMMING = true;
 	public static final Boolean ENABLE_STOPWORD_FILTER = true;
+	public static final Boolean ENABLE_FULL_DOC_ID = true;
+	public static final Boolean ENABLE_AUTO_CLEAN = true;
+	
 	// Word assosiations
 	
 	public static final String DATA_FILE_PREFIX = "ap";

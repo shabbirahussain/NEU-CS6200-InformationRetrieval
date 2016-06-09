@@ -13,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +30,8 @@ import com.ir.homework.hw2.cache.CacheManager;
 import com.ir.homework.hw2.indexers.IndexManager;
 import com.ir.homework.hw2.tokenizers.DefaultTokenizer;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
+
+import opennlp.tools.stemmer.PorterStemmer;
 
 import static com.ir.homework.hw2.Constants.*;
 
@@ -57,10 +60,10 @@ public final class Executor{
 		
 		File folder = new File(DATA_PATH);
 		File[] listOfFiles = folder.listFiles();
+
 		
 		Integer cnt    = 0;
-		Integer idxVer = 1;
-		IndexManager idxManager = new IndexManager(INDEX_ID, idxVer, tokenizer, translator);
+		IndexManager idxManager = getIndexManager(translator.getNextIndexID());
 		
 		Integer limit = 0;
 		for (File file : listOfFiles) {
@@ -69,44 +72,61 @@ public final class Executor{
 				
 				cnt += Executor.loadFile(idxManager, file);
 				if((cnt / BATCH_SIZE)>1){
-					idxManager.flush();
+					System.out.println("\n\n \t\t ********** New Batch *************\n\n");;
 					limit++;
 					cnt = 0;
-					
+
+					//if(limit>3) break;
 					// Create new instance of index manager
-					idxManager = new IndexManager(INDEX_ID, ++idxVer, tokenizer, translator);
+					idxManager.flush();
+					idxManager.finalize(false);
+					idxManager = getIndexManager(translator.getNextIndexID());
 				}
 			}
 		}
 		idxManager.flush();
+		idxManager.finalize(false);
+		
+		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+		
+		mergeIndices();
+		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
 		saveObject(translator, OBJECT_STORE_PATH);
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+				
+	}
+	/**
+	 * Performs index merge with master file
+	 * @throws Throwable
+	 */
+	public static void mergeIndices() throws Throwable{
+		Integer masterIdxId = translator.getLastStableIndexID();
+		Integer indexStop   = translator.getCurrIndexID();
 		
-		mergeIndices(1, idxVer);
-		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+		IndexManager masterIM = getIndexManager(masterIdxId);
+		for(int i=(masterIdxId+1); i<=indexStop; i++){
+			System.out.println("Merging : " + i + " onto " + translator.getLastStableIndexID());
+			
+			masterIM = masterIM.mergeIndices(i, BATCH_SIZE, ENABLE_AUTO_CLEAN);
+			
+			//System.out.println("Merged index => " + translator.getLastStableIndexID() + "\n");
+		}
+		masterIM.finalize(false);
 	}
 	
-	public static void mergeIndices(Integer idxVerStart, Integer idxVerStop) throws Throwable{
-		System.out.println("[Info]: Merging files:" +  idxVerStart + "-" + idxVerStop);
-		if ((idxVerStop - idxVerStart) <1) return; // do nothing
-		
-		Integer idxVer = idxVerStop;
-		for(int i=idxVerStart; i<=(idxVerStop-1); i+=2){
-			IndexManager idxManager = new IndexManager(INDEX_ID, ++idxVer, tokenizer, translator);
-			IndexManager idx1 = new IndexManager(INDEX_ID, i  , tokenizer, translator);
-			IndexManager idx2 = new IndexManager(INDEX_ID, i+1, tokenizer, translator);
-			
-			System.out.println(i + " + " + (i+1) + " => " + idxVer);
-			
-			idxManager.mergeIndices(idx1, idx2);
-			idxManager.flush();
-			
-			idx1.deleteIndex(true);
-			idx2.deleteIndex(true);
-		}
-		mergeIndices(idxVerStop + 1, idxVer);
+	/**
+	 * Gets teh index manager for the given index version
+	 * @param idxVer is the version of index
+	 * @return IndexManager
+	 */
+	private static IndexManager getIndexManager(Integer idxVer){
+		return (new IndexManager(INDEX_ID, idxVer))
+				.setTokenizer(tokenizer)
+				.setCacheManager(translator);
 	}
+	
+	
 	
 	/**
 	 * Reads and returns list of stop words
@@ -218,7 +238,6 @@ public final class Executor{
 		}catch(ClassNotFoundException | IOException e){}
 		return null;
 	}
-	
 	
 	/**
 	 * Loads or creates a elasticClient

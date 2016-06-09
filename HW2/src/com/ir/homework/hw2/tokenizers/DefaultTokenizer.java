@@ -58,10 +58,11 @@ public class DefaultTokenizer implements Tokenizer {
 		List<String> result = new LinkedList<String>();
 		while (m.find()) {
 			String term = m.group();
-			if(this.stemmingEnabled) term = stemmer.stem(term);
+			if(this.stemmingEnabled) 
+				term = stemmer.stem(term);
 			if(stopWords.contains(term)) continue;
 			
-			result.add(m.group());
+			result.add(term);
 		}
 		return result;
 	}

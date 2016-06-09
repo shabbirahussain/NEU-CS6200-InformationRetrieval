@@ -30,6 +30,7 @@ public class IndexManager implements Serializable, Flushable{
 	// Serialization version ID
 	private static final long serialVersionUID = 1L;
 	
+	private String indexID;
 	private Tokenizer    tokenizer;
 	private CacheManager translator;
 	private Integer instanceID;
@@ -45,12 +46,13 @@ public class IndexManager implements Serializable, Flushable{
 	 * @param instanceID is the unique identifier of instance or thread
 	 * @param tokenizer tokenizer used for current index
 	 */
-	public IndexManager(String indexID, Integer instanceID, Tokenizer tokenizer, CacheManager translator) {
-		this.tokenizer  = tokenizer;
-		this.translator = translator;
-		
+	public IndexManager(String indexID, Integer instanceID) {
+		this.indexID    = indexID;
 		this.instanceID = instanceID;
-		this.indexPath  = INDEX_PATH + "/" + indexID;
+		this.tokenizer  = null;
+		this.translator = null;
+		
+		this.indexPath   = INDEX_PATH + "/" + indexID;
 		this.datFilePath = indexPath + "/" + instanceID;
 		
 		// Create directory structure
@@ -65,30 +67,52 @@ public class IndexManager implements Serializable, Flushable{
 
 	/**
 	 * Merges two indices using api
-	 * @param idx1 First index to merge
-	 * @param idx2 Second index to merge
-	 * @throws Exception 
+	 * @param index2 Second index to merge
+	 * @param batchSize is the batch size to set flush interval
+	 * @param deleteOnMerge specifies to delete old indices after merge
+	 * @throws Throwable 
 	 */
-	public void mergeIndices(IndexManager idx1, IndexManager idx2) throws Exception{
-		this.fieldSet.addAll(idx1.fieldSet);
+	public IndexManager mergeIndices(Integer index2, Integer batchSize, Boolean deleteOnMerge) throws Throwable{
+		Integer newIdxID = translator.getNextIndexID();
+		
+		IndexManager idxM = new IndexManager(this.indexID, newIdxID);
+		IndexManager idx2 = new IndexManager(this.indexID, index2  );
+		
+		this.fieldSet.addAll(this.fieldSet);
 		this.fieldSet.addAll(idx2.fieldSet);
 		
+		Integer i = 0;
 		for(String field: this.fieldSet){
-			CatalogManager cm = this.getCatalogManager(field);
+			CatalogManager cm = idxM.getCatalogManager(field);
 			
 			Set<String> terms = new HashSet<String>();
-			terms.addAll(idx1.getTerms(field));
+			terms.addAll(this.getTerms(field));
 			terms.addAll(idx2.getTerms(field));
 			
 			for(String term: terms){
-				Map<String, DocInfo> docsInfo1 = idx1.getTermPositionVector(field, term);
+				Map<String, DocInfo> docsInfo1 = this.getTermPositionVector(field, term);
 				Map<String, DocInfo> docsInfo2 = idx2.getTermPositionVector(field, term);
 				
 				docsInfo1.putAll(docsInfo2);
+				idxM.setTermPositionVector(field, term, docsInfo1);
 				
-				cm.putData(term, docsInfo1);
+				// flush data periodically
+				if(++i >= batchSize){
+					i = 0;
+					cm.flush();
+				}
 			}
+			cm.flush();
 		}
+		translator.setLastStableIndexID(newIdxID);
+		idxM.setCacheManager(this.translator)
+			.setTokenizer(this.tokenizer)
+			.fieldSet = this.fieldSet;
+		
+		idx2.finalize(deleteOnMerge);
+		this.finalize(deleteOnMerge);
+		
+		return idxM;
 	}
 	
 	
@@ -112,6 +136,17 @@ public class IndexManager implements Serializable, Flushable{
 	 */
 	public Map<String, DocInfo> getTermPositionVector(String field, String term) throws Exception{
 		return this.getCatalogManager(field).readEntry(term);
+	}
+	
+	/**
+	 * Sets the term position vector
+	 * @param field is the field to search for
+	 * @param term is the term to search for
+	 * @param docsInfo vector to set
+	 * @throws Exception
+	 */
+	private void setTermPositionVector(String field, String term, Map<String, DocInfo> docsInfo) throws Exception{
+		this.getCatalogManager(field).putData(term, docsInfo);
 	}
 	
 	/**
@@ -147,8 +182,29 @@ public class IndexManager implements Serializable, Flushable{
 		}
 	}
 	
+	
 	// ----------------------------------------------------------------
 
+	/**
+	 * Sets the cache manager for the index
+	 * @param cacheManager is the cache manager to set
+	 * @return IndexManager
+	 */
+	public IndexManager setCacheManager(CacheManager cacheManager){
+		this.translator = cacheManager;
+		return this;
+	}
+	
+	/**
+	 * Sets the tokenizer for the index
+	 * @param tokenizer is the tokenizer to set
+	 * @return
+	 */
+	public IndexManager setTokenizer(Tokenizer tokenizer){
+		this.tokenizer = tokenizer;
+		return this;
+	}
+	
 	/**
 	 * Gets list of fields indexed
 	 * @return List of field names
@@ -202,5 +258,15 @@ public class IndexManager implements Serializable, Flushable{
 		
 		this.catalogMap.put(field, result);
 		return result;
+	}
+	
+	/**
+	 * Finalizeses the object forcefully deleting any files associated with it
+	 * @param deleteFiles specifies to delete index files from hard disk
+	 */
+	public final void finalize(Boolean deleteFiles) throws IOException, Throwable{
+		for(String field : this.fieldSet){
+			this.getCatalogManager(field).finalize(deleteFiles);
+		}
 	}
 }

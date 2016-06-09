@@ -2,12 +2,10 @@ package com.ir.homework.hw2.indexers;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.Flushable;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -15,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,12 +25,13 @@ import java.util.Map.Entry;
 
 import com.ir.homework.hw2.cache.CacheManager;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
+import static com.ir.homework.hw2.Constants.*;
 
 import java.util.Set;
 
 public class CatalogManager implements Serializable, Flushable{
 	private static final long serialVersionUID = 1L;
-	private static final Integer MAX_DOCS_PER_TERM = 1000;
+	private static final Integer MAX_DOCS_PER_TERM = Integer.MAX_VALUE;
 	
 	private Tokenizer    tokenizer;
 	private CacheManager translator;
@@ -206,11 +204,13 @@ public class CatalogManager implements Serializable, Flushable{
 		for(Entry<String, Map<String, DocInfo>> termDoc : termDocsMap.entrySet()){
 			try {
 				this.writeEntry(termDoc.getKey(), termDoc.getValue());
-				this.termDocsMap = new HashMap<String, Map<String, DocInfo>>();
-			} catch (Exception e) {e.printStackTrace();}
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new IOException();
+			}
 		}
-		this.datFileWr.close();
-		this.writeCatalog();
+
+		this.termDocsMap = new HashMap<String, Map<String, DocInfo>>();
 	}
 	
 	// ------------------------------------------------------------
@@ -223,8 +223,8 @@ public class CatalogManager implements Serializable, Flushable{
 	 */
 	private void writeEntry(String term, Map<String, DocInfo> docInfoMap) throws Exception{
 		// Raises an exception for overwriting an existing term in catalog
-		//if(this.catalogMap.containsKey(term)) 
-		//	throw (new Exception("Cannot overrite an existing entry for term: " + term));
+		if(this.catalogMap.containsKey(term)) 
+			throw (new Exception("Cannot overrite an existing entry for term: " + term));
 		
 		
 		// convert data to byte buffer
@@ -233,7 +233,13 @@ public class CatalogManager implements Serializable, Flushable{
 		
 		Integer ctr = 0;	
 		for(Entry<String, DocInfo> docInfo : this.sortByValue(docInfoMap, false)){
-			buffer.append(docInfo.getKey()).append(":");
+			String docID = docInfo.getKey();
+			try{
+				if(ENABLE_FULL_DOC_ID)
+					docID = translator.translateDocID(Integer.parseInt(docID));
+			}catch(NumberFormatException e){}
+			
+			buffer.append(docID).append(":");
 			
 			//List<Long> posList = docInfo.getValue().docPos;
 			//Long sortedPos[] = new Long[posList.size()];
@@ -252,6 +258,7 @@ public class CatalogManager implements Serializable, Flushable{
 			
 			// break the loop if max limit of docs is reached
 			if(++ctr > MAX_DOCS_PER_TERM) break;
+			
 		}
 		buffer.append("\n");
 		
@@ -280,7 +287,7 @@ public class CatalogManager implements Serializable, Flushable{
 		// Return if no catalog file is present
 		if(! Files.exists(Paths.get(catFileName))) return;
 		
-		BufferedReader catFile = new BufferedReader(new InputStreamReader(new FileInputStream(catFileName)));
+		BufferedReader catFile = new BufferedReader(new FileReader(catFileName));
 		
 		String line;
 		while((line=catFile.readLine())!=null){
@@ -299,9 +306,9 @@ public class CatalogManager implements Serializable, Flushable{
 	 * Writes catalog back to file from memory
 	 * @throws IOException
 	 */
-	private void writeCatalog() throws IOException{
+	public void writeCatalog() throws IOException{
 		String catFileName = this.getCatFileName();
-		BufferedWriter catFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(catFileName)));
+		BufferedWriter catFile = new BufferedWriter(new FileWriter(catFileName, true));
 
 		// For each term 
 		for(Entry<String, CatInfo> catInfo: this.catalogMap.entrySet()){
@@ -366,11 +373,26 @@ public class CatalogManager implements Serializable, Flushable{
 	
 	@Override
 	public void finalize() throws Throwable{
+		// Write catalog back to file
+		this.datFileRW.close();
+		try{
+			this.datFileWr.close();
+		}catch(Exception e){}
+	}
+	
+	/**
+	 * Finalizeses the object forcefully deleting any files associated with it
+	 * @param deleteFiles specifies to delete index files from hard disk
+	 */
+	public final void finalize(Boolean deleteFiles) throws IOException, Throwable{
+		//System.out.println("Finalizing catalog..." + this.datFilePath + "/" + this.fieldName);
 		this.datFileRW.close();
 		
-		// Write catalog back to file
-		//this.writeCatalog();
-		
-		super.finalize();
+		if(!deleteFiles) this.writeCatalog();
+		try{
+			this.datFileWr.close();
+		} catch(Exception e){}
+
+		this.deleteIndex(deleteFiles);
 	}
 }
