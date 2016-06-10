@@ -361,6 +361,13 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		return Math.log(result);
 	}
 	
+	@Override
+	public Map<String, List<Long>> getPositionVector(String term){
+		return null;
+	}
+	
+	// ----------------------------------------------------------------
+	
 	public static void main(String arg[]) throws IOException, InterruptedException, ExecutionException{
 		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
 				.setClusterName(CLUSTER_NAME)

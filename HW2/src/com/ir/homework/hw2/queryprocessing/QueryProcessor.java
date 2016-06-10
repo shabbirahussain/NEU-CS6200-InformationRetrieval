@@ -2,9 +2,16 @@ package com.ir.homework.hw2.queryprocessing;
 
 import static com.ir.homework.hw2.Constants.INDEX_ID;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import com.ir.homework.hw2.indexers.IndexManager;
+import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
 import com.ir.homework.hw2.indexers.CatalogManager.TermInfo;
 import com.ir.homework.hw2.metainfo.MetaInfoController;
 
@@ -50,6 +57,40 @@ public class QueryProcessor {
 			termInfo.merge(im.getTermInfo(this.fieldName, term));
 		}
 		return termInfo;
+	}
+	
+	/**
+	 * Gets the vocabulary in the index 
+	 * @return Set containing vocab of the index
+	 * @throws IOException 
+	 */
+	public Set<String> getVocab() throws IOException{
+		List<Integer> indices = metaSynchronizer.getUsableIndices();
+		if(indices.isEmpty()) return null;
+		
+		Set<String> result = new HashSet<String>();
+		
+		for(int i=0; i<indices.size(); i++){
+			IndexManager im = metaSynchronizer.getIndexManager(indices.get(i));
+			result.addAll(im.getTerms(this.fieldName));
+		}
+		return result;
+	}
+	
+	/**
+	 * Fetches the position vector of a term
+	 * @param term is the term to search for
+	 * @return Term information wrapped in an object
+	 * @throws Exception 
+	 */
+	public Map<String, List<Long>> getPositionVector(String term) throws Exception{
+		Map<String, List<Long>> result = new HashMap<String, List<Long>>();
+		
+		for(Entry<String, DocInfo> e : this.fetchData(term).docsInfo.entrySet()){
+			result.put(e.getKey(), e.getValue().docPos);
+		};
+		
+		return result;
 	}
 	
 }

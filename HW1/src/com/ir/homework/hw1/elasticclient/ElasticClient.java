@@ -127,12 +127,19 @@ public interface ElasticClient {
 	 * @param term to search for
 	 * @return Total background probability
 	 */
-	Double getBGProbability(String term);
+	public Double getBGProbability(String term);
 
 	/**
 	 * Gets total number of times a term occurs in the corpus
 	 * @param term to search for
 	 * @return Number of times term is observed from index
 	 */
-	Long getTotalTermCount(String term);
+	public Long getTotalTermCount(String term);
+	
+	/**
+	 * Gets position vector map of a term. A position vector is list of indices a term occures in a document.
+	 * @param term to search for
+	 * @return Number of times term is observed from index
+	 */
+	public Map<String, List<Long>> getPositionVector(String term);
 }

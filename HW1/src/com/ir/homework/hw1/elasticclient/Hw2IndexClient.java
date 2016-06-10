@@ -25,7 +25,7 @@ import com.ir.homework.hw2.queryprocessing.QueryProcessor;
 public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
 	private static final long serialVersionUID = 1L;
 	
-	QueryProcessor queryProcessor;
+	private QueryProcessor queryProcessor;
 	
 	/**
 	 * Default constructor
@@ -81,6 +81,25 @@ public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
 		}catch(Exception e) {e.printStackTrace();}
 		
 		return result.longValue();
+	}
+	
+	@Override
+	public Long getVocabSize(){
+		Long result = null;
+		try {
+			result = ((Integer)queryProcessor.getVocab().size()).longValue();
+		} catch (IOException e) {e.printStackTrace();}
+		
+		return result;
+	}
+	
+	@Override
+	public Map<String, List<Long>> getPositionVector(String term){
+		Map<String, List<Long>> result = null;
+		try {
+			result = queryProcessor.getPositionVector(term);
+		} catch (Exception e) {e.printStackTrace();}
+		return result;
 	}
 
 }

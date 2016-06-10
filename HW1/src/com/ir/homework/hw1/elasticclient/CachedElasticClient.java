@@ -217,6 +217,11 @@ public class CachedElasticClient implements ElasticClient{
 		return termStatsMap.get(term).totTermCnt;
 	}
 	
+	@Override
+	public Map<String, List<Long>> getPositionVector(String term){
+		return this.searchClient.getPositionVector(term);
+	}
+	
 	//  ==========================================================
 
 	@Override
