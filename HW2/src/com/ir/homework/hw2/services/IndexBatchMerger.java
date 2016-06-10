@@ -41,7 +41,7 @@ public class IndexBatchMerger implements Runnable {
 				System.out.println("Batch merge session started...");
 				
 				mergeIndices();
-				//metaSynchronizer.save();
+				metaSynchronizer.save();
 				
 				System.out.println("Batch merge service sleeping...");
 				Thread.sleep(REFRESH_INTERVAL);
@@ -56,7 +56,7 @@ public class IndexBatchMerger implements Runnable {
 	 */
 	private void mergeIndices() throws Throwable{
 		List<Integer> oldUsableIndices = new LinkedList<Integer>(metaSynchronizer.getUsableIndices());
-		if(oldUsableIndices.isEmpty()) return;
+		if(oldUsableIndices.size()<MAX_ACTIVE_INDICES) return;
 		
 		IndexManager masterIM = metaSynchronizer.getIndexManager(oldUsableIndices.remove(0));
 		for(Integer idxId : oldUsableIndices){

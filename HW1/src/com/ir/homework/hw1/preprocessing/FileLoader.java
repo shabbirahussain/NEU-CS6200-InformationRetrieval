@@ -71,10 +71,9 @@ final class FileLoader {
 					StringBuilder TEXT = new StringBuilder();
 					for(int j=0; j<texts.getLength(); j++){
 						TEXT = TEXT.append(" "); 
-						TEXT = TEXT.append(elem.getElementsByTagName("text" )
-								.item(j)
-								.getTextContent()
-								.trim());
+						TEXT = TEXT.append(texts.item(j)
+									.getTextContent()
+									.trim());
 					}
 					
 					XContentBuilder builder = jsonBuilder()

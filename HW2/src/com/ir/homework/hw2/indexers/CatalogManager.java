@@ -41,7 +41,7 @@ public class CatalogManager implements Serializable, Flushable{
 	private FileChannel  datFileWr;
 	
 	private Map<String, CatInfo> catalogMap;
-	private Map<String, Map<String, DocInfo>> termDocsMap;
+	private Map<String, TermInfo> termInfoMap;
 	
 	public class TermInfo implements Serializable{
 		private static final long serialVersionUID = 1L;
@@ -74,6 +74,11 @@ public class CatalogManager implements Serializable, Flushable{
 				this.merge(d);
 			}
 			return this;
+		}
+		
+		@Override
+		public String toString(){
+			return this.docsInfo.toString();
 		}
 	}
 	
@@ -127,7 +132,7 @@ public class CatalogManager implements Serializable, Flushable{
 		this.metaSynchronizer  = metaSynchronizer;
 		
 		this.catalogMap  = new HashMap<String, CatInfo>();
-		this.termDocsMap = new HashMap<String, Map<String, DocInfo>>();
+		this.termInfoMap = new HashMap<String, TermInfo>();
 
 		this.loadCatMap();
 		this.openIndexStreams();
@@ -215,7 +220,8 @@ public class CatalogManager implements Serializable, Flushable{
 		for(Integer i=0; i<terms.size(); i++){
 			String term = terms.get(i);
 			
-			docsInfo = this.termDocsMap.getOrDefault(term, (new HashMap<String, DocInfo>()));
+			TermInfo termInfo = this.termInfoMap.getOrDefault(term, (new TermInfo()));
+			docsInfo = termInfo.docsInfo;
 			docInfo  = docsInfo.getOrDefault(docID, (new DocInfo()));
 			
 			// add current position to map
@@ -223,7 +229,8 @@ public class CatalogManager implements Serializable, Flushable{
 				
 			// Store data back
 			docsInfo.put(docID, docInfo);
-			this.termDocsMap.put(term, docsInfo);
+			termInfo.docsInfo = docsInfo;
+			this.termInfoMap.put(term, termInfo);
 		}
 	}
 	
@@ -231,9 +238,10 @@ public class CatalogManager implements Serializable, Flushable{
 	 * Loads processed term data into map
 	 * @param term is the given term to load
 	 * @param docsInfo is the statistics to be loaded into index
+	 * @return TermInfo
 	 */
-	public void putData(String term, Map<String, DocInfo> docsInfo){
-		this.termDocsMap.put(term, docsInfo);
+	public TermInfo putEntry(String term, TermInfo termInfo){
+		return this.termInfoMap.put(term, termInfo);
 	}
 	
 	@Override
@@ -241,16 +249,16 @@ public class CatalogManager implements Serializable, Flushable{
 		Path datFilePath = Paths.get(this.getDatFileName());
 		this.datFileWr = FileChannel.open(datFilePath, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
 		
-		for(Entry<String, Map<String, DocInfo>> termDoc : termDocsMap.entrySet()){
+		for(Entry<String, TermInfo> termInfo : this.termInfoMap.entrySet()){
 			try {
-				this.writeEntry(termDoc.getKey(), termDoc.getValue());
+				this.writeEntry(termInfo.getKey(), termInfo.getValue().docsInfo);
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new IOException();
 			}
 		}
 
-		this.termDocsMap = new HashMap<String, Map<String, DocInfo>>();
+		this.termInfoMap = new HashMap<String, TermInfo>();
 	}
 	
 	// ------------------------------------------------------------

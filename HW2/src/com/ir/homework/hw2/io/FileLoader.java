@@ -7,6 +7,7 @@ import static com.ir.homework.hw2.Constants.BATCH_SIZE;
 import static com.ir.homework.hw2.Constants.DATA_FILE_PREFIX;
 import static com.ir.homework.hw2.Constants.DATA_PATH;
 import static com.ir.homework.hw2.Constants.DONE_FILE_SUFFIX;
+import static com.ir.homework.hw2.Constants.FIELDS_TO_LOAD;
 
 import java.io.File;
 import java.io.IOException;
@@ -95,27 +96,18 @@ public class FileLoader {
 					.trim()
 					.toUpperCase();
 			
-			org.w3c.dom.NodeList texts = elem.getElementsByTagName("text");
-			StringBuilder text = new StringBuilder();
-			for(int j=0; j<texts.getLength(); j++){
-				text = text.append(" "); 
-				text = text.append(elem.getElementsByTagName("text" )
-						.item(j)
-						.getTextContent()
-						.trim());
-			}
-			dataMap.put("TEXT", text.toString());
 			
-			org.w3c.dom.NodeList heads = elem.getElementsByTagName("head");
-			StringBuilder head = new StringBuilder();
-			for(int j=0; j<heads.getLength(); j++){
-				head = head.append(" "); 
-				head = head.append(elem.getElementsByTagName("head" )
-						.item(j)
-						.getTextContent()
-						.trim());
+			for(String fieldName : FIELDS_TO_LOAD){
+				org.w3c.dom.NodeList texts = elem.getElementsByTagName(fieldName);
+				StringBuilder text = new StringBuilder();
+				for(int j=0; j<texts.getLength(); j++){
+					text = text.append(" "); 
+					text = text.append(texts.item(j)
+								.getTextContent()
+								.trim());
+				}
+				dataMap.put(fieldName.toUpperCase(), text.toString());
 			}
-			dataMap.put("HEAD", head.toString());
 			
 			client.putData(DOCNO, dataMap, tokenizer);
 		}

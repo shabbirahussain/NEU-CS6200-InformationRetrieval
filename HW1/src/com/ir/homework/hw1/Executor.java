@@ -46,6 +46,7 @@ public final class Executor {
 				.setTypes(INDEX_TYPE)
 				.setLimit(MAX_RESULTS)
 				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
+				.setCustomFetch(ENABLE_HW2_CLIENT)
 				.setField(TEXT_FIELD_NAME);
 		
 		if(ENABLE_PERSISTENT_CACHE){

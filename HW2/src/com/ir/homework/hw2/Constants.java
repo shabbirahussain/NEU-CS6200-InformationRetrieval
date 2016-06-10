@@ -13,6 +13,7 @@ public final class Constants {
 	
 
 	public static final Integer BATCH_SIZE = 3000;
+	public static final Integer MAX_ACTIVE_INDICES = 3;
 	public static final Boolean ENABLE_STEMMING = true;
 	public static final Boolean ENABLE_STOPWORD_FILTER = true;
 	public static final Boolean ENABLE_FULL_DOC_ID = true;
@@ -22,6 +23,7 @@ public final class Constants {
 	public static final String DONE_FILE_SUFFIX = ".done";
 	public static final String TOKENIZER_REGEXP = "(\\w+(\\.?\\w+)*)";
 	
+	public static final String FIELDS_TO_LOAD[] = {"text", "head"};
 	// Word assosiations
 	
 	
@@ -29,22 +31,7 @@ public final class Constants {
 	public static final Integer PORT = 9300;
 	public static final String  CLUSTER_NAME = "dead-pool";
 	
-	public static final String INDEX_NAME = "ap_dataset";
-	public static final String INDEX_TYPE = "document";
-	
-	public static final Boolean ENABLE_BULK_INSERT = false;
-	public static final Boolean ENABLE_PERSISTENT_CACHE = true;
-	public static final Boolean ENABLE_SILENT_MODE = false;
-	public static final Boolean ENABLE_PSEUDO_FEEDBACK = true;
-	public static final Boolean ENABLE_ADD_NORMALIZATION = true;
-	public static final Boolean ENABLE_FULL_TREC_OUTPUT = false;
-	
-	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
-	
 	public static final Integer MAX_RESULTS = 40000; 
 	public static final Integer MAX_RESULTS_OUTPUT = 1000;
 	
-	public static final String TEXT_FIELD_NAME = "TEXT";
-	
-
 }

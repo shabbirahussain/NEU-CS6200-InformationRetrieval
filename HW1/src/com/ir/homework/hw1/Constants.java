@@ -38,6 +38,8 @@ public final class Constants {
 	public static final Boolean ENABLE_ADD_NORMALIZATION = true;
 	public static final Boolean ENABLE_FULL_TREC_OUTPUT = false;
 	
+	public static final Boolean ENABLE_HW2_CLIENT = true;
+	
 	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
 	
 	public static final Integer MAX_RESULTS = 40000; 

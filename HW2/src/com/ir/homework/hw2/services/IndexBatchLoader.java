@@ -72,7 +72,7 @@ public class IndexBatchLoader implements Runnable {
 					
 					fileLader.loadFiles(indexManager);
 					metaSynchronizer.setUsable(idxVer);
-					//metaSynchronizer.save();
+					metaSynchronizer.save();
 				}
 				
 				System.out.println("Batch load sleeping...");

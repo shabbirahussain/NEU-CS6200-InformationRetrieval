@@ -72,8 +72,8 @@ public class IndexManager implements Serializable, Flushable{
 	public IndexManager mergeIndices(Integer index2, Integer batchSize) throws Throwable{
 		Integer newIdxID = metaSynchronizer.getNextIndexID();
 		
-		IndexManager idxM = new IndexManager(this.indexID, newIdxID, metaSynchronizer);
-		IndexManager idx2 = new IndexManager(this.indexID, index2  , metaSynchronizer);
+		IndexManager idxM = metaSynchronizer.getIndexManager(newIdxID);// new IndexManager(this.indexID, newIdxID, metaSynchronizer);
+		IndexManager idx2 = metaSynchronizer.getIndexManager(index2);  //new IndexManager(this.indexID, index2  , metaSynchronizer);
 		
 		this.fieldSet.addAll(this.fieldSet);
 		this.fieldSet.addAll(idx2.fieldSet);
@@ -87,26 +87,21 @@ public class IndexManager implements Serializable, Flushable{
 			terms.addAll(idx2.getTerms(field));
 			
 			for(String term: terms){
-				Map<String, DocInfo> docsInfo1 = this.getTermPositionVector(field, term);
-				Map<String, DocInfo> docsInfo2 = idx2.getTermPositionVector(field, term);
-				
-				docsInfo1.putAll(docsInfo2);
-				idxM.setTermPositionVector(field, term, docsInfo1);
-				
+				idxM.setTermInfo(field, term, 
+						this.getTermInfo(field, term)
+						.merge(idx2.getTermInfo(field, term)));
+
 				// flush data periodically
-				if(++i >= batchSize){
-					i = 0;
-					cm.flush();
-				}
+				if(++i >= batchSize){i = 0; cm.flush();}
 			}
 			cm.flush();
 		}
 
 		idxM.fieldSet = this.fieldSet;
-		
+
+		metaSynchronizer.setUsable(idxM.version);
 		metaSynchronizer.setUnUsable(this.version);
 		metaSynchronizer.setUnUsable(idx2.version);
-		metaSynchronizer.setUsable(idxM.version);
 		
 		this.deleteIndex(true);
 		idx2.deleteIndex(true);
@@ -149,14 +144,15 @@ public class IndexManager implements Serializable, Flushable{
 	// -------------------- Setters -----------------------------------
 	
 	/**
-	 * Sets the term position vector
+	 * Sets the term info 
 	 * @param field is the field to search for
 	 * @param term is the term to search for
-	 * @param docsInfo vector to set
-	 * @throws Exception
+	 * @return Doc info wrapper object
+	 * @throws Exception 
 	 */
-	private void setTermPositionVector(String field, String term, Map<String, DocInfo> docsInfo) throws Exception{
-		this.getCatalogManager(field).putData(term, docsInfo);
+	public TermInfo setTermInfo(String field, String term, TermInfo termInfo) throws Exception{
+		return this.getCatalogManager(field)
+				.putEntry(term, termInfo);
 	}
 	
 	/**

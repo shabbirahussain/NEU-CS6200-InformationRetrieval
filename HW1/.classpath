@@ -16,5 +16,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/NEU-CS6200-InformationRetrieval-HW2"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

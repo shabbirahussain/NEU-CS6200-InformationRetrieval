@@ -88,7 +88,7 @@ public class MetaInfoController implements Saveable {
 	 * Saves underlying model
 	 */
 	public synchronized void save(){
-		this.model.save();
+		model.save();
 	}
 }
 
