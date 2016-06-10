@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
+import com.ir.homework.hw2.indexers.CatalogManager.TermInfo;
 import com.ir.homework.hw2.metainfo.MetaInfoController;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 import static com.ir.homework.hw2.Constants.*;
@@ -133,15 +134,17 @@ public class IndexManager implements Serializable, Flushable{
 	}
 	
 	/**
-	 * Term frequency vector is retrieved from catalog and data file of this instance
+	 * Reads the term info 
 	 * @param field is the field to search for
 	 * @param term is the term to search for
 	 * @return Doc info wrapper object
 	 * @throws Exception 
 	 */
-	public Map<String, DocInfo> getTermPositionVector(String field, String term) throws Exception{
-		return this.getCatalogManager(field).readEntry(term);
+	public TermInfo getTermInfo(String field, String term) throws Exception{
+		return this.getCatalogManager(field)
+				.readEntry(term);
 	}
+	
 	
 	// -------------------- Setters -----------------------------------
 	
@@ -192,6 +195,18 @@ public class IndexManager implements Serializable, Flushable{
 	
 	
 	// ----------------------------------------------------------------
+	/**
+	 * Term frequency vector is retrieved from catalog and data file of this instance
+	 * @param field is the field to search for
+	 * @param term is the term to search for
+	 * @return Doc info wrapper object
+	 * @throws Exception 
+	 */
+	private Map<String, DocInfo> getTermPositionVector(String field, String term) throws Exception{
+		return this.getCatalogManager(field)
+				.readEntry(term)
+				.docsInfo;
+	}
 	
 	/**
 	 * Gets list of fields indexed

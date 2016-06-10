@@ -41,6 +41,7 @@ public class IndexBatchMerger implements Runnable {
 				System.out.println("Batch merge session started...");
 				
 				mergeIndices();
+				//metaSynchronizer.save();
 				
 				System.out.println("Batch merge service sleeping...");
 				Thread.sleep(REFRESH_INTERVAL);

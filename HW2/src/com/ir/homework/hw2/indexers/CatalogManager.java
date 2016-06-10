@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,6 +42,40 @@ public class CatalogManager implements Serializable, Flushable{
 	
 	private Map<String, CatInfo> catalogMap;
 	private Map<String, Map<String, DocInfo>> termDocsMap;
+	
+	public class TermInfo implements Serializable{
+		private static final long serialVersionUID = 1L;
+		public Map<String, DocInfo> docsInfo;
+		
+		/**
+		 * Default constructor
+		 */
+		public TermInfo(){
+			docsInfo = new HashMap<String, DocInfo>();
+		}
+		
+		/**
+		 * Merges information from another term info object
+		 * @param i2 is the other term info object to be merged
+		 * @return Merged information object
+		 */
+		public TermInfo merge(TermInfo i2){
+			this.docsInfo.putAll(i2.docsInfo);
+			return this;
+		}
+		
+		/**
+		 * Merges information from another term info object
+		 * @param info is the collection of other term info object to be merged
+		 * @return Merged information object
+		 */
+		public TermInfo mergeAll(Collection<TermInfo> info){
+			for(TermInfo d : info){
+				this.merge(d);
+			}
+			return this;
+		}
+	}
 	
 	/**
 	 * Stores document information for every term in the reverse index
@@ -104,11 +139,11 @@ public class CatalogManager implements Serializable, Flushable{
 	 * @return Map of document and information stored in index
 	 * @throws Exception is thrown for IOException or ArrayIndexOutOfBounds when file underlying is corrupted
 	 */
-	public Map<String, DocInfo> readEntry(String term) throws Exception{
+	public TermInfo readEntry(String term) throws Exception{
 		CatInfo catInfo = this.catalogMap.get(term);
-		if(catInfo == null) return (new HashMap<String, DocInfo>());
+		if(catInfo == null) return (new TermInfo());
 		
-		Map<String, DocInfo> result = new HashMap<String, DocInfo>();
+		Map<String, DocInfo> docInfoMap = new HashMap<String, DocInfo>();
 		
 		// Read from file 
 		Long    position = catInfo.offset;
@@ -133,8 +168,12 @@ public class CatalogManager implements Serializable, Flushable{
 				value.docPos.add(currPos);
 				prevPos = currPos;
 			}
-			result.put(key, value);
+			docInfoMap.put(key, value);
 		}
+		
+		TermInfo result = new TermInfo();
+		result.docsInfo = docInfoMap;
+		
 		return result;
 	}
 		
