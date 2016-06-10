@@ -143,9 +143,16 @@ public class MetaInfoModel implements Serializable{
 		return this.getModel(indexID);
 	}
 	
-	@Override
-	public void finalize(){
+	/**
+	 * Saves the model to the hard drive
+	 */
+	public void save(){
 		System.out.println("Saving object...");
 		ObjectStore.saveObject(this.models);
+	}
+	
+	@Override
+	public void finalize(){
+		save();
 	}
 }

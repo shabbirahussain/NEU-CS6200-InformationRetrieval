@@ -6,13 +6,14 @@ package com.ir.homework.hw2.metainfo;
 import java.util.List;
 
 import com.ir.homework.hw2.indexers.IndexManager;
+import com.ir.homework.hw2.io.Saveable;
 
 /**
  * Used for thread synchronization
  * @author shabbirhussain
  *
  */
-public class MetaInfoController {
+public class MetaInfoController implements Saveable {
 	private String  indexID;
 	private static MetaInfoModel model = new MetaInfoModel();
 	/**
@@ -79,9 +80,15 @@ public class MetaInfoController {
 	 * @param idxVer is the version of index
 	 * @return IndexManager
 	 */
-	public IndexManager getIndexManager(Integer idxVer){
+	public synchronized IndexManager getIndexManager(Integer idxVer){
 		return new IndexManager(this.indexID, idxVer, this);
 	}
 
+	/**
+	 * Saves underlying model
+	 */
+	public synchronized void save(){
+		this.model.save();
+	}
 }
 
