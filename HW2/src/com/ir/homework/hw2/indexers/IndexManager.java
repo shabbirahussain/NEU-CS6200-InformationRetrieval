@@ -19,7 +19,6 @@ import java.util.Set;
 
 import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
 import com.ir.homework.hw2.metainfo.MetaInfoController;
-import com.ir.homework.hw2.metainfo.MetaInfoControllers;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 import static com.ir.homework.hw2.Constants.*;
 
@@ -30,12 +29,12 @@ import static com.ir.homework.hw2.Constants.*;
 public class IndexManager implements Serializable, Flushable{
 	// Serialization version ID
 	private static final long serialVersionUID = 1L;
-	
-	private String indexID;
-	private Tokenizer    tokenizer;
-	private Integer instanceID;
-	private String  datFilePath;
-	private String  indexPath;
+
+	private MetaInfoController metaSynchronizer;
+	private String    indexID;
+	private Integer   version;
+	private String    datFilePath;
+	private String    indexPath;
 	
 	public Set<String> fieldSet;
 	private Map<String, CatalogManager>  catalogMap;
@@ -46,13 +45,13 @@ public class IndexManager implements Serializable, Flushable{
 	 * @param instanceID is the unique identifier of instance or thread
 	 * @param tokenizer tokenizer used for current index
 	 */
-	public IndexManager(String indexID, Integer instanceID) {
-		this.indexID    = indexID;
-		this.instanceID = instanceID;
-		this.tokenizer  = null;
+	public IndexManager(String indexID, Integer version, MetaInfoController metaSynchronizer) {
+		this.indexID   = indexID;
+		this.version   = version;
+		this.metaSynchronizer = metaSynchronizer;
 		
 		this.indexPath   = INDEX_PATH + "/" + indexID;
-		this.datFilePath = indexPath + "/" + instanceID;
+		this.datFilePath = indexPath + "/" + version;
 		
 		// Create directory structure
 		(new File(indexPath)).mkdirs();
@@ -65,16 +64,15 @@ public class IndexManager implements Serializable, Flushable{
 
 	/**
 	 * Merges two indices using api
-	 * @param index2 Second index to merge
+	 * @param index2 Second index version number to merge
 	 * @param batchSize is the batch size to set flush interval
-	 * @param deleteOnMerge specifies to delete old indices after merge
 	 * @throws Throwable 
 	 */
-	public IndexManager mergeIndices(Integer index2, Integer batchSize, Boolean deleteOnMerge) throws Throwable{
-		Integer newIdxID = MetaInfoControllers.getNextIndexID(this.indexID);
+	public IndexManager mergeIndices(Integer index2, Integer batchSize) throws Throwable{
+		Integer newIdxID = metaSynchronizer.getNextIndexID();
 		
-		IndexManager idxM = new IndexManager(this.indexID, newIdxID);
-		IndexManager idx2 = new IndexManager(this.indexID, index2  );
+		IndexManager idxM = new IndexManager(this.indexID, newIdxID, metaSynchronizer);
+		IndexManager idx2 = new IndexManager(this.indexID, index2  , metaSynchronizer);
 		
 		this.fieldSet.addAll(this.fieldSet);
 		this.fieldSet.addAll(idx2.fieldSet);
@@ -102,13 +100,16 @@ public class IndexManager implements Serializable, Flushable{
 			}
 			cm.flush();
 		}
+
+		idxM.fieldSet = this.fieldSet;
 		
-		idxM.setTokenizer(this.tokenizer)
-			.fieldSet = this.fieldSet;
+		metaSynchronizer.setUnUsable(this.version);
+		metaSynchronizer.setUnUsable(idx2.version);
+		metaSynchronizer.setUsable(idxM.version);
 		
-		idx2.finalize(deleteOnMerge);
-		this.finalize(deleteOnMerge);
-		
+		this.deleteIndex(true);
+		idx2.deleteIndex(true);
+
 		return idxM;
 	}
 	
@@ -128,7 +129,7 @@ public class IndexManager implements Serializable, Flushable{
 	 * @return Unique instance identifier
 	 */
 	public Integer getInstanceID(){
-		return this.instanceID;
+		return this.version;
 	}
 	
 	/**
@@ -159,14 +160,15 @@ public class IndexManager implements Serializable, Flushable{
 	 * Writes index to the internal buffer
 	 * @param docID is the document id to be indexed
 	 * @param data is the data to be indexed in terms of fields and values
+	 * @param tokenizer is the tokenizer to be used to parse the data
 	 * @throws IOException
 	 */
-	public final void putData(String docID, Map<String, String> data) throws IOException{
+	public final void putData(String docID, Map<String, String> data, Tokenizer tokenizer) throws IOException{
 		for(Entry<String, String> fieldDat : data.entrySet()){
 			this.fieldSet.add(fieldDat.getKey());
 			
 			CatalogManager cm = this.getCatalogManager(fieldDat.getKey());
-			cm.putData(docID, fieldDat.getValue());
+			cm.putData(docID, fieldDat.getValue(), tokenizer);
 		}
 	}
 	
@@ -177,7 +179,7 @@ public class IndexManager implements Serializable, Flushable{
 	 */
 	public final void deleteIndex(Boolean confirmDelete) throws Throwable{
 		for(String field : this.fieldSet){
-			this.getCatalogManager(field).deleteIndex(confirmDelete);
+			this.getCatalogManager(field).deleteIndex(ENABLE_AUTO_CLEAN); // TODO
 		}
 	}
 	
@@ -192,16 +194,6 @@ public class IndexManager implements Serializable, Flushable{
 	// ----------------------------------------------------------------
 	
 	/**
-	 * Sets the tokenizer for the index
-	 * @param tokenizer is the tokenizer to set
-	 * @return
-	 */
-	public IndexManager setTokenizer(Tokenizer tokenizer){
-		this.tokenizer = tokenizer;
-		return this;
-	}
-	
-	/**
 	 * Gets list of fields indexed
 	 * @return List of field names
 	 */
@@ -212,13 +204,43 @@ public class IndexManager implements Serializable, Flushable{
 		Set<String> result = new HashSet<String>();
 		for(File file: files){
 			String nameSplit[] = file.getName().split("\\.");
-			if(nameSplit.length>1 && nameSplit[0].equals(this.instanceID.toString())){
+			if(nameSplit.length>1 && nameSplit[0].equals(this.version.toString())){
 				result.add(nameSplit[1]);
 			}
 		}
 		return result;
 	}
 	
+	
+	/**
+	 * Fetches a handler for a cataloged index
+	 * @param field is the field name to query
+	 * @return Object of catalog manager
+	 * @throws IOException 
+	 */
+	private final CatalogManager getCatalogManager(String field) throws IOException{
+		CatalogManager result = this.catalogMap.get(field);
+		if(result != null) return result;
+		
+		result = new CatalogManager(field, 
+				this.datFilePath,
+				metaSynchronizer);
+		
+		this.catalogMap.put(field, result);
+		return result;
+	}
+	
+	/**
+	 * Finalizeses the object forcefully deleting any files associated with it
+	 * @param deleteFiles specifies to delete index files from hard disk
+	 */
+	public final void finalize(Boolean deleteFiles) throws IOException, Throwable{
+		for(String field : this.fieldSet){
+			this.getCatalogManager(field).finalize(deleteFiles);
+		}
+	}
+	
+
 	/**
 	 * sorts given map and returns a linked list to print results in sorted order
 	 * @param map is the map to sort
@@ -234,35 +256,5 @@ public class IndexManager implements Serializable, Flushable{
 	          }
 	     });
 	     return list;
-	}
-	
-	//-----------------------------------------------------------------
-	/**
-	 * Fetches a handler for a cataloged index
-	 * @param field is the field name to query
-	 * @return Object of catalog manager
-	 * @throws IOException 
-	 */
-	private final CatalogManager getCatalogManager(String field) throws IOException{
-		CatalogManager result = this.catalogMap.get(field);
-		if(result != null) return result;
-		
-		result = new CatalogManager(field, 
-				this.datFilePath,
-				this.tokenizer, 
-				MetaInfoControllers.getMetaInfoController(this.indexID));
-		
-		this.catalogMap.put(field, result);
-		return result;
-	}
-	
-	/**
-	 * Finalizeses the object forcefully deleting any files associated with it
-	 * @param deleteFiles specifies to delete index files from hard disk
-	 */
-	public final void finalize(Boolean deleteFiles) throws IOException, Throwable{
-		for(String field : this.fieldSet){
-			this.getCatalogManager(field).finalize(deleteFiles);
-		}
 	}
 }

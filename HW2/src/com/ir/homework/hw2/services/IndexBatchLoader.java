@@ -16,7 +16,7 @@ import java.util.Set;
 import com.ir.homework.hw2.indexers.IndexManager;
 import com.ir.homework.hw2.io.FileLoader;
 import com.ir.homework.hw2.io.StopWordReader;
-import com.ir.homework.hw2.metainfo.MetaInfoControllers;
+import com.ir.homework.hw2.metainfo.MetaInfoController;
 import com.ir.homework.hw2.tokenizers.DefaultTokenizer;
 import com.ir.homework.hw2.tokenizers.Tokenizer;
 
@@ -25,10 +25,17 @@ import com.ir.homework.hw2.tokenizers.Tokenizer;
  * @author shabbirhussain
  */
 public class IndexBatchLoader implements Runnable {
-	private static Tokenizer  tokenizer;
-	private static final Long REFRESH_INTERVAL = 1L * 1000L;
-
-	static{
+	private static final Long   REFRESH_INTERVAL = 1L * 1000L;
+	private MetaInfoController  metaSynchronizer;
+	private Tokenizer           tokenizer;
+	
+	/**
+	 * Default constructor
+	 * @param metaSynchronizer is the synchronizer object used for interprocess communication
+	 */
+	public IndexBatchLoader(MetaInfoController metaSynchronizer){
+		this.metaSynchronizer = metaSynchronizer;
+		
 		StopWordReader sr = new StopWordReader(STOP_WORDS_FILE_PATH);
 		Set<String> stopWords = new HashSet<String>();;
 		if(ENABLE_STOPWORD_FILTER)
@@ -41,17 +48,18 @@ public class IndexBatchLoader implements Runnable {
 				.setStemming(ENABLE_STEMMING)
 				.setStopWordsFilter(stopWords);
 	}
+
 	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		(new IndexBatchLoader()).run();
+		(new IndexBatchLoader(new MetaInfoController(INDEX_ID))).run();
 	}
 	
 	@Override
 	public void run() {
-		FileLoader fileLader = new FileLoader();
+		FileLoader fileLader = new FileLoader(tokenizer);
 		try {
 			while(true){
 				System.out.println("Starting new batch load...");
@@ -59,28 +67,17 @@ public class IndexBatchLoader implements Runnable {
 				Integer idxVer = 0;
 				IndexManager indexManager = null;
 				if(fileLader.newFilesAvailable()){
-					idxVer = MetaInfoControllers.getNextIndexID(INDEX_ID);
-					indexManager = getIndexManager(idxVer);
+					idxVer = metaSynchronizer.getNextIndexID();
+					indexManager = metaSynchronizer.getIndexManager(idxVer);
 					
 					fileLader.loadFiles(indexManager);
 
-					MetaInfoControllers.addUsableIndex(INDEX_ID, idxVer);
+					metaSynchronizer.setUsable(idxVer);
 				}
 				
 				System.out.println("Batch load sleeping...");
 				Thread.sleep(REFRESH_INTERVAL);
 			}
 		} catch (Throwable e) {e.printStackTrace();}
-	}
-	
-
-	/**
-	 * Gets the index manager for the given index version
-	 * @param idxVer is the version of index
-	 * @return IndexManager
-	 */
-	private static IndexManager getIndexManager(Integer idxVer){
-		return (new IndexManager(INDEX_ID, idxVer))
-				.setTokenizer(tokenizer);
 	}
 }

@@ -32,9 +32,8 @@ import java.util.Set;
 public class CatalogManager implements Serializable, Flushable{
 	private static final long serialVersionUID = 1L;
 	private static final Integer MAX_DOCS_PER_TERM = Integer.MAX_VALUE;
-	
-	private Tokenizer    tokenizer;
-	private MetaInfoController translator;
+
+	private MetaInfoController metaSynchronizer;
 	private String       datFilePath;
 	private String       fieldName;
 	private FileChannel  datFileRW;
@@ -47,7 +46,8 @@ public class CatalogManager implements Serializable, Flushable{
 	 * Stores document information for every term in the reverse index
 	 * @author shabbirhussain
 	 */
-	public class DocInfo implements Comparable<DocInfo> {
+	public class DocInfo implements Serializable, Comparable<DocInfo> {
+		private static final long serialVersionUID = 1L;
 		public List<Long> docPos;
 		
 		public DocInfo(){
@@ -72,7 +72,8 @@ public class CatalogManager implements Serializable, Flushable{
 	 * Stores catalog info for a term
 	 * @author shabbirhussain
 	 */
-	private class CatInfo{
+	private class CatInfo implements Serializable{
+		private static final long serialVersionUID = 1L;
 		Long    offset;
 		Integer length;
 	}
@@ -85,11 +86,10 @@ public class CatalogManager implements Serializable, Flushable{
 	 * @param translator 
 	 * @throws IOException 
 	 */
-	public CatalogManager(String myName, String  datFilePath, Tokenizer tokenizer, MetaInfoController translator) throws IOException{
+	public CatalogManager(String myName, String  datFilePath, MetaInfoController metaSynchronizer) throws IOException{
 		this.datFilePath = datFilePath;
 		this.fieldName   = myName;
-		this.tokenizer   = tokenizer;
-		this.translator  = translator;
+		this.metaSynchronizer  = metaSynchronizer;
 		
 		this.catalogMap  = new HashMap<String, CatInfo>();
 		this.termDocsMap = new HashMap<String, Map<String, DocInfo>>();
@@ -164,9 +164,10 @@ public class CatalogManager implements Serializable, Flushable{
 	 * Loads data provided in map into the index
 	 * @param docID unique identifier of document
 	 * @param data text data to be indexed
+	 * @param tokenizer is the tokenizer to be used for data parsing
 	 */
-	public void putData(String docID, String data){
-		docID = this.translator.translateDocID(docID).toString();
+	public void putData(String docID, String data, Tokenizer tokenizer){
+		docID = this.metaSynchronizer.translateDocID(docID).toString();
 		Map<String, DocInfo> docsInfo;
 		DocInfo docInfo;
 		
@@ -236,7 +237,7 @@ public class CatalogManager implements Serializable, Flushable{
 			String docID = docInfo.getKey();
 			try{
 				if(ENABLE_FULL_DOC_ID)
-					docID = translator.translateDocID(Integer.parseInt(docID));
+					docID = metaSynchronizer.translateDocID(Integer.parseInt(docID));
 			}catch(NumberFormatException e){}
 			
 			buffer.append(docID).append(":");

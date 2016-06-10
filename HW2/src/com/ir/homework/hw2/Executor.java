@@ -3,30 +3,12 @@
  */
 package com.ir.homework.hw2;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
-
-import com.ir.homework.hw2.indexers.IndexManager;
+import com.ir.homework.hw2.io.FileLoader;
 import com.ir.homework.hw2.metainfo.MetaInfoController;
-import com.ir.homework.hw2.metainfo.MetaInfoControllers;
-import com.ir.homework.hw2.tokenizers.DefaultTokenizer;
-import com.ir.homework.hw2.tokenizers.Tokenizer;
-
+import com.ir.homework.hw2.services.IndexBatchLoader;
+import com.ir.homework.hw2.services.IndexBatchMerger;
 
 import static com.ir.homework.hw2.Constants.*;
 
@@ -35,33 +17,30 @@ import static com.ir.homework.hw2.Constants.*;
  *
  */
 public final class Executor{
-	private static Set<String>  stopWords = new HashSet<String>();
-	private static Tokenizer    tokenizer;
-	
 	/**
 	 * @param args
 	 * @throws Throwable 
 	 */
 	public static void main(String[] args) throws Throwable {
-		long start = System.nanoTime(); 
 		
+		MetaInfoController metaSynchronizer = new MetaInfoController(INDEX_ID);
 		
-		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+		Thread loader = new Thread(new IndexBatchLoader(metaSynchronizer));
+		Thread merger = new Thread(new IndexBatchMerger(metaSynchronizer));
 		
-		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
-		
-		MetaInfoControllers.saveMetaInfo();
-		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
-				
+		loader.start();
+		merger.start();	
 	}
 	
-	/**
-	 * Gets the index manager for the given index version
-	 * @param idxVer is the version of index
-	 * @return IndexManager
-	 */
-	private static IndexManager getIndexManager(Integer idxVer){
-		return (new IndexManager(INDEX_ID, idxVer))
-				.setTokenizer(tokenizer);
+	private static void resetIndices(){
+		FileLoader.resetLoadedFiles();
+		
+		
+		String indicesPath = INDEX_PATH + File.separator + INDEX_ID;
+		File folder = new File(indicesPath);
+		File[] files = folder.listFiles();
+		for(File file : files){
+			file.delete();
+		}
 	}
 }

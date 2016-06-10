@@ -1,108 +1,87 @@
+/**
+ * 
+ */
 package com.ir.homework.hw2.metainfo;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+
+import com.ir.homework.hw2.indexers.IndexManager;
 
 /**
- * Stores meta information Model about indices and helps facilitate interprocess communication
+ * Used for thread synchronization
  * @author shabbirhussain
+ *
  */
-public class MetaInfoController implements Serializable{
-	private static final long serialVersionUID = 1L;
-	private Map<String, Integer> docInternalIDLookup;
-	private Map<Integer, String> docBusinessIDLookup;
-	private Integer masterIdxID; 
-	private Integer stableIdxID;
-	private List<Integer> usableIndexIds;
-	
+public class MetaInfoController {
+	private String  indexID;
+	private static MetaInfoModel model = new MetaInfoModel();
 	/**
 	 * Default constructor
+	 * @param model is the model of meta info
+	 * @param instanceID is the unique index identifier 
 	 */
-	public MetaInfoController(){
-		this.docInternalIDLookup = new HashMap<String, Integer>();
-		this.docBusinessIDLookup = new HashMap<Integer, String>();
-		this.usableIndexIds      = new LinkedList<Integer>();
-		
-		this.masterIdxID = 0;
-		this.stableIdxID = 0;
+	public MetaInfoController(String indexID){
+		this.indexID = indexID;
 	}
-	
-	
-	/**
-	 * Adds new index to usable list. With data from higher index id considered more reliable. 
-	 * @param indexID is the unique index number/ version number
-	 * @return MetaInfoController
-	 */
-	public MetaInfoController addUsableIndex(Integer indexID){
-		this.usableIndexIds.add(indexID);
-		return this;
-	}
-	
-	/**
-	 * Marks a index obsolete. Obsolete indices are no longer valid for use
-	 * @param indexID is the unique index number/ version number
-	 * @return MetaInfoController
-	 */
-	public MetaInfoController markIndexObsolete(Integer indexID){
-		this.usableIndexIds.remove(indexID);
-		return this;
-	}
-	
+
 	/**
 	 * Sets usable indices for future use
 	 * @param indexIDList is the list of index id to be set as usable
-	 * @return MetaInfoController
 	 */
-	public MetaInfoController setUsableIndices(List<Integer> indexIDList){
-		this.usableIndexIds = indexIDList;
-		return this;
+	public synchronized void setUsable(Integer version){
+		model.setUsable(this.indexID, version);
 	}
-	// ----------------------------------------------------------------
 	
 	/**
-	 * Returns the list of usable indices. A usable index is a index which has been successfully written to disk completely and is ready to use.
-	 * @return List of usable index
+	 * Sets unusable indices for future use
+	 * @param indexIDList is the list of index id to be set as usable
 	 */
-	public List<Integer> getUsableIndices(){
-		return this.usableIndexIds;
+	public synchronized void setUnUsable(Integer version){
+		model.setUnUsable(this.indexID, version);
 	}
-	
+
 	/**
 	 * Gets the next index file version ID
-	 * @return New master index ID
+	 * @return New index ID
 	 */
-	public Integer getNextIndexID(){
-		return ++this.masterIdxID;
+	public synchronized Integer getNextIndexID(){
+		return model.getNextIndexID(this.indexID);
 	}
-	
-	
-	// -------------------- Compressor and translators ----------------
-	
+
+	/**
+	 * Returns the list of usable indices. A usable index is a index which has been successfully written to disk completely and is ready to use. 
+	 * @return List of usable index
+	 */
+	public synchronized List<Integer> getUsableIndices(){
+		return model.getUsableIndices(this.indexID);
+	}
+
 	/** 
 	 * Creates or loads a unique ID for each document
 	 * @param key is the business key for a document
 	 * @return Internal key for unique document ID
 	 */
-	public Integer translateDocID(String key){
-		Integer id = this.docInternalIDLookup.get(key);
-		if(id != null) return id; // found existing document id
-		
-		Integer value = this.docInternalIDLookup.size();
-		this.docInternalIDLookup.put(key, value);
-		this.docBusinessIDLookup.put(value, key);
-		
-		return this.translateDocID(key);
+	public synchronized Integer translateDocID(String key){
+		return model.translateDocID(this.indexID, key);
 	}
-	
+
 	/** 
 	 * Performs reverse lookup translating internal doc id to business key
 	 * @param key is the internal key for the document
 	 * @return Business key for unique document ID
 	 */
-	public String translateDocID(Integer key){
-		return docBusinessIDLookup.get(key);
+	public synchronized String translateDocID(Integer key){
+		return model.translateDocID(this.indexID, key);
 	}
+	
+	/**
+	 * Gets the index manager for the given index version
+	 * @param idxVer is the version of index
+	 * @return IndexManager
+	 */
+	public IndexManager getIndexManager(Integer idxVer){
+		return new IndexManager(this.indexID, idxVer, this);
+	}
+
 }
+

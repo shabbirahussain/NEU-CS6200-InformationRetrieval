@@ -11,6 +11,8 @@ import static com.ir.homework.hw2.Constants.DONE_FILE_SUFFIX;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -22,6 +24,7 @@ import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import com.ir.homework.hw2.indexers.IndexManager;
+import com.ir.homework.hw2.tokenizers.Tokenizer;
 
 /**
  * Loads the files into custom inverted indices
@@ -29,19 +32,17 @@ import com.ir.homework.hw2.indexers.IndexManager;
  *
  */
 public class FileLoader {
+	private Tokenizer tokenizer;
+	
+	public FileLoader(Tokenizer tokenizer){
+		this.tokenizer = tokenizer;
+	}
+	
 	/**
 	 * @return True is new files are available for loading
 	 */
 	public Boolean newFilesAvailable(){
-		File folder = new File(DATA_PATH);
-		File[] listOfFiles = folder.listFiles();
-		for (File file : listOfFiles) {
-			if (file.isFile()
-					&& file.getName().startsWith(DATA_FILE_PREFIX)
-					&& !file.getName().endsWith(DONE_FILE_SUFFIX)) 
-				return true;
-		}
-		return false;
+		return !getFilesForLoading().isEmpty();
 	}
 	
 	/**
@@ -52,22 +53,16 @@ public class FileLoader {
 	public Integer loadFiles(IndexManager idxManager) throws Throwable {
 		System.out.println("\n\n \t\t ********** New Batch *************\n\n");;
 	
-		File folder = new File(DATA_PATH);
-		File[] listOfFiles = folder.listFiles();
+		List<File> listOfFiles = getFilesForLoading();
 		
 		Integer cnt    = 0;
 		for (File file : listOfFiles) {
-			if (file.isFile()
-					&& file.getName().startsWith(DATA_FILE_PREFIX)
-					&& !file.getName().endsWith(DONE_FILE_SUFFIX)) 
-			{
-				System.out.println("[Info]: Loading file [" + file.getName() + "]");
+			System.out.println("[Info]: Loading file [" + file.getName() + "]");
 				
-				cnt += loadFile(idxManager, file);
-				file.renameTo(new File(file.getAbsolutePath() + DONE_FILE_SUFFIX));
-				
-				if((cnt / BATCH_SIZE)>1) break;
-			}
+			cnt += loadFile(idxManager, file);
+			file.renameTo(new File(file.getAbsolutePath() + DONE_FILE_SUFFIX));
+			
+			if((cnt / BATCH_SIZE)>1) break;
 		}
 		idxManager.flush();
 		idxManager.finalize(false);
@@ -122,8 +117,45 @@ public class FileLoader {
 			}
 			dataMap.put("HEAD", head.toString());
 			
-			client.putData(DOCNO, dataMap);
+			client.putData(DOCNO, dataMap, tokenizer);
 		}
 		return i;
+	}
+	
+	/**
+	 * @return List of files ready to be loaded
+	 */
+	private List<File> getFilesForLoading(){
+		List<File> result = new LinkedList<File>();
+		File folder = new File(DATA_PATH);
+		File[] listOfFiles = folder.listFiles();
+		for (File file : listOfFiles) {
+			if (file.isFile()
+					&& file.getName().startsWith(DATA_FILE_PREFIX)
+					&& !file.getName().endsWith(DONE_FILE_SUFFIX)) 
+				result.add(file);
+		}
+		return result;
+	}
+	
+	/**
+	 * For debugging only
+	 */
+	public static void resetLoadedFiles(){
+		File folder = new File(DATA_PATH);
+		File[] listOfFiles = folder.listFiles();
+		for (File file : listOfFiles) {
+			if (file.isFile()
+					&& file.getName().startsWith(DATA_FILE_PREFIX)
+					&& file.getName().endsWith(DONE_FILE_SUFFIX)) {
+				String newFileName = file.getAbsolutePath()
+						.subSequence(0, 
+								file.getAbsolutePath().length() - DONE_FILE_SUFFIX.length())
+						.toString();
+				
+				
+				file.renameTo(new File(newFileName));
+			}
+		}
 	}
 }
