@@ -65,59 +65,57 @@ public class ProximitySearchController extends BaseSearchController{
 	}
 	
 	/**
-	 * Calculates and returns proximity score of the matrix provided
+	 * Calculates and returns proximity score of the matrix provided. Requires all inner arrays to be sorted in ascending order.
 	 * @return The minimum distance between all terms
 	 */
-	private Long getMinSpanDistance(Long[][] positionMatrix){
-		Integer ptr[] = new Integer[positionMatrix.length];
+	private Long getMinSpanDistance(Long[][] pasMat){
+		Integer ptr[] = new Integer[pasMat.length];
 		Long minSpanTarget = -1L;
-		for(int i=0; i<positionMatrix.length; ptr[i++] = 0){
-			if(positionMatrix[i] != null)
+		for(int i=0; i<pasMat.length; ptr[i++] = 0){
+			if(pasMat[i] != null)
 				minSpanTarget++;
 		}
 
-//		System.out.println("new doc\n");
-//		System.out.println("-----------------------------");
-//		for(int i=0;i<positionMatrix.length; i++){
-//			System.out.print("term["+i+"]");
-//			for(int j=0;positionMatrix[i]!= null && j<positionMatrix[i].length; j++){
-//				System.out.print("\t" + positionMatrix[i][j]);
-//			}
-//			System.out.println("");
-//		}
-//		System.out.println("-----------------------------\n");
+		/*System.out.println("new doc\n");
+		System.out.println("-----------------------------");
+		for(int i=0;i<pasMat.length; i++){
+			System.out.print("term["+i+"]");
+			for(int j=0;pasMat[i]!= null && j<pasMat[i].length; j++){
+				System.out.print("\t" + pasMat[i][j]);
+			}
+			System.out.println("");
+		}
+		System.out.println("-----------------------------\n");*/
 
-		Boolean flgContinue = true;
 		Long minSpan = Long.MAX_VALUE;
-		while(flgContinue){
-			flgContinue = false;
+		while(true){
 			
-			Map<Integer, Long> idxValMap = new HashMap<Integer, Long>();
-			for(int i=0; i<positionMatrix.length; i++){
+			Long minVal  = Long.MAX_VALUE;
+			Long maxVal  = Long.MIN_VALUE;
+			Integer minI = null; 
+			
+			for(int i=0; i<pasMat.length; i++){
 				Integer j = ptr[i];
-				if (positionMatrix[i] == null) continue;
+				if (pasMat[i] == null) continue;
 				
-				//System.out.println("["+i+"]["+j+"]");
-				Long value = positionMatrix[i][j];
-				idxValMap.put(i, value);
+				Long value = pasMat[i][j];
+				minVal = Math.min(minVal, value);
+				maxVal = Math.max(maxVal, value);
+				
+				// current value is less than min J value and there is room for incrementing 
+				if(((minI == null) || (value < pasMat[minI][ptr[minI]]))
+					&& (ptr[i]+1 < pasMat[i].length)){
+					minI = i;
+				}
+				//System.out.println("["+i+"]["+j+"]\t val="+value+"\tmini="+minI+"\t");
+					
 			}
 			//System.out.println("");
 			
-			List<Entry> sortedIdxValMap = sortByValue(idxValMap);
-			for(Entry e : sortedIdxValMap){
-				Integer i = (Integer) e.getKey();
-				if(ptr[i] < positionMatrix[i].length-1){
-					ptr[i]++;
-					flgContinue = true;
-					break;
-				}
-			}
-			
-			Long minVal = (Long) sortedIdxValMap.get(0).getValue();
-			Long maxVal = (Long) sortedIdxValMap.get(sortedIdxValMap.size()-1).getValue();
 			minSpan = Math.min(minSpan, maxVal - minVal);
 			
-			if(minSpan == minSpanTarget) break;
+			if(minSpan == minSpanTarget || minI == null) break;
+			ptr[minI]++;
 		}
 		return minSpan;
 	}
@@ -141,10 +139,10 @@ public class ProximitySearchController extends BaseSearchController{
 	
 	public static void main(String args[]){
 		ProximitySearchController sc = new ProximitySearchController(null);
-		Long[][] positionMatrix = new Long[][]{{0L, 5L, 10L, 15L, 30L},
+		Long[][] pasMat = new Long[][]{{0L, 5L, 10L, 15L, 30L},
 												{1L, 3L,  6L,  9L},
 												{4L, 8L, 16L, 21L}};
 
-		System.out.println("Min Span = " + sc.getMinSpanDistance(positionMatrix));
+		System.out.println("Min Span = " + sc.getMinSpanDistance(pasMat));
 	}
 }
