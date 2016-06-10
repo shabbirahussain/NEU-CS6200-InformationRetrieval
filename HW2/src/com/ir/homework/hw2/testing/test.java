@@ -1,4 +1,4 @@
-package com.ir.homework.hw2;
+package com.ir.homework.hw2.testing;
 
 import java.util.HashMap;
 import java.util.LinkedList;

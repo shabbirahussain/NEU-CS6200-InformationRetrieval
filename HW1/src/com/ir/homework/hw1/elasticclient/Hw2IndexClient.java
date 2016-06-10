@@ -3,29 +3,22 @@
  */
 package com.ir.homework.hw1.elasticclient;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
-import com.ir.homework.hw2.queryprocessing.QueryProcessor;
 
 /**
  * @author shabbirhussain
  *
  */
-public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
+public class Hw2IndexClient extends BaseElasticClient implements Serializable, ElasticClient {
 	private static final long serialVersionUID = 1L;
-	
-	private QueryProcessor queryProcessor;
 	
 	/**
 	 * Default constructor
@@ -37,7 +30,6 @@ public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
 	 */
 	public Hw2IndexClient(String indices, String types, Boolean enableBulkProcessing, Integer limit, String field) {
 		super(indices, types, enableBulkProcessing, limit, field);
-		queryProcessor = new QueryProcessor(indices + File.separator + types, field);
 	}
 
 
@@ -48,7 +40,7 @@ public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
 	public Map<String, Float> getDocFrequency(String term) throws IOException {
 		Map<String, Float> result = new HashMap<String, Float>();
 		try {
-			for(Entry<String, DocInfo> e : queryProcessor.fetchData(term).docsInfo.entrySet()){
+			for(Entry<String, DocInfo> e : _queryProcessor.fetchData(term).docsInfo.entrySet()){
 				result.put(e.getKey(), ((Integer) e.getValue().docPos.size()).floatValue());
 			}
 		} catch (Exception e) {e.printStackTrace();}
@@ -62,7 +54,7 @@ public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
 	public Long getDocCount(String term) throws IOException {
 		Long result = null;
 		try{
-			result = ((Integer) queryProcessor.fetchData(term).docsInfo.size()).longValue();
+			result = ((Integer) _queryProcessor.fetchData(term).docsInfo.size()).longValue();
 		}catch(Exception e) {e.printStackTrace();}
 		
 		return result;
@@ -75,7 +67,7 @@ public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
 	public Long getTotalTermCount(String term) {
 		Integer result = 0;
 		try{
-			for(Entry<String, DocInfo> e : queryProcessor.fetchData(term).docsInfo.entrySet()){
+			for(Entry<String, DocInfo> e : _queryProcessor.fetchData(term).docsInfo.entrySet()){
 				result += e.getValue().docPos.size();
 			}
 		}catch(Exception e) {e.printStackTrace();}
@@ -87,7 +79,7 @@ public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
 	public Long getVocabSize(){
 		Long result = null;
 		try {
-			result = ((Integer)queryProcessor.getVocab().size()).longValue();
+			result = ((Integer)_queryProcessor.getVocab().size()).longValue();
 		} catch (IOException e) {e.printStackTrace();}
 		
 		return result;
@@ -97,7 +89,7 @@ public class Hw2IndexClient extends BaseElasticClient implements ElasticClient {
 	public Map<String, List<Long>> getPositionVector(String term){
 		Map<String, List<Long>> result = null;
 		try {
-			result = queryProcessor.getPositionVector(term);
+			result = _queryProcessor.getPositionVector(term);
 		} catch (Exception e) {e.printStackTrace();}
 		return result;
 	}

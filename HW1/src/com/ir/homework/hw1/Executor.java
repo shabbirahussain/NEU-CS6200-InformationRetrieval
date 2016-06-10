@@ -59,19 +59,19 @@ public final class Executor {
 		controllers.add(new ProximitySearchController(elasticClient));
 		
 		// OkapiTF
-		//controllers.add(new OkapiTFController(elasticClient));
+		controllers.add(new OkapiTFController(elasticClient));
 		
 		// TF-IDF
-		//controllers.add(new TF_IDFController(elasticClient));
+		controllers.add(new TF_IDFController(elasticClient));
 		
 		// OkapiBM25
-		//controllers.add(new OkapiBM25Controller(elasticClient));
+		controllers.add(new OkapiBM25Controller(elasticClient));
 		
 		// UnigramLM LaplaceSmoothing
-		//controllers.add(new UnigramLM_LaplaceSmoothing(elasticClient));
+		controllers.add(new UnigramLM_LaplaceSmoothing(elasticClient));
 		
 		// UnigramLM Jelinek-Mercer smoothing
-		//controllers.add(new UnigramLM_JelinekMercer(elasticClient));
+		controllers.add(new UnigramLM_JelinekMercer(elasticClient));
 		
 		// MetaSearchController
 		//controllers.add(new MetaSearchController(elasticClient, controllers));

@@ -21,6 +21,8 @@ import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
  *
  */
 public class ProximitySearchController extends BaseSearchController{
+	private static final Float λ = 0.8F;
+	
 	/**
 	 * constructor for re using cache across controllers
 	 * @param elasticClient search cache object
@@ -55,7 +57,10 @@ public class ProximitySearchController extends BaseSearchController{
 			for(Entry<String, Long[][]> e: docTermMatrix.entrySet()){
 				String docNo   = e.getKey();
 				Float score_ps = docScore.getOrDefault(docNo, 0.0F);
-				score_ps = 1F/(1F + getMinSpanDistance(e.getValue()));
+				Float s = getMinSpanDistance(e.getValue()).floatValue();
+				Float k = getNGramLength(e.getValue()).floatValue();
+				
+				score_ps = λ * (s-k)/k;
 					
 				docScore.put(docNo, score_ps);
 			}
@@ -66,6 +71,7 @@ public class ProximitySearchController extends BaseSearchController{
 	
 	/**
 	 * Calculates and returns proximity score of the matrix provided. Requires all inner arrays to be sorted in ascending order.
+	 * @param pasMat is the position matrix for a document
 	 * @return The minimum distance between all terms
 	 */
 	private Long getMinSpanDistance(Long[][] pasMat){
@@ -119,6 +125,21 @@ public class ProximitySearchController extends BaseSearchController{
 		}
 		return minSpan;
 	}
+	
+	/**
+	 * Gives the max ngram matcheed
+	 * @param pasMat is the position matrix for a document
+	 * @return The maximum number of ngram matched
+	 */
+	private Integer getNGramLength(Long[][] pasMat){
+		Integer result = 0;
+		for(int i=0; i<pasMat.length; i++){
+			if(pasMat[i] != null)
+				result++;
+		}
+		return result;
+	}
+	
 	
 	/**
 	 * sorts given map and returns a linked list to print results in sorted order

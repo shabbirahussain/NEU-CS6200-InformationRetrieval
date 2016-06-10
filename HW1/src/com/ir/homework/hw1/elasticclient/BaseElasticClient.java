@@ -34,6 +34,8 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.significant.SignificantTerms;
 
+import com.ir.homework.hw2.queryprocessing.QueryProcessor;
+
 import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.stemmer.Stemmer;
 
@@ -48,9 +50,10 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 	
 	public Boolean enableBulkProcessing;
 
-	private static Client _client = null;
-	private static BulkProcessor _bulkProcessor = null;
-	private static Stemmer stemer;
+	protected static Client _client = null;
+	protected static BulkProcessor  _bulkProcessor  = null;
+	protected static QueryProcessor _queryProcessor = null;
+	protected static Stemmer stemer;
 	
 	/**
 	 * Default constructor
@@ -68,13 +71,13 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		this.maxResults = limit;
 		this.textFieldName = field;
 		this.enableBulkProcessing = enableBulkProcessing;
-		this.stemer = new PorterStemmer();
+		stemer = new PorterStemmer();
 	}
 	
-	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor){
-		_client        = client;
-		_bulkProcessor = bulkProcessor;
-		
+	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor, QueryProcessor queryProcessor){
+		_client         = client;
+		_bulkProcessor  = bulkProcessor;
+		_queryProcessor = queryProcessor;
 		return this;
 	}
 

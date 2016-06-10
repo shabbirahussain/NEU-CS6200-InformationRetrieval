@@ -12,6 +12,8 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
+import com.ir.homework.hw2.queryprocessing.QueryProcessor;
+
 
 /**
  * @author shabbirhussain
@@ -110,8 +112,9 @@ public interface ElasticClient {
 	 * Attaches client and bulk processor
 	 * @param client
 	 * @param bulkProcessor
+	 * @param queryProcessor 
 	 */
-	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor);
+	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor, QueryProcessor queryProcessor);
 	
 	/**
 	 * Gets top n significant terms

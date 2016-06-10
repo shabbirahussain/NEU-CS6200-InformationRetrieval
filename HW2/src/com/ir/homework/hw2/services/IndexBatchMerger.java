@@ -17,7 +17,7 @@ import com.ir.homework.hw2.metainfo.MetaInfoController;
  *
  */
 public class IndexBatchMerger implements Runnable {
-	private static final Long REFRESH_INTERVAL = 10L * 1000L;
+	private static final Long REFRESH_INTERVAL = 2L * 1000L;
 	private MetaInfoController metaSynchronizer;
 	
 	/**

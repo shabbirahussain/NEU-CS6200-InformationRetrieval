@@ -17,8 +17,10 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.significant.SignificantTerms;
 
+import com.ir.homework.hw2.queryprocessing.QueryProcessor;
 
-public class CachedElasticClient implements ElasticClient{
+
+public class CachedElasticClient implements Serializable, ElasticClient{
 	// Serialization version Id
 	private static final long serialVersionUID = 1L;
 	private Integer numberOfTerm = 10;
@@ -240,8 +242,8 @@ public class CachedElasticClient implements ElasticClient{
 	}
 
 	@Override
-	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor) {
-		return searchClient.attachClients(client, bulkProcessor);
+	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor, QueryProcessor queryProcessor) {
+		return searchClient.attachClients(client, bulkProcessor, queryProcessor);
 	}
 
 	@Override

@@ -1,5 +1,6 @@
 package com.ir.homework.hw1.elasticclient;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -16,16 +17,18 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
+import com.ir.homework.hw2.queryprocessing.QueryProcessor;
+
 import static com.ir.homework.hw1.Constants.*;
 
 public class ElasticClientBuilder {
 	private Builder settings;
-	private Boolean cachedFetch, customFetch;
+	private Boolean cachedFetch = false;
+	private Boolean customFetch = false;
 	private String  host, indices, types, field;
 	private Integer port, size;
 	
 	/** 
-	 * Default constructor
 	 * @return ElasticClientBuilder
 	 */
 	public static ElasticClientBuilder createElasticClientBuilder(){
@@ -184,7 +187,9 @@ public class ElasticClientBuilder {
 			            BackoffPolicy.exponentialBackoff(TimeValue.timeValueMillis(100), 3)) 
 			        .build();
 			
-			elasticClient.attachClients(client, bulkProcessor);
+			QueryProcessor queryProcessor = new QueryProcessor(indices + File.separator + types, field);
+			
+			elasticClient.attachClients(client, bulkProcessor, queryProcessor);
 		}catch (UnknownHostException e) {e.printStackTrace();}
 		
 		return elasticClient;
