@@ -22,6 +22,8 @@ import com.ir.homework.hw1.io.OutputWriter.OutputRecord;
  */
 public class ProximitySearchController extends BaseSearchController{
 	private static final Float λ = 0.8F;
+	private static final Float C = 1500F;
+	
 	
 	/**
 	 * constructor for re using cache across controllers
@@ -48,20 +50,23 @@ public class ProximitySearchController extends BaseSearchController{
 				for(Entry<String, List<Long>> e : termPositionMat.entrySet()){
 					Long[][] termMatrix = docTermMatrix.getOrDefault(e.getKey(), new Long[queryTerms.length][]);
 					termMatrix[i]       =  e.getValue().toArray(new Long[0]);
-					Arrays.sort(termMatrix[i]);
+					//Arrays.sort(termMatrix[i]);
 					
 					docTermMatrix.put(e.getKey(), termMatrix);
 				}
 			}
 			
+			Long  V  = super.elasticClient.getVocabSize();
 			for(Entry<String, Long[][]> e: docTermMatrix.entrySet()){
 				String docNo   = e.getKey();
 				Float score_ps = docScore.getOrDefault(docNo, 0.0F);
 				Float s = getMinSpanDistance(e.getValue()).floatValue();
 				Float k = getNGramLength(e.getValue()).floatValue();
+				Long  len_d     = super.elasticClient.getTermCount(docNo);
 				
-				score_ps = λ * (s-k)/k;
-					
+				//score_ps = λ * (s-k)/k;
+				score_ps = (C - s) * k / (len_d + V);
+				
 				docScore.put(docNo, score_ps);
 			}
 			return super.prepareOutput(queryNo, docScore);
