@@ -38,7 +38,7 @@ public final class Constants {
 	public static final Boolean ENABLE_ADD_NORMALIZATION = true;
 	public static final Boolean ENABLE_FULL_TREC_OUTPUT = true;
 	
-	public static final Boolean ENABLE_HW2_CLIENT = true;
+	public static final Boolean ENABLE_HW2_CLIENT = false;
 	
 	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
 	

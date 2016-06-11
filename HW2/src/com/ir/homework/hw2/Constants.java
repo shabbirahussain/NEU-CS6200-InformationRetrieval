@@ -6,8 +6,8 @@ public final class Constants {
 	public static final String DATA_PATH  = BASE_PATH + "/AP_DATA/ap89_collection";
 	public static final String INPUT_PATH = BASE_PATH + "/AP_DATA_RO/ap89_collection";
 	public static final String INDEX_PATH = BASE_PATH + "/AP_DATA/indexes";
-	//public static final String EVAL_OUTPUT_FILE = BASE_PATH + "/AP_DATA/results/out.0.no.stop.stem.txt";
-	public static final String EVAL_OUTPUT_FILE = BASE_PATH + "/AP_DATA/results/out.0.stop.stem.txt";
+	public static final String EVAL_OUTPUT_FILE = BASE_PATH + "/AP_DATA/results/out.0.no.stop.stem.txt";
+	//public static final String EVAL_OUTPUT_FILE = BASE_PATH + "/AP_DATA/results/out.0.stop.stem.txt";
 	public static final String EVAL_INPUT_FILE = BASE_PATH + "/AP_DATA/queries/in.0.50.txt";
 	
 	public static final String INDEX_ID = "ap_dataset/document";
@@ -18,8 +18,8 @@ public final class Constants {
 
 	public static final Integer BATCH_SIZE = 3000;
 	public static final Integer MAX_ACTIVE_INDICES = 1;
-	public static final Boolean ENABLE_STEMMING = false;
-	public static final Boolean ENABLE_STOPWORD_FILTER = false;
+	public static final Boolean ENABLE_STEMMING = true;
+	public static final Boolean ENABLE_STOPWORD_FILTER = true;
 	public static final Boolean ENABLE_FULL_DOC_ID = false;
 	public static final Boolean ENABLE_AUTO_CLEAN = true;
 	

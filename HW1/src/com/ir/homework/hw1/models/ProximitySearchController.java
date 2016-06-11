@@ -165,9 +165,9 @@ public class ProximitySearchController extends BaseSearchController{
 	
 	public static void main(String args[]){
 		ProximitySearchController sc = new ProximitySearchController(null);
-		Long[][] pasMat = new Long[][]{{0L, 5L, 10L, 15L, 30L},
-												{1L, 3L,  6L,  9L},
-												{4L, 8L, 16L, 21L}};
+		Long[][] pasMat = new Long[][]{ {0L, 5L, 10L, 15L, 30L},
+										{1L, 3L,  6L,  9L},
+										{4L, 8L, 16L, 21L}};
 
 		System.out.println("Min Span = " + sc.getMinSpanDistance(pasMat));
 	}

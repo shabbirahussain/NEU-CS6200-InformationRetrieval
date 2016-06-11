@@ -26,7 +26,7 @@ import com.ir.homework.hw1.util.QueryAugmentor;
  *
  */
 public final class Executor {
-	private static ElasticClient elasticClient;
+	private static ElasticClient elasticClient, elasticClient1;
 	private static ResultEvaluator resultEvaluator;
 	private static QueryAugmentor queryAugmentor;
 	private static StopWordReader stopWordReader;
@@ -38,7 +38,7 @@ public final class Executor {
 	public static void main(String[] args) throws IOException {
 		long start = System.nanoTime(); 
 		List<SearchController> controllers = new LinkedList<SearchController>();
-		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
+		ElasticClientBuilder eBuilder1 = ElasticClientBuilder.createElasticClientBuilder()
 				.setClusterName(CLUSTER_NAME)
 				.setHost(HOST)
 				.setPort(PORT)
@@ -49,15 +49,30 @@ public final class Executor {
 				.setCustomFetch(ENABLE_HW2_CLIENT)
 				.setField(TEXT_FIELD_NAME);
 		
+		ElasticClientBuilder eBuilder2 = ElasticClientBuilder.createElasticClientBuilder()
+				.setClusterName(CLUSTER_NAME)
+				.setHost(HOST)
+				.setPort(PORT)
+				.setIndices(INDEX_NAME)
+				.setTypes(INDEX_TYPE)
+				.setLimit(MAX_RESULTS)
+				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
+				.setCustomFetch(ENABLE_HW2_CLIENT)
+				.setField("HEAD");
+		
 		if(ENABLE_PERSISTENT_CACHE){
 			System.out.println("Loading cache...");
-			elasticClient = (ElasticClient) ObjectStore.getOrDefault(eBuilder.build());
-		}eBuilder.build(elasticClient);
+			elasticClient = (ElasticClient) ObjectStore.getOrDefault(eBuilder1.build());
+			elasticClient1 = (ElasticClient) ObjectStore.getOrDefault(eBuilder2.build());
+		}
+		eBuilder1.build(elasticClient);
+		eBuilder2.build(elasticClient1);
 		
 		//////////////////////// Controllers ////////////////////////////
 		
 		// OkapiTF
-		//controllers.add(new OkapiTFController(elasticClient));
+		controllers.add(new OkapiTFController(elasticClient));
+		controllers.add(new OkapiTFController(elasticClient1));
 		
 		// TF-IDF
 		//controllers.add(new TF_IDFController(elasticClient));
@@ -72,10 +87,10 @@ public final class Executor {
 		//controllers.add(new UnigramLM_JelinekMercer(elasticClient));
 		
 		// MetaSearchController
-		//controllers.add(new MetaSearchController(elasticClient, controllers));
+		controllers.add(new MetaSearchController(elasticClient, controllers));
 		
 		// Proximity Search 
-		controllers.add(new ProximitySearchController(elasticClient));
+		//controllers.add(new ProximitySearchController(elasticClient));
 				
 		
 		////////////////////////////////////////////////////////////////

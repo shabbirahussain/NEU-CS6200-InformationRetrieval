@@ -34,11 +34,11 @@ public class QueryProcessor {
 	 * @throws Exception
 	 */
 	public static void main(String args[]) throws Exception{
-		QueryProcessor qp = new QueryProcessor(INDEX_ID, "TEXT");
-		System.out.println(qp.getTermStatistics("i").ttf);
-		System.out.println(qp.metaSynchronizer.getUsableIndices());
-		System.out.println(qp.fetchData("dog"));
-		System.out.println(qp.fetchData("dog").docsInfo.size());
+		QueryProcessor qp = new QueryProcessor(INDEX_ID, "HEAD");
+		System.out.println(qp.getTermStatistics("cancel").ttf);
+		//System.out.println(qp.metaSynchronizer.getUsableIndices());
+		//System.out.println(qp.fetchData("dog"));
+		//System.out.println(qp.fetchData("dog").docsInfo.size());
 		
 	}
 	
