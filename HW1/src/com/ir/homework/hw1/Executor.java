@@ -55,8 +55,6 @@ public final class Executor {
 		}eBuilder.build(elasticClient);
 		
 		//////////////////////// Controllers ////////////////////////////
-		// Proximity Search 
-		controllers.add(new ProximitySearchController(elasticClient));
 		
 		// OkapiTF
 		controllers.add(new OkapiTFController(elasticClient));
@@ -75,6 +73,10 @@ public final class Executor {
 		
 		// MetaSearchController
 		controllers.add(new MetaSearchController(elasticClient, controllers));
+		
+		// Proximity Search 
+		controllers.add(new ProximitySearchController(elasticClient));
+				
 		
 		////////////////////////////////////////////////////////////////
 		

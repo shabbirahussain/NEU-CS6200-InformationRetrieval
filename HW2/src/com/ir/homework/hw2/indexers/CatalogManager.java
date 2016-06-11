@@ -180,6 +180,11 @@ public class CatalogManager implements Serializable, Flushable{
 		String tokens[] = buffer.split(":");
 		for(int i=1; i<tokens.length-1; i+=2){
 			String  key   = tokens[i]; // Document id
+			try{
+				key = metaSynchronizer.translateDocID(Integer.parseInt(key));
+			}catch(Exception e){}
+			
+			
 			DocInfo value = new DocInfo(); 
 			
 			String tokens1[] = tokens[i+1].split(";");
