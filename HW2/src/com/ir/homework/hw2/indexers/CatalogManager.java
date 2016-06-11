@@ -389,7 +389,7 @@ public class CatalogManager implements Serializable, Flushable{
 	 */
 	public void writeCatalog() throws IOException{
 		String catFileName = this.getCatFileName();
-		BufferedWriter catFile = new BufferedWriter(new FileWriter(catFileName, true));
+		BufferedWriter catFile = new BufferedWriter(new FileWriter(catFileName, false));
 
 		// For each term 
 		for(Entry<String, CatInfo> catInfo: this.catalogMap.entrySet()){
