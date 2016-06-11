@@ -74,7 +74,7 @@ public final class Executor {
 		controllers.add(new UnigramLM_JelinekMercer(elasticClient));
 		
 		// MetaSearchController
-		//controllers.add(new MetaSearchController(elasticClient, controllers));
+		controllers.add(new MetaSearchController(elasticClient, controllers));
 		
 		////////////////////////////////////////////////////////////////
 		

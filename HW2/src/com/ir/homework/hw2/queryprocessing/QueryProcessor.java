@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.ir.homework.hw2.indexers.IndexManager;
+import com.ir.homework.hw2.indexers.CatalogManager.CatInfo;
 import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
 import com.ir.homework.hw2.indexers.CatalogManager.TermInfo;
 import com.ir.homework.hw2.metainfo.MetaInfoController;
@@ -34,7 +35,9 @@ public class QueryProcessor {
 	 */
 	public static void main(String args[]) throws Exception{
 		QueryProcessor qp = new QueryProcessor(INDEX_ID, "TEXT");
-		
+		System.out.println(qp.getTermStatistics("i").ttf);
+		System.out.println(qp.metaSynchronizer.getUsableIndices());
+		System.out.println(qp.fetchData("dog"));
 		System.out.println(qp.fetchData("dog").docsInfo.size());
 		
 	}
@@ -57,6 +60,26 @@ public class QueryProcessor {
 			termInfo.merge(im.getTermInfo(this.fieldName, term));
 		}
 		return termInfo;
+	}
+	
+	/**
+	 * Fetches term statistics
+	 * @param term is the term to search for
+	 * @return Statistics wrapped in an object
+	 * @throws IOException 
+	 */
+	public CatInfo getTermStatistics(String term) throws IOException{
+		List<Integer> indices = metaSynchronizer.getUsableIndices();
+		if(indices.isEmpty()) return null;
+		
+		CatInfo catInfo = metaSynchronizer.getIndexManager(indices.get(0))
+				.getTermStats(this.fieldName, term);
+		
+		for(int i=1; i<indices.size(); i++){
+			IndexManager im = metaSynchronizer.getIndexManager(indices.get(i));
+			catInfo.merge(im.getTermStats(this.fieldName, term));
+		}
+		return catInfo;
 	}
 	
 	/**

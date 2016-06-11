@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.ir.homework.hw2.indexers.CatalogManager.CatInfo;
 import com.ir.homework.hw2.indexers.CatalogManager.DocInfo;
 import com.ir.homework.hw2.indexers.CatalogManager.TermInfo;
 import com.ir.homework.hw2.metainfo.MetaInfoController;
@@ -109,6 +110,16 @@ public class IndexManager implements Serializable, Flushable{
 		return idxM;
 	}
 	
+	/**
+	 * Gets the term statistics for given term from the catalog 
+	 * @param field is the field to search for
+	 * @param term is the given term to search for
+	 * @return CatInfo
+	 * @throws IOException 
+	 */
+	public CatInfo getTermStats(String field, String term) throws IOException{
+		return this.getCatalogManager(field).getTermStats(term);
+	}
 	
 	/**
 	 * Returns terms present in index

@@ -112,10 +112,28 @@ public class CatalogManager implements Serializable, Flushable{
 	 * Stores catalog info for a term
 	 * @author shabbirhussain
 	 */
-	private class CatInfo implements Serializable{
+	public class CatInfo implements Serializable{
 		private static final long serialVersionUID = 1L;
 		Long    offset;
 		Integer length;
+		public Long df;
+		public Long ttf;
+		
+		public CatInfo(){
+			this.df  = 0L;
+			this.ttf = 0L;
+		}
+
+		/**
+		 * Merges information from another term info object
+		 * @param i2 is the other term info object to be merged
+		 * @return Merged information object
+		 */
+		public CatInfo merge(CatInfo i2){
+			this.df  += i2.df;
+			this.ttf += i2.ttf;
+			return this;
+		}
 	}
 	
 	/**
@@ -205,6 +223,15 @@ public class CatalogManager implements Serializable, Flushable{
 	}
 	
 	/**
+	 * Gets the term statistics for given term from the catalog 
+	 * @param term is the given term to search for
+	 * @return CatInfo
+	 */
+	public final CatInfo getTermStats(String term){
+		return this.catalogMap.getOrDefault(term, new CatInfo());
+	}
+	
+	/**
 	 * Loads data provided in map into the index
 	 * @param docID unique identifier of document
 	 * @param data text data to be indexed
@@ -279,8 +306,9 @@ public class CatalogManager implements Serializable, Flushable{
 		StringBuilder buffer = new StringBuilder();
 		buffer.append(term).append(":");
 		
-		Integer ctr = 0;	
-		for(Entry<String, DocInfo> docInfo : this.sortByValue(docInfoMap, false)){
+		Long df  = 0L;
+		Long ttf = 0L;
+		for(Entry<String, DocInfo> docInfo : this.getSortedList(docInfoMap, false)){
 			String docID = docInfo.getKey();
 			try{
 				if(ENABLE_FULL_DOC_ID)
@@ -301,11 +329,12 @@ public class CatalogManager implements Serializable, Flushable{
 
 				// Save current pos for future use
 				prevPos = currPos;
+				ttf++;
 			}
 			buffer.append(":");
 			
 			// break the loop if max limit of docs is reached
-			if(++ctr > MAX_DOCS_PER_TERM) break;
+			if(++df > MAX_DOCS_PER_TERM) break;
 			
 		}
 		buffer.append("\n");
@@ -320,6 +349,8 @@ public class CatalogManager implements Serializable, Flushable{
 		CatInfo catInfo = new CatInfo();
 		catInfo.offset  = position;
 		catInfo.length  = ((Long)(datFileWr.size() - position)).intValue();
+		catInfo.df      = df;
+		catInfo.ttf     = ttf;
 		
 		this.catalogMap.put(term, catInfo);
 	}
@@ -344,6 +375,8 @@ public class CatalogManager implements Serializable, Flushable{
 			CatInfo catInfo = new CatInfo();
 			catInfo.offset = Long.parseLong(entries[1]);
 			catInfo.length = Integer.parseInt(entries[2]);
+			catInfo.df     = Long.parseLong(entries[3]);
+			catInfo.ttf    = Long.parseLong(entries[4]);
 			
 			this.catalogMap.put(entries[0], catInfo);
 		}
@@ -364,7 +397,9 @@ public class CatalogManager implements Serializable, Flushable{
 			
 			buffer.append(catInfo.getKey()).append(":");
 			buffer.append(catInfo.getValue().offset).append(":");
-			buffer.append(catInfo.getValue().length).append("\n");
+			buffer.append(catInfo.getValue().length).append(":");
+			buffer.append(catInfo.getValue().df).append(":");
+			buffer.append(catInfo.getValue().ttf).append("\n");
 			
 			catFile.write(buffer.toString());
 		}
@@ -398,6 +433,25 @@ public class CatalogManager implements Serializable, Flushable{
 		
 		this.datFileRW = FileChannel.open(datFilePath, StandardOpenOption.READ, StandardOpenOption.CREATE);
 	}
+	/**
+	 * sorts given map and returns a linked list to print results in sorted order
+	 * @param map is the map to sort
+	 * @param ascOrder notifies order of sort ascending otherwise descending
+	 * @return List of map entries in sorted form
+	 */
+	private List<Entry> getSortedList(Map<String, DocInfo> map, Boolean ascOrder){
+		Map<String, DocInfo> m1 = new HashMap<String, DocInfo>();
+		Map<String, DocInfo> m2 = new HashMap<String, DocInfo>();
+		
+		Integer i = 0;
+		for(Entry<String, DocInfo> e: map.entrySet()){
+			if(i<map.size()/2)
+				m1.put(e.getKey(), e.getValue());
+			else
+				m2.put(e.getKey(), e.getValue());
+		}
+		return mergeSort(sortByValue(m1, ascOrder), sortByValue(m2, ascOrder));
+	}
 	
 	/**
 	 * sorts given map and returns a linked list to print results in sorted order
@@ -417,6 +471,36 @@ public class CatalogManager implements Serializable, Flushable{
 	          }
 	     });
 	     return list;
+	}
+	
+	/**
+	 * sorts given list of entries and returns a linked list to print results in sorted order
+	 * @param map is the map to sort
+	 * @param ascOrder notifies order of sort ascending otherwise descending
+	 * @return List of map entries in sorted form
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private List<Entry> mergeSort(List<Entry> map1, List<Entry> map2){
+		List<Entry> list = new LinkedList();
+	    Integer minLen = Math.min(map1.size(), map2.size());
+	    
+	    while(!map1.isEmpty() && !map2.isEmpty()){
+	    	Entry item1 = map1.get(0); 
+	    	Entry item2 = map2.get(0);
+	    	
+	    	if(((Comparable)item1.getValue())
+	    			.compareTo((Comparable)item2.getValue())>0){
+	    		map1.remove(0);
+	    		list.add(item1);
+	    	}else{
+	    		map2.remove(0);
+	    		list.add(item2);
+	    	}
+	    	
+	    }
+	    list.addAll(map1);
+	    list.addAll(map2);
+		return list;
 	}
 	
 	@Override
