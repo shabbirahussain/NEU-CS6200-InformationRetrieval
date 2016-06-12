@@ -38,6 +38,8 @@ public final class Executor {
 		
 		System.out.println(doc);
 		
+		
+		
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
 		//ObjectStore.saveObject(elasticClient, OBJECT_STORE_PATH);

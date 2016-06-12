@@ -11,5 +11,6 @@ public abstract class Constants {
 	public static final String INDEX_NAME = "web_dataset";
 	public static final String INDEX_TYPE = "document";
 	
+	public static final Integer COOL_DOWN_INTERVAL = 1000; // is the amount of time between multiple requests to a domain in ms.
 	
 }
