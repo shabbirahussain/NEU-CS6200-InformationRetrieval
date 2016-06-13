@@ -30,7 +30,11 @@
     <p class='no-results' ng-show='!results.length && !loading'>No Results</p>
     <article class='result' ng-repeat='result in results track by $id(result)'>
       <h2>{{result.DOCNO}}</h2>
-      <p>{{result.TEXT}}</p>
+      <p>
+      	<span ng-repeat='highlight in result.highlight.TEXT' ng-bind-html-unsafe='highlight'>
+      		<span ng-bind-html="highlight"></span>&nbsp; ... &nbsp;
+      	</span>
+      </p>
     </article>
   </section>
   <section class='pagination-controls'>
@@ -39,6 +43,7 @@
 </main>
 
 <!-- Load resources -->
+<script src='bower_components/angular/angular-sanitize.min.js' type='text/javascript'></script>
 <script src='bower_components/angular-animate/angular-animate.min.js' type='text/javascript'></script>
 <script src='bower_components/elasticsearch/elasticsearch.angular.min.js' type='text/javascript'></script>
 <script src='js/config.js' type='text/javascript'></script>

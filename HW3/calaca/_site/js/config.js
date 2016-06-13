@@ -22,7 +22,7 @@ var CALACA_CONFIGS = {
 	url: "http://localhost:9200",
 	index_name: "ap_dataset",
 	type: "document",
-	highlight: "TEXT",
+	field: "TEXT",
 	size: 10,
 	search_delay: 500
 }

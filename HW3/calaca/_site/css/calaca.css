@@ -133,6 +133,18 @@ body {
   color: #ed4877;
   margin-bottom: 5px;
 }
+
+.result p span {
+    font-size: 13px;
+    font-weight: normal;
+    color: rgb(84,84,84);
+}
+
+.result p span em {
+  color: black;
+  font-weight: bold;
+}
+
 /* Result */
 
 /* ng-repeat animation */
