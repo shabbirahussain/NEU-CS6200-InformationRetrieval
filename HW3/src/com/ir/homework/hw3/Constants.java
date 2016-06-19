@@ -17,12 +17,12 @@ public abstract class Constants {
 	public static final String TOKENIZER_REGEXP = "(\\w+(\\.?\\w+)*)";
 
 	public static final Float   DEQUEUE_RND_PERCENT = .7F;
-	public static final Integer DEQUEUE_SIZE  = ((Float) (10F / DEQUEUE_RND_PERCENT)).intValue();
-	public static final Integer MAX_QUEUE_SIZE = 5000;
+	public static final Integer DEQUEUE_SIZE  = ((Float) (30F / DEQUEUE_RND_PERCENT)).intValue();
+	public static final Integer MAX_QUEUE_SIZE = 10000;
 	public static final Integer COOL_DOWN_INTERVAL  = 1000; // is the amount of time between multiple requests to a domain in ms.
 	public static final Long    TRUNCATION_INTERVAL = 60 * 1000L;
 	
-	public static final Short   MAX_NO_THREADS = 6;	
+	public static final Short   MAX_NO_THREADS = 12;	
 	
 	public static final String INDEX_NAME = "1512_great_mordenist_artist";
 	public static final String INDEX_TYPE = "document";

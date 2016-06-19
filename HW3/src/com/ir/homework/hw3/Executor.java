@@ -5,25 +5,18 @@ package com.ir.homework.hw3;
 
 import static com.ir.homework.hw3.Constants.*;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.elasticsearch.search.SearchHit;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.w3c.dom.Element;
 
 import com.ir.homework.hw3.elasticclient.ElasticClient;
 import com.ir.homework.hw3.frontier.FrontierTruncator;
@@ -50,8 +43,6 @@ public final class Executor extends Thread{
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		long start = System.nanoTime(); 
-		
 		// Initalizing
 		_tokenizer = new DefaultTokenizer(TOKENIZER_REGEXP)
 				.setStemming(true)
@@ -65,10 +56,20 @@ public final class Executor extends Thread{
 		}
 		
 		_elasticClient = new ElasticClient();
+				
+//		String url = "http://closetmonster.tumblr.com/";
+//		Document doc = Jsoup.connect(url)
+//				.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.120 Safari/535.2")
+//				.get();
+//		
+//		Executor e = new Executor(((Integer) 1).shortValue());
+//		System.out.println("Parsing2 [" + url + "]");
+//		Collection<URL> outLinks = e.getLinksFromPage(doc);
+//		if(true) return;
 		
 		// Create threads
-		FrontierTruncator truncator = new FrontierTruncator(_elasticClient, TRUNCATION_INTERVAL);
-		truncator.start();
+//		FrontierTruncator truncator = new FrontierTruncator(_elasticClient, TRUNCATION_INTERVAL);
+//		truncator.start();
 		
 		_domainAccessTime = new ConcurrentHashMap<String, Long>();
 		for(Short i=0;i<MAX_NO_THREADS; i++){
@@ -95,8 +96,6 @@ public final class Executor extends Thread{
 				}
 				System.out.println("["+this.threadID + "] Storing results...");
 				_elasticClient.flush();
-				//System.out.println("[Took: " + ((System.nanoTime() - start) * 1.0e-9) +"s] ");
-				
 			} catch (Exception e) {}
 		}
 	}
@@ -109,15 +108,12 @@ public final class Executor extends Thread{
 		String url  = hit.getId();
 		String host = new URL(url).getHost();
 		// Sleep thread if last access time is less than cooldown time
-		Long timeElapsed = (System.currentTimeMillis() - 
-				_domainAccessTime.getOrDefault(host, 0L));
+		Long timeElapsed = (System.currentTimeMillis() - _domainAccessTime.getOrDefault(host, 0L));
 		while(timeElapsed < COOL_DOWN_INTERVAL){
 			//System.out.println("["+this.threadID + "] Sleeping [" + url + "]");
-			
 			Thread.sleep(Math.max(0, COOL_DOWN_INTERVAL - timeElapsed));
 			
-			timeElapsed = (System.currentTimeMillis() - 
-					_domainAccessTime.get(host));
+			timeElapsed = (System.currentTimeMillis() - _domainAccessTime.get(host));
 		}
 		
 		Integer discoveryTime = hit.getFields()
@@ -128,14 +124,17 @@ public final class Executor extends Thread{
 			System.out.println("["+this.threadID + "] Fetching [" + url + "]");
 			
 			_domainAccessTime.put(host, System.currentTimeMillis());
-			Document doc = Jsoup.connect(url).get();
-			
-			System.out.println("["+this.threadID + "] Parsing [" + url + "]");
+			Document doc = Jsoup.connect(url)
+					.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.120 Safari/535.2")
+					.get();
 			
 			String text = getPlainTextContent(doc);
+			
+			//System.out.println("["+this.threadID + "] Parsing2 [" + url + "]");
+			
 			Collection<URL> outLinks = getLinksFromPage(doc);
 			
-			System.out.println("["+this.threadID + "] Buffering [" + url + "]");
+			//System.out.println("["+this.threadID + "] Buffering [" + url + "]");
 			
 			_elasticClient.loadData(url, doc.select("title").text(), text, outLinks);
 		
@@ -152,7 +151,7 @@ public final class Executor extends Thread{
 	 * @param document is the text of document to score
 	 * @return
 	 */
-	private static Float getScore(String document) {
+	private Float getScore(String document) {
 		Map<String, Float> tfMap = new HashMap<String, Float>();
 		
 		for(String term : _tokenizer.tokenize(document)){
@@ -176,7 +175,7 @@ public final class Executor extends Thread{
 	 * @param doc
 	 * @return
 	 */
-	private static String getPlainTextContent(Document doc){
+	private String getPlainTextContent(Document doc){
 		return doc.select("body").text();
 	}
 	
@@ -185,18 +184,18 @@ public final class Executor extends Thread{
 	 * @param doc is the document page
 	 * @return List of urls
 	 */
-	private static Collection<URL> getLinksFromPage(Document doc){
-		Collection<URL> result = new HashSet<URL>();
-		
-		Elements elems = doc.select("body").select("a");
+	private Collection<URL> getLinksFromPage(Document doc){
+		Elements elems = doc.select("a");
+		//Collection<URL> result = new HashSet<URL>(elems.size());
+		Collection<URL> result = new LinkedList<URL>();
 		
 		for(org.jsoup.nodes.Element elem : elems){
 			String href = elem.attr("href");
 			URL url = null;
 			try{
 				url = URLCanonizer.getCanninizedURL(href);
-				url = new URL("http", url.getHost(), url.getPath());
-				result.add(url);
+				if(url != null)
+					result.add(url);
 			}catch(Exception e){continue;}
 		}
 		return result;

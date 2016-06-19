@@ -28,7 +28,9 @@ public final class URLCanonizer {
 	
 	public static URL getCanninizedURL(String url) throws URISyntaxException, MalformedURLException{
 		// Remove Fragment : everything after #
-		url = url.replaceAll("#.*", "");
+		url = url.replaceAll("https://", "http://")
+				.replaceAll("#.*", "");
+		if(url=="") return null;
 		
 		URI compiledURI = new URI(url);
 		String protocol = compiledURI.getScheme().toLowerCase(); // Convert scheme to lowercase
