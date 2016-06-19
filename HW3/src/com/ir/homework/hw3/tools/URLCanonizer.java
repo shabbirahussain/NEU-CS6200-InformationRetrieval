@@ -12,7 +12,7 @@ import java.net.URL;
  * @author shabbirhussain
  *
  */
-public final class URLCanonicalizer {
+public final class URLCanonizer {
 
 	/**
 	 * @param args
@@ -20,14 +20,13 @@ public final class URLCanonicalizer {
 	 * @throws MalformedURLException 
 	 */
 	public static void main(String[] args) throws URISyntaxException, MalformedURLException {
-		String url = "https://play.Spotify.com:80//artis/t/../../53Xhw.htm#fbYqKCa1cC15pYq2q";
+		String url = "#";
 
-		URLCanonicalizer uc = new URLCanonicalizer();
-		System.out.println(uc.getCanninizedURL(url));
+		System.out.println(getCanninizedURL(url));
 	}
 	
 	
-	public URL getCanninizedURL(String url) throws URISyntaxException, MalformedURLException{
+	public static URL getCanninizedURL(String url) throws URISyntaxException, MalformedURLException{
 		// Remove Fragment : everything after #
 		url = url.replaceAll("#.*", "");
 		
