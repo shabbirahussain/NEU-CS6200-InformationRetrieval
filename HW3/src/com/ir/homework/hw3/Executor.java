@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -85,13 +86,14 @@ public final class Executor extends Thread{
 	public void run(){
 		while(true){
 			try {
+				System.out.println("["+this.threadID + "] Dequeing...");
 				SearchHit[] queue = _elasticClient.dequeue(DEQUEUE_SIZE);
 				if(queue.length == 0) continue;
 				
 				for(SearchHit hit : queue){
 					executeItteration(hit);
 				}
-				System.out.println("Storing results...");
+				System.out.println("["+this.threadID + "] Storing results...");
 				_elasticClient.flush();
 				//System.out.println("[Took: " + ((System.nanoTime() - start) * 1.0e-9) +"s] ");
 				
@@ -104,13 +106,18 @@ public final class Executor extends Thread{
 	 * @throws Exception
 	 */
 	private void executeItteration(SearchHit hit) throws Exception{
-		String url = hit.getId();
-		
+		String url  = hit.getId();
+		String host = new URL(url).getHost();
 		// Sleep thread if last access time is less than cooldown time
 		Long timeElapsed = (System.currentTimeMillis() - 
-				_domainAccessTime.getOrDefault(new URL(url).getHost(), 0L));
+				_domainAccessTime.getOrDefault(host, 0L));
 		while(timeElapsed < COOL_DOWN_INTERVAL){
+			//System.out.println("["+this.threadID + "] Sleeping [" + url + "]");
+			
 			Thread.sleep(Math.max(0, COOL_DOWN_INTERVAL - timeElapsed));
+			
+			timeElapsed = (System.currentTimeMillis() - 
+					_domainAccessTime.get(host));
 		}
 		
 		Integer discoveryTime = hit.getFields()
@@ -120,13 +127,19 @@ public final class Executor extends Thread{
 		try{
 			System.out.println("["+this.threadID + "] Fetching [" + url + "]");
 			
-			_domainAccessTime.put(url, System.currentTimeMillis());
+			_domainAccessTime.put(host, System.currentTimeMillis());
 			Document doc = Jsoup.connect(url).get();
 			
+			System.out.println("["+this.threadID + "] Parsing [" + url + "]");
+			
 			String text = getPlainTextContent(doc);
-			_elasticClient.loadData(url, doc.select("title").text(), text);
+			Collection<URL> outLinks = getLinksFromPage(doc);
+			
+			System.out.println("["+this.threadID + "] Buffering [" + url + "]");
+			
+			_elasticClient.loadData(url, doc.select("title").text(), text, outLinks);
 		
-			for(URL link : getLinksFromPage(doc)){
+			for(URL link : outLinks){
 				_elasticClient.enqueue(getScore(text), link, ++discoveryTime);
 			}
 		}catch(Exception e){}
@@ -173,9 +186,9 @@ public final class Executor extends Thread{
 	 * @return List of urls
 	 */
 	private static Collection<URL> getLinksFromPage(Document doc){
-		Collection<URL> result = new LinkedList<URL>();
+		Collection<URL> result = new HashSet<URL>();
 		
-		Elements elems = doc.select("body").select("a[href]");
+		Elements elems = doc.select("body").select("a");
 		
 		for(org.jsoup.nodes.Element elem : elems){
 			String href = elem.attr("href");

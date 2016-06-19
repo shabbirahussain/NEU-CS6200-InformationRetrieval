@@ -16,13 +16,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
-import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -41,6 +41,7 @@ import org.elasticsearch.search.SearchHit;
 public class ElasticClient implements Flushable{
 	private static Client _client = null;
 	private static DateFormat _dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmssZ");
+	private static Random random = new Random();
 	
 	private BulkRequestBuilder _bulkBuilder; // Stores the requests for loading data
 	private Map<String, Map<String, Object>> enqueueBuffer; // Stores enqueue requests
@@ -57,7 +58,9 @@ public class ElasticClient implements Flushable{
 		        .put("client.transport.sniff", true)
 		        .put("cluster.name", CLUSTER_NAME);;
 		
-		_client = TransportClient.builder().settings(settings.build()).build()
+		_client = TransportClient.builder()
+				.settings(settings.build())
+				.build()
 		        .addTransportAddress(
 		        		new InetSocketTransportAddress(InetAddress.getByName(HOST), PORT));
 		_bulkBuilder  = _client.prepareBulk();
@@ -71,14 +74,16 @@ public class ElasticClient implements Flushable{
 	 * @param id is the id of the document
 	 * @param title is the title of the document
 	 * @param string is the main content of the document
+	 * @param outLinks is the collection of out links from the page
 	 * @throws IOException
 	 */
-	public synchronized void loadData(String id, String title, String string) throws IOException{
+	public synchronized void loadData(String id, String title, String string, Collection<URL> outLinks) throws IOException{
 		XContentBuilder source = jsonBuilder()
 			.startObject()
 				.field(FIELD_TEXT, string)
 				.field(FIELD_TITLE, title)
 				.field(FIELD_DT_UPDATED, _dateFormat.format(new Date()))
+				.field(FIELD_OUT_LINKS, outLinks)
 			.endObject();
 		
 		IndexRequestBuilder irBuilder = _client.prepareIndex()
@@ -113,6 +118,13 @@ public class ElasticClient implements Flushable{
 	 */
 	public synchronized SearchHit[] dequeue(Integer size) throws Exception{
 		SearchHit[] hits = this.getNextItems(size);
+		
+		List<SearchHit> newHits = new LinkedList<SearchHit>();
+ 		for(SearchHit hit : hits){
+			if(random.nextDouble() < DEQUEUE_RND_PERCENT)
+				newHits.add(hit);
+		}
+		hits = newHits.toArray(new SearchHit[0]);
 		this.removeItems(hits);
 		
 		return hits;
@@ -214,13 +226,16 @@ public class ElasticClient implements Flushable{
 				.setIndex(QUEUE_NAME)
 				.setType(QUEUE_TYPE)
 				.setId(id)
+				//.setFields(FIELD_DISCOVERY_TIME)
 				.setDoc(builder);
 			
 			bulkBuilder.add(request);
 		}
 		
-		bulkBuilder.get();
+		bulkBuilder.get().getItems();
 	}
+	
+	
 	
 	/**
 	 * Truncates additional records in frontier queue

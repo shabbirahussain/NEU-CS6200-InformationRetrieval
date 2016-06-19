@@ -16,12 +16,13 @@ public abstract class Constants {
 	
 	public static final String TOKENIZER_REGEXP = "(\\w+(\\.?\\w+)*)";
 
-	public static final Integer DEQUEUE_SIZE  = 10;
-	public static final Integer MAX_QUEUE_SIZE = 10000;
+	public static final Float   DEQUEUE_RND_PERCENT = .7F;
+	public static final Integer DEQUEUE_SIZE  = ((Float) (10F / DEQUEUE_RND_PERCENT)).intValue();
+	public static final Integer MAX_QUEUE_SIZE = 5000;
 	public static final Integer COOL_DOWN_INTERVAL  = 1000; // is the amount of time between multiple requests to a domain in ms.
 	public static final Long    TRUNCATION_INTERVAL = 60 * 1000L;
 	
-	public static final Short   MAX_NO_THREADS = 1;	
+	public static final Short   MAX_NO_THREADS = 6;	
 	
 	public static final String INDEX_NAME = "1512_great_mordenist_artist";
 	public static final String INDEX_TYPE = "document";
@@ -34,6 +35,7 @@ public abstract class Constants {
 	public static final String FIELD_DISCOVERY_TIME = "DISCOVERY_TIME";
 	public static final String FIELD_DOMAIN_NAME    = "DOMAIN_NAME";
 	public static final String FIELD_VIS_DOMAIN_NAME= "VISITED_DOMAIN_NAME";
+	public static final String FIELD_OUT_LINKS      = "OUT_LINKS";
 	
 	public static final String FIELD_TEXT           = "TEXT";
 	public static final String FIELD_TITLE			= "TITLE";
