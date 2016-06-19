@@ -125,7 +125,7 @@ public class ElasticClient implements Flushable{
 	 * @throws MalformedURLException 
 	 */
 	public synchronized void enqueue(Float score, URL url, Integer discoveryTime) throws MalformedURLException{
-		Map<String, Object> params = this.enqueueBuffer.getOrDefault(url, DEFAULT_QUEUE_FIELDS);
+		Map<String, Object> params = this.enqueueBuffer.getOrDefault(url, new HashMap<String, Object>(DEFAULT_QUEUE_FIELDS));
 		
 		score             = Math.max(score, (Float) params.get(FIELD_PARENT_SCORE));
 		Integer inCnt     = (Integer) params.get(FIELD_IN_CNT) + 1 ;

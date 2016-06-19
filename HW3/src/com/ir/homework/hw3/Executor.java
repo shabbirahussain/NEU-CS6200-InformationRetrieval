@@ -94,7 +94,7 @@ public final class Executor extends Thread{
 				System.out.println("Storing results...");
 				_elasticClient.flush();
 				//System.out.println("[Took: " + ((System.nanoTime() - start) * 1.0e-9) +"s] ");
-			
+				
 			} catch (Exception e) {}
 		}
 	}
