@@ -12,11 +12,16 @@ public abstract class Constants {
 	public static final Integer PORT = 9300;
 	public static final String  CLUSTER_NAME = "dead-pool";
 	
-	public static final String[] QUERY_TERMS = {"modern", "artists"};
+	public static final String[] QUERY_TERMS = {"modern", "artists", "modernist"};
 	
 	public static final String TOKENIZER_REGEXP = "(\\w+(\\.?\\w+)*)";
+
+	public static final Integer DEQUEUE_SIZE  = 10;
+	public static final Integer MAX_QUEUE_SIZE = 10000;
+	public static final Integer COOL_DOWN_INTERVAL  = 1000; // is the amount of time between multiple requests to a domain in ms.
+	public static final Long    TRUNCATION_INTERVAL = 60 * 1000L;
 	
-	public static final Integer COOL_DOWN_INTERVAL = 1000; // is the amount of time between multiple requests to a domain in ms.
+	public static final Short   MAX_NO_THREADS = 6;	
 	
 	public static final String INDEX_NAME = "1512_great_mordenist_artist";
 	public static final String INDEX_TYPE = "document";

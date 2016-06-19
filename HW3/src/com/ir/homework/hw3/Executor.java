@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.elasticsearch.search.SearchHit;
 import org.jsoup.Jsoup;
@@ -24,6 +25,7 @@ import org.jsoup.select.Elements;
 import org.w3c.dom.Element;
 
 import com.ir.homework.hw3.elasticclient.ElasticClient;
+import com.ir.homework.hw3.frontier.FrontierTruncator;
 import com.ir.homework.hw3.io.StopWordReader;
 import com.ir.homework.hw3.tools.DefaultTokenizer;
 import com.ir.homework.hw3.tools.URLCanonizer;
@@ -35,11 +37,13 @@ import opennlp.tools.stemmer.Stemmer;
  * @author shabbirhussain
  *
  */
-public final class Executor {
+public final class Executor extends Thread{
 	private static ElasticClient _elasticClient;
 	private static DefaultTokenizer _tokenizer;
 	private static List<String> _queryTerms;
 	
+	private static Map<String, Long> _domainAccessTime;
+	private Short threadID;
 	/**
 	 * @param args
 	 * @throws Exception 
@@ -47,6 +51,7 @@ public final class Executor {
 	public static void main(String[] args) throws Exception {
 		long start = System.nanoTime(); 
 		
+		// Initalizing
 		_tokenizer = new DefaultTokenizer(TOKENIZER_REGEXP)
 				.setStemming(true)
 				.setStopWordsFilter((new StopWordReader(STOP_WORDS_FILE_PATH))
@@ -60,45 +65,72 @@ public final class Executor {
 		
 		_elasticClient = new ElasticClient();
 		
-		executeItteration();
+		// Create threads
+		FrontierTruncator truncator = new FrontierTruncator(_elasticClient, TRUNCATION_INTERVAL);
+		truncator.start();
 		
+		_domainAccessTime = new ConcurrentHashMap<String, Long>();
+		for(Short i=0;i<MAX_NO_THREADS; i++){
+			(new Executor(i)).start();
+		}
 	}
 	
+	public Executor(Short threadID){
+		this.threadID = threadID;
+	}
 	
-	private static void executeItteration() throws Exception{
-		long start = System.nanoTime(); 
-		
-		System.out.print("Dequeing elements...");
-		SearchHit[] queue = _elasticClient.dequeue(10);
-		System.out.println("[Took: " + ((System.nanoTime() - start) * 1.0e-9) +"s] ");
-		
-		for(SearchHit hit : queue){
-			String url = hit.getId();
-			System.out.print("Fetching [" + url + "]");
-			
-			Integer discoveryTime = hit.getFields()
-					.get(FIELD_DISCOVERY_TIME)
-					.getValue();
-			
-			long lastAccessTime = System.currentTimeMillis();
-			try{
-				Document doc = Jsoup.connect(url).get();
-				String text = getPlainTextContent(doc);
-				_elasticClient.loadData(url, doc.select("title").text(), text);
-			
-				for(URL link : getLinksFromPage(doc)){
-					_elasticClient.enqueue(getScore(text), link, ++discoveryTime);
+	/**
+	 * Executes thread
+	 */
+	public void run(){
+		while(true){
+			try {
+				SearchHit[] queue = _elasticClient.dequeue(DEQUEUE_SIZE);
+				if(queue.length == 0) continue;
+				
+				for(SearchHit hit : queue){
+					executeItteration(hit);
 				}
-			}catch(Exception e){}
-			Thread.sleep(Math.max(0, COOL_DOWN_INTERVAL - System.currentTimeMillis() + lastAccessTime));
+				System.out.println("Storing results...");
+				_elasticClient.flush();
+				//System.out.println("[Took: " + ((System.nanoTime() - start) * 1.0e-9) +"s] ");
 			
-			System.out.println("[Took: " + ((System.nanoTime() - start) * 1.0e-9) +"s] ");
+			} catch (Exception e) {}
 		}
-		System.out.print("Storing results...");
-		_elasticClient.flush();
-		System.out.println("[Took: " + ((System.nanoTime() - start) * 1.0e-9) +"s] ");
+	}
+	
+	/**
+	 * Executes iteration
+	 * @throws Exception
+	 */
+	private void executeItteration(SearchHit hit) throws Exception{
+		String url = hit.getId();
 		
-		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+		// Sleep thread if last access time is less than cooldown time
+		Long timeElapsed = (System.currentTimeMillis() - 
+				_domainAccessTime.getOrDefault(new URL(url).getHost(), 0L));
+		while(timeElapsed < COOL_DOWN_INTERVAL){
+			Thread.sleep(Math.max(0, COOL_DOWN_INTERVAL - timeElapsed));
+		}
+		
+		Integer discoveryTime = hit.getFields()
+				.get(FIELD_DISCOVERY_TIME)
+				.getValue();
+		
+		try{
+			System.out.println("["+this.threadID + "] Fetching [" + url + "]");
+			
+			_domainAccessTime.put(url, System.currentTimeMillis());
+			Document doc = Jsoup.connect(url).get();
+			
+			String text = getPlainTextContent(doc);
+			_elasticClient.loadData(url, doc.select("title").text(), text);
+		
+			for(URL link : getLinksFromPage(doc)){
+				_elasticClient.enqueue(getScore(text), link, ++discoveryTime);
+			}
+		}catch(Exception e){}
+		
 	}
 	
 	
@@ -150,9 +182,9 @@ public final class Executor {
 			URL url = null;
 			try{
 				url = URLCanonizer.getCanninizedURL(href);
+				url = new URL("http", url.getHost(), url.getPath());
+				result.add(url);
 			}catch(Exception e){continue;}
-			
-			result.add(url);
 		}
 		return result;
 	}

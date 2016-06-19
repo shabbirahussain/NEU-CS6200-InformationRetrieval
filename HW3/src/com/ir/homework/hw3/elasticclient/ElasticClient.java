@@ -4,17 +4,25 @@ import static com.ir.homework.hw3.Constants.*;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.Flushable;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -32,7 +40,7 @@ import org.elasticsearch.search.SearchHit;
 
 public class ElasticClient implements Flushable{
 	private static Client _client = null;
-	//private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ss");
+	private static DateFormat _dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmssZ");
 	
 	private BulkRequestBuilder _bulkBuilder; // Stores the requests for loading data
 	private Map<String, Map<String, Object>> enqueueBuffer; // Stores enqueue requests
@@ -58,14 +66,26 @@ public class ElasticClient implements Flushable{
 	}
 	
 	// --------------------------- Loaders ----------------------------
-	public synchronized void loadData(String id, String title, String string){
+	/**
+	 * Loads data into elasticsearch
+	 * @param id is the id of the document
+	 * @param title is the title of the document
+	 * @param string is the main content of the document
+	 * @throws IOException
+	 */
+	public synchronized void loadData(String id, String title, String string) throws IOException{
+		XContentBuilder source = jsonBuilder()
+			.startObject()
+				.field(FIELD_TEXT, string)
+				.field(FIELD_TITLE, title)
+				.field(FIELD_DT_UPDATED, _dateFormat.format(new Date()))
+			.endObject();
+		
 		IndexRequestBuilder irBuilder = _client.prepareIndex()
 				.setIndex(INDEX_NAME)
 				.setType(INDEX_TYPE)
 				.setId(id)
-				.setSource(FIELD_TEXT, string)
-				.setSource(FIELD_TITLE, title)
-				.setSource(FIELD_DT_UPDATED, (new Date()).toString());
+				.setSource(source);
 		
 		_bulkBuilder.add(irBuilder);
 		return;
@@ -74,7 +94,11 @@ public class ElasticClient implements Flushable{
 	@Override
 	public synchronized void flush(){
 		// load all buffered documents if any
-		_bulkBuilder.get();
+		BulkResponse response = _bulkBuilder.get();
+		if(response.hasFailures())
+			System.err.println(response.buildFailureMessage());
+		
+		
 		_bulkBuilder = _client.prepareBulk();
 		
 		this.enqueue(this.enqueueBuffer);
@@ -198,4 +222,59 @@ public class ElasticClient implements Flushable{
 		bulkBuilder.get();
 	}
 	
+	/**
+	 * Truncates additional records in frontier queue
+	 * @throws IOException 
+	 */
+	public void truncateQueue() throws IOException{
+		Set<String> toKeep = new HashSet<String>();
+		SearchResponse response1 = _client.prepareSearch()
+				.setIndices(QUEUE_NAME)
+				.setTypes(QUEUE_TYPE)
+			 	.setSize(MAX_QUEUE_SIZE)
+			 	.setQuery(QueryBuilders.boolQuery()
+			 		.must(QueryBuilders.functionScoreQuery()
+			 			.add(ScoreFunctionBuilders
+			 			.scriptFunction(new Script(SCRIPT_DEQUEUE, ScriptType.INDEXED, "groovy", null)))
+			 			.boostMode("replace"))
+			 		.filter(QueryBuilders.termQuery(FIELD_VISITED, false)))
+			 	.addFields(FIELD_DISCOVERY_TIME)
+			 	.get();
+		
+		for(SearchHit hit : response1.getHits().hits()){
+			toKeep.add(hit.getId());
+		}
+		
+		SearchResponse response2 = _client.prepareSearch()
+				.setIndices(QUEUE_NAME)
+				.setTypes(QUEUE_TYPE)
+			 	.setSize(MAX_QUEUE_SIZE)
+			 	.setQuery(QueryBuilders.boolQuery()
+			 		.must(QueryBuilders.matchAllQuery())
+			 		.filter(QueryBuilders.termQuery(FIELD_VISITED, false)))
+			 	.addFields(FIELD_DISCOVERY_TIME)
+			 	.get();
+		
+
+		BulkRequestBuilder bulkBuilder = _client.prepareBulk();
+		XContentBuilder builder = jsonBuilder()
+				.startObject()
+					.field(FIELD_VIS_DOMAIN_NAME, "")
+					.field(FIELD_VISITED, true)
+				.endObject();
+		
+		for(SearchHit hit : response2.getHits().hits()){
+			String id = hit.getId();
+			if(toKeep.contains(id)) continue;
+			
+			UpdateRequestBuilder request = _client.prepareUpdate()
+				.setIndex(QUEUE_NAME)
+				.setType(QUEUE_TYPE)
+				.setId(id)
+				.setDoc(builder);
+			
+			bulkBuilder.add(request);
+		}
+		bulkBuilder.get();
+	}
 }
