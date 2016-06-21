@@ -38,12 +38,15 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.SearchHit;
 
+import com.google.common.net.InternetDomainName;
+
 public class ElasticClient implements Flushable{
 	private static Client _client = null;
 	private static DateFormat _dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmssZ");
 	private static Random random = new Random();
 	
-	private BulkRequestBuilder _bulkBuilder; // Stores the requests for loading data
+	// Local buffers
+	private BulkRequestBuilder loadDataBuffer; // Stores the requests for loading data
 	private Map<String, Map<String, Object>> enqueueBuffer; // Stores enqueue requests
 	
 	
@@ -63,7 +66,7 @@ public class ElasticClient implements Flushable{
 				.build()
 		        .addTransportAddress(
 		        		new InetSocketTransportAddress(InetAddress.getByName(HOST), PORT));
-		_bulkBuilder  = _client.prepareBulk();
+		loadDataBuffer  = _client.prepareBulk();
 		
 		enqueueBuffer = new HashMap<String, Map<String, Object>>();
 	}
@@ -92,22 +95,25 @@ public class ElasticClient implements Flushable{
 				.setId(id)
 				.setSource(source);
 		
-		_bulkBuilder.add(irBuilder);
+		loadDataBuffer.add(irBuilder);
 		return;
 	}
 	
 	@Override
 	public synchronized void flush(){
 		// load all buffered documents if any
-		BulkResponse response = _bulkBuilder.get();
-		if(response.hasFailures())
-			System.err.println(response.buildFailureMessage());
+		if(loadDataBuffer.numberOfActions() > 0){
+			BulkResponse response = loadDataBuffer.get();
+			if(response.hasFailures())
+				System.err.println(response.buildFailureMessage());
+			
+			loadDataBuffer = _client.prepareBulk();
+		}
 		
-		
-		_bulkBuilder = _client.prepareBulk();
-		
-		this.enqueue(this.enqueueBuffer);
-		this.enqueueBuffer = new HashMap<String, Map<String, Object>>();
+		if(this.enqueueBuffer.size() > 0){
+			this.enqueue(this.enqueueBuffer);
+			this.enqueueBuffer = new HashMap<String, Map<String, Object>>();
+		}
 	}
 	
 	/**
@@ -142,7 +148,7 @@ public class ElasticClient implements Flushable{
 		score             = Math.max(score, (Float) params.get(FIELD_PARENT_SCORE));
 		Integer inCnt     = (Integer) params.get(FIELD_IN_CNT) + 1 ;
 		discoveryTime     = Math.min(discoveryTime, (Integer) params.get(FIELD_DISCOVERY_TIME) + 1 );
-		String domainName = url.getHost();
+		String domainName = InternetDomainName.from(url.getHost()).topPrivateDomain().toString();
 				
 		params.put(FIELD_PARENT_SCORE, score);
 		params.put(FIELD_IN_CNT, inCnt);
@@ -198,6 +204,7 @@ public class ElasticClient implements Flushable{
 		 			.boostMode("replace"))
 		 		.filter(QueryBuilders.termQuery(FIELD_VISITED, false)))
 		 	.addFields(FIELD_DISCOVERY_TIME)
+		 	.addFields(FIELD_DOMAIN_NAME)
 		 	.get();
 		
 		return response.getHits().hits();
@@ -215,11 +222,13 @@ public class ElasticClient implements Flushable{
 		
 		for(SearchHit hit : hits){
 			String id = hit.getId();
+			String domainName = hit.getFields().get(FIELD_DOMAIN_NAME).value();
 			
 			XContentBuilder builder = jsonBuilder()
 			.startObject()
-				.field(FIELD_VIS_DOMAIN_NAME, (new URL(id).getHost()))
+				.field(FIELD_VIS_DOMAIN_NAME, domainName)
 				.field(FIELD_VISITED, true)
+				.field(VISITED_DATE,  _dateFormat.format(new Date()))
 			.endObject();
 			
 			UpdateRequestBuilder request = _client.prepareUpdate()
@@ -255,7 +264,7 @@ public class ElasticClient implements Flushable{
 			 		.filter(QueryBuilders.termQuery(FIELD_VISITED, false)))
 			 	.addFields(FIELD_DISCOVERY_TIME)
 			 	.get();
-		
+
 		for(SearchHit hit : response1.getHits().hits()){
 			toKeep.add(hit.getId());
 		}
@@ -290,6 +299,7 @@ public class ElasticClient implements Flushable{
 			
 			bulkBuilder.add(request);
 		}
-		bulkBuilder.get();
+		if(bulkBuilder.numberOfActions()>0)
+			bulkBuilder.get();
 	}
 }

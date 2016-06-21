@@ -128,10 +128,25 @@ body {
   padding: 10px;
   border-bottom: 10px solid #ecf0f1;
 }
-.result h2 {
+
+.result a:link, .result a:visited{
+	text-decoration: none;
+}
+
+.result a:hover{
+	text-decoration: underline;
+}
+
+.result a h2 {
   font-size: 20px;
   color: #ed4877;
-  margin-bottom: 5px;
+}
+
+.result cite {
+  font-size: 14px;
+  color: #006621;
+  margin-top: 7px;
+  margin-bottom: 15px;
 }
 
 .result p span {

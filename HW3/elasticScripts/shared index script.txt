@@ -1,0 +1,197 @@
+
+# START: RESET -----------------------------------------------
+
+#DELETE /1512_great_mordenist_artist
+PUT /1512_great_mordenist_artist/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 3,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "analyzer": {
+        "my_english": { 
+          "type": "english",
+          "stopwords_path": "stoplist.txt" 
+        }
+      }
+    }
+  }
+}
+
+PUT /1512_great_mordenist_artist/document/_mapping
+{
+  "document": {
+    "properties": {
+      "IN_LINKS": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "OUT_LINKS": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "LAST_UPDATED": {
+        "type": "date",
+        "format": "basic_date_time_no_millis",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "TITLE": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english"
+      },
+      "TEXT": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english"
+      }
+    }
+  }
+}
+
+#DELETE /frontier/
+PUT /frontier/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 3,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "analyzer": {
+        "my_keyword": { 
+          "type": "keyword",
+          "filter":"lowercase"
+        }
+      }
+    }
+  }
+}
+
+
+
+PUT /frontier/queue/_mapping
+{
+  "queue": {
+    "properties": {
+      "VISITED_DOMAIN_NAME":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer":"my_keyword" 
+      },
+      "DOMAIN_NAME":{
+        "type": "string",
+        "store": true,
+        "index":"not_analyzed" 
+      },
+      "PARENT_SCORE": {
+        "type": "float",
+        "store": true
+      },
+      "IN_LINK_CNT": {
+        "type": "integer",
+        "store": true
+      },
+      "DISCOVERY_WAVE_NO": {
+        "type": "integer",
+        "store": true
+      },
+      "VISITED":{
+        "type": "boolean",
+        "store": true
+      },
+      "VISITED_DATE": {
+        "type": "date",
+        "format": "basic_date_time_no_millis",
+        "store": true,
+        "index": "not_analyzed"
+      }
+    },
+    "_source": {
+      "enabled": true
+    }
+  }
+}
+
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_modern_artists
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fwww.ranker.com%2Flist%2Ffamous-modernism-artists%2Freference
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"ranker.com",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FAntoni_Gaud%25C3%25AD
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_Gaud%25C3%25AD_buildings
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+# END: RESET -----------------------------------------------
+
+GET /1512_great_mordenist_artist/
+GET /1512_great_mordenist_artist/document/_mapping
+GET /1512_great_mordenist_artist/document/_search
+
+
+GET /1512_great_mordenist_artist/document/http%3A%2F%2Fwww.real.com
+
+GET /frontier/queue/http%3A%2F%2Fdirector.real.com%2Frealplayer
+
+#1:430 => 46563
+#10:00 => 208736
+#Speed => 340 pages/min
+
+POST /frontier/queue/_search
+
+
+POST /_scripts/groovy/MAGIC_DEQUEUE
+{
+     "script": "(_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))"
+}
+
+
+GET /_scripts/groovy/MAGIC_DEQUEUE
+POST /_scripts/groovy/MAGIC_ENQUEUE
+{
+     "script": "ctx._source.PARENT_SCORE = max(ctx._source.PARENT_SCORE, PARENT_SCORE); ctx._source.DISCOVERY_WAVE_NO = min(ctx._source.DISCOVERY_WAVE_NO, DISCOVERY_WAVE_NO); ctx._source.IN_LINK_CNT += IN_LINK_CNT;"
+}

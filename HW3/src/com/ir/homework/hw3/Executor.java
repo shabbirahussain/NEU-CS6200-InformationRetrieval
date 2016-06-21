@@ -19,8 +19,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
 import com.ir.homework.hw3.elasticclient.ElasticClient;
-import com.ir.homework.hw3.frontier.FrontierTruncator;
 import com.ir.homework.hw3.io.StopWordReader;
+import com.ir.homework.hw3.processes.FrontierTruncator;
 import com.ir.homework.hw3.tools.DefaultTokenizer;
 import com.ir.homework.hw3.tools.URLCanonizer;
 
@@ -68,8 +68,8 @@ public final class Executor extends Thread{
 //		if(true) return;
 		
 		// Create threads
-//		FrontierTruncator truncator = new FrontierTruncator(_elasticClient, TRUNCATION_INTERVAL);
-//		truncator.start();
+		FrontierTruncator truncator = new FrontierTruncator(_elasticClient, TRUNCATION_INTERVAL);
+		truncator.start();
 		
 		_domainAccessTime = new ConcurrentHashMap<String, Long>();
 		for(Short i=0;i<MAX_NO_THREADS; i++){

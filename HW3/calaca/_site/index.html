@@ -29,12 +29,19 @@
   <section class='results'>
     <p class='no-results' ng-show='!results.length && !loading'>No Results</p>
     <article class='result' ng-repeat='result in results track by $id(result)'>
-      <h2>{{result.DOCNO}}</h2>
+    
+    <!-- START: Custom display results -->
+      <a href="{{result._id}}">
+      	<h2>{{result.TITLE}}</h2>
+      </a>
+      <cite>{{result._id}}</cite>
       <p>
       	<span ng-repeat='highlight in result.highlight.TEXT' ng-bind-html-unsafe='highlight'>
       		<span ng-bind-html="highlight"></span>&nbsp; ... &nbsp;
       	</span>
       </p>
+      <!-- END: Custom display results -->
+      
     </article>
   </section>
   <section class='pagination-controls'>

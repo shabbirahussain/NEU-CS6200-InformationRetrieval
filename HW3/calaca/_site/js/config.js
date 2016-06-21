@@ -19,8 +19,8 @@
  */
 
 var CALACA_CONFIGS = {
-	url: "http://localhost:9200",
-	index_name: "ap_dataset",
+	url: "http://elastichost:9200",
+	index_name: "1512_great_mordenist_artist",
 	type: "document",
 	field: "TEXT",
 	size: 10,
