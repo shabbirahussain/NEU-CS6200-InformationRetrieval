@@ -27,7 +27,7 @@ public final class FrontierTruncator extends Thread{
 				System.out.println("Truncating additional queue...");
 				this.ec.truncateQueue();
 			}catch(Exception e){}
-			try{	
+			try{
 				Thread.sleep(trunctionInterval);
 			}catch(Exception e){}
 		}

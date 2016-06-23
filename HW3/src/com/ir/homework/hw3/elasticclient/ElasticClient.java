@@ -11,7 +11,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +38,7 @@ import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.SearchHit;
 
 import com.google.common.net.InternetDomainName;
+import com.ir.homework.hw3.tools.WebPageParser.ParsedWebPage;
 
 public class ElasticClient implements Flushable{
 	private static Client _client = null;
@@ -75,18 +75,23 @@ public class ElasticClient implements Flushable{
 	/**
 	 * Loads data into elasticsearch
 	 * @param id is the id of the document
-	 * @param title is the title of the document
-	 * @param string is the main content of the document
-	 * @param outLinks is the collection of out links from the page
+	 * @param ParsedWebPage is the object containing parsed webpage response
 	 * @throws IOException
 	 */
-	public synchronized void loadData(String id, String title, String string, Collection<URL> outLinks) throws IOException{
+	public synchronized void loadData(String id, ParsedWebPage parsedWebPage) throws IOException{
+		
+		if(this.loadDataBuffer.numberOfActions() > MAX_BUFFER_SIZE){
+			System.out.println("[X] Storing results...");
+			this.flush();
+		}
+		
 		XContentBuilder source = jsonBuilder()
 			.startObject()
-				.field(FIELD_TEXT, string)
-				.field(FIELD_TITLE, title)
+				.field(FIELD_HTML, parsedWebPage.html)
+				.field(FIELD_HTTP_HEADERS, parsedWebPage.headers)
+				.field(FIELD_TEXT, parsedWebPage.text)
+				.field(FIELD_TITLE, parsedWebPage.title)
 				.field(FIELD_DT_UPDATED, _dateFormat.format(new Date()))
-				//.field(FIELD_OUT_LINKS, outLinks)
 			.endObject();
 		
 		IndexRequestBuilder irBuilder = _client.prepareIndex()
@@ -99,7 +104,7 @@ public class ElasticClient implements Flushable{
 		
 		
 		// Store link map
-		for(URL link : outLinks){
+		for(URL link : parsedWebPage.outLinks){
 			String dstLink = link.toString();
 			String mapId = id + "#" + dstLink;
 			
@@ -123,7 +128,8 @@ public class ElasticClient implements Flushable{
 	@Override
 	public synchronized void flush(){
 		// load all buffered documents if any
-		if(loadDataBuffer.numberOfActions() > 0){
+		
+		if(this.loadDataBuffer.numberOfActions() > 0){
 			BulkResponse response = loadDataBuffer.get();
 			if(response.hasFailures())
 				System.err.println(response.buildFailureMessage());
