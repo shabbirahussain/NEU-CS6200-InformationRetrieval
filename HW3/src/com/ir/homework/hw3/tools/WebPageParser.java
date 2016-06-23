@@ -35,7 +35,7 @@ public class WebPageParser {
 		Document doc;
 		doc = response.parse();
 		result.headers  = response.headers().toString();
-		result.html     = doc.text();
+		result.html     = doc.outerHtml();
 		result.title    = doc.select("title").text();
 		result.text     = doc.body().text(); //getPlainTextContent(doc);
 		result.outLinks = getLinksFromPage(doc);

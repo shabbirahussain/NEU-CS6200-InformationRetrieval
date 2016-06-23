@@ -57,11 +57,13 @@ public class DefaultTokenizer {
 		List<String> result = new LinkedList<String>();
 		while (m.find()) {
 			String term = m.group();
-			if(this.stemmingEnabled) 
-				term = stemmer.stem(term);
-			if(stopWords.contains(term)) continue;
-			
-			result.add(term);
+			try{
+				if(this.stemmingEnabled) 
+					term = stemmer.stem(term);
+				if(stopWords.contains(term)) continue;
+				
+				result.add(term);
+			}catch(Exception e){}
 		}
 		return result;
 	}

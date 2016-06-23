@@ -1,5 +1,6 @@
+
 # START: RESET -----------------------------------------------
-DELETE /*
+#DELETE /*
 
 
 POST /_scripts/groovy/MAGIC_DEQUEUE
@@ -13,7 +14,7 @@ POST /_scripts/groovy/MAGIC_ENQUEUE
 }
 
 
-#DELETE /1512_great_mordenist_artist
+DELETE /1512_great_mordenist_artist
 PUT /1512_great_mordenist_artist/
 {
   "settings": {
@@ -39,21 +40,21 @@ PUT /1512_great_mordenist_artist/document/_mapping
 {
   "document": {
     "properties": {
-      "IN_LINKS": {
+      "HTTP_HEADERS": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
-      },
-      "OUT_LINKS": {
-        "type": "string",
-        "store": true,
-        "index": "not_analyzed"
+        "index": "no"
       },
       "LAST_UPDATED": {
         "type": "date",
         "format": "basic_date_time_no_millis",
         "store": true,
         "index": "not_analyzed"
+      },
+      "HTML": {
+        "type": "string",
+        "store": true,
+        "index": "no"
       },
       "TITLE": {
         "type": "string",
@@ -73,7 +74,7 @@ PUT /1512_great_mordenist_artist/document/_mapping
   }
 }
 
-
+DELETE links
 PUT /links/
 {
   "settings": {
@@ -114,7 +115,7 @@ PUT /links/map/_mapping
 }
 
 
-#DELETE /frontier/
+DELETE /frontier/
 PUT /frontier/
 {
   "settings": {
@@ -180,6 +181,7 @@ PUT /frontier/queue/_mapping
   }
 }
 
+
 POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_modern_artists
 {
   "VISITED_DOMAIN_NAME": "",
@@ -219,3 +221,8 @@ POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_Gaud%25C3%25
 
 
 # END: RESET -----------------------------------------------
+
+
+GET /1512_great_mordenist_artist/document/_search
+GET /links/map/_search
+GET /frontier/queue/_search
