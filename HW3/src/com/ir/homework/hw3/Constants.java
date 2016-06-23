@@ -16,7 +16,7 @@ public abstract class Constants {
 	
 	public static final String TOKENIZER_REGEXP = "(\\w+(\\.?\\w+)*)";
 
-	public static final Float   DEQUEUE_RND_PERCENT = .7F;
+	public static final Float   DEQUEUE_RND_PERCENT = 1.0F;
 	public static final Integer DEQUEUE_SIZE  = ((Float) (100F / DEQUEUE_RND_PERCENT)).intValue();
 	public static final Integer MAX_QUEUE_SIZE = 10000;
 	public static final Integer COOL_DOWN_INTERVAL  = 1000; // is the amount of time between multiple requests to a domain in ms.
@@ -28,8 +28,8 @@ public abstract class Constants {
 	public static final String INDEX_TYPE    = "document";
 	public static final String QUEUE_NAME    = "frontier";
 	public static final String QUEUE_TYPE    = "queue";
-	public static final String LINK_MAP_NAME = "frontier";
-	public static final String LINK_MAP_TYPE = "link_map";
+	public static final String LINK_MAP_NAME = "links";
+	public static final String LINK_MAP_TYPE = "map";
 	
 	
 	public static final String FIELD_VISITED        = "VISITED";

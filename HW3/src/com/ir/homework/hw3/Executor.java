@@ -89,8 +89,10 @@ public final class Executor extends Thread{
 			try {
 				System.out.println("["+this.threadID + "] Dequeing...");
 				SearchHit[] queue = _elasticClient.dequeue(DEQUEUE_SIZE);
-				if(queue.length == 0) continue;
-				
+				if(queue.length == 0) {
+					System.out.println("["+this.threadID + "] Sleeping...");
+					Thread.sleep(1000);
+				}
 				for(SearchHit hit : queue){
 					executeItteration(hit);
 				}
