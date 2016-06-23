@@ -28,12 +28,14 @@ public final class URLCanonizer {
 	
 	public static URL getCanninizedURL(String url) throws URISyntaxException, MalformedURLException{
 		// Remove Fragment : everything after #
-		url = url.replaceAll("https://", "http://")
-				.replaceAll("#.*", "");
+		url = url.replaceAll("#.*", "");
 		if(url=="") return null;
 		
 		URI compiledURI = new URI(url);
-		String protocol = compiledURI.getScheme().toLowerCase(); // Convert scheme to lowercase
+		String protocol = compiledURI.getScheme()
+				.toLowerCase()
+				.replaceAll("https", "http");
+		// Convert scheme to lowercase
 		String host     = compiledURI.getHost().toLowerCase();
 		String path     = compiledURI.getPath();
 		
