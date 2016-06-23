@@ -24,10 +24,13 @@ public abstract class Constants {
 	
 	public static final Short   MAX_NO_THREADS = 8;	
 	
-	public static final String INDEX_NAME = "1512_great_mordenist_artist";
-	public static final String INDEX_TYPE = "document";
-	public static final String QUEUE_NAME = "frontier";
-	public static final String QUEUE_TYPE = "queue";
+	public static final String INDEX_NAME    = "1512_great_mordenist_artist";
+	public static final String INDEX_TYPE    = "document";
+	public static final String QUEUE_NAME    = "frontier";
+	public static final String QUEUE_TYPE    = "queue";
+	public static final String LINK_MAP_NAME = "frontier";
+	public static final String LINK_MAP_TYPE = "link_map";
+	
 	
 	public static final String FIELD_VISITED        = "VISITED";
 	public static final String FIELD_IN_CNT         = "IN_LINK_CNT";
@@ -35,8 +38,10 @@ public abstract class Constants {
 	public static final String FIELD_DISCOVERY_TIME = "DISCOVERY_WAVE_NO";
 	public static final String FIELD_DOMAIN_NAME    = "DOMAIN_NAME";
 	public static final String FIELD_VIS_DOMAIN_NAME= "VISITED_DOMAIN_NAME";
-	public static final String FIELD_OUT_LINKS      = "OUT_LINKS";
-	public static final String VISITED_DATE         = "VISITED_DATE";
+	public static final String FIELD_VISITED_DATE   = "VISITED_DATE";
+	public static final String FIELD_SRC_LINK       = "SRC_LINK";
+	public static final String FIELD_DST_LINK       = "DST_LINK";
+	
 	
 	public static final String FIELD_TEXT           = "TEXT";
 	public static final String FIELD_TITLE			= "TITLE";

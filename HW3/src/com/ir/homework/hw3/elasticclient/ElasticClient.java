@@ -86,7 +86,7 @@ public class ElasticClient implements Flushable{
 				.field(FIELD_TEXT, string)
 				.field(FIELD_TITLE, title)
 				.field(FIELD_DT_UPDATED, _dateFormat.format(new Date()))
-				.field(FIELD_OUT_LINKS, outLinks)
+				//.field(FIELD_OUT_LINKS, outLinks)
 			.endObject();
 		
 		IndexRequestBuilder irBuilder = _client.prepareIndex()
@@ -96,6 +96,27 @@ public class ElasticClient implements Flushable{
 				.setSource(source);
 		
 		loadDataBuffer.add(irBuilder);
+		
+		
+		// Store link map
+		for(URL link : outLinks){
+			String dstLink = link.toString();
+			String mapId = id + "#" + dstLink;
+			
+			source = jsonBuilder()
+					.startObject()
+						.field(FIELD_SRC_LINK, id)
+						.field(FIELD_DST_LINK, dstLink)
+					.endObject();
+			
+			irBuilder = _client.prepareIndex()
+					.setIndex(LINK_MAP_NAME)
+					.setType(LINK_MAP_TYPE)
+					.setId(mapId)
+					.setSource(source);
+			
+			loadDataBuffer.add(irBuilder);
+		}
 		return;
 	}
 	
@@ -228,7 +249,7 @@ public class ElasticClient implements Flushable{
 			.startObject()
 				.field(FIELD_VIS_DOMAIN_NAME, domainName)
 				.field(FIELD_VISITED, true)
-				.field(VISITED_DATE,  _dateFormat.format(new Date()))
+				.field(FIELD_VISITED_DATE,  _dateFormat.format(new Date()))
 			.endObject();
 			
 			UpdateRequestBuilder request = _client.prepareUpdate()
