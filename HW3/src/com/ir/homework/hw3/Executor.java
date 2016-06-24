@@ -22,7 +22,6 @@ import opennlp.tools.stemmer.Stemmer;
  *
  */
 public final class Executor{
-	private static ElasticClient    _elasticClient;
 	/**
 	 * @param args
 	 * @throws Exception 
@@ -42,10 +41,10 @@ public final class Executor{
 		ElasticClient elasticClient = new ElasticClient();
 		
 		// Create threads
-		(new FrontierTruncator(_elasticClient, TRUNCATION_INTERVAL)).start();
+		(new FrontierTruncator(elasticClient, TRUNCATION_INTERVAL)).start();
 	
 		for(Short i=0;i<MAX_NO_THREADS; i++){
-			(new WebCrawler(elasticClient,
+			(new WebCrawler((new ElasticClient()),
 					tokenizer,
 					queryTerms)).start();
 			try{Thread.sleep(1000); }catch(Exception e){}

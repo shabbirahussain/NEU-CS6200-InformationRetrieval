@@ -53,8 +53,8 @@ public class WebCrawler extends Thread {
 				SearchHit[] queue = elasticClient.dequeue(DEQUEUE_SIZE);
 				
 				if(queue.length == 0) {
-					this.log("Flusing buffer...");
-					elasticClient.flush();
+//					this.log("Flusing buffer...");
+//					elasticClient.flush();
 					Thread.sleep(2000);
 				}
 				
@@ -75,9 +75,7 @@ public class WebCrawler extends Thread {
 	 */
 	private void crawl(SearchHit hit) throws Exception{
 		String url  = hit.getId();
-		Integer discoveryTime = hit.getFields()
-				.get(FIELD_DISCOVERY_TIME)
-				.getValue();
+		Integer discoveryTime = hit.getFields().get(FIELD_DISCOVERY_TIME).getValue();
 		
 
 		String host = new URL(url).getHost();
@@ -94,17 +92,26 @@ public class WebCrawler extends Thread {
 					.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.120 Safari/535.2")
 					.followRedirects(true)
 					.timeout(5000)
+					.ignoreHttpErrors(true)
 					.execute();
 			
+			this.log("Parsing [" + url + "]");
 			ParsedWebPage parsedWebPage = _webPageParser.parseResponse(response);
 			
+			this.log("Buffering1 [" + url + "]");
 			elasticClient.loadData(url, parsedWebPage);
 		
+			this.log("Scoring [" + url + "]");
+			Float score = getScore(parsedWebPage.text);
+			discoveryTime++;
+			
+			this.log("Buffering2 [" + url + "]"+ parsedWebPage.outLinks.size());
 			for(URL link : parsedWebPage.outLinks){
-				elasticClient.enqueue(getScore(parsedWebPage.text), link, ++discoveryTime);
+				elasticClient.enqueue(score, link, discoveryTime);
 			}
+			this.log("Done [" + url + "]");
 		}catch(Exception e){
-			//e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 	

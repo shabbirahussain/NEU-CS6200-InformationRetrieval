@@ -16,12 +16,12 @@ public abstract class Constants {
 	
 	public static final String TOKENIZER_REGEXP = "(\\w+(\\.?\\w+)*)";
 
-	public static final Float   DEQUEUE_RND_PERCENT = .7F;
+	public static final Float   DEQUEUE_RND_PERCENT = 1F;
 	public static final Integer DEQUEUE_SIZE  = ((Float) (60F / DEQUEUE_RND_PERCENT)).intValue();
-	public static final Integer MAX_QUEUE_SIZE = 10000;
+	public static final Integer MAX_QUEUE_SIZE = 5000;
 	public static final Integer COOL_DOWN_INTERVAL  = 1000; // is the amount of time between multiple requests to a domain in ms.
 	public static final Long    TRUNCATION_INTERVAL = 60 * 1000L;
-	public static final Integer MAX_BUFFER_SIZE = 2000;
+	public static final Integer MAX_BUFFER_SIZE = 1000;
 	
 	public static final Short   MAX_NO_THREADS = 8;	
 	
@@ -52,6 +52,7 @@ public abstract class Constants {
 	
 	public static final String SCRIPT_DEQUEUE = "MAGIC_DEQUEUE";
 	public static final String SCRIPT_ENQUEUE = "MAGIC_ENQUEUE";
+	public static final String SCRIPT_TRUNCATE= "MAGIC_TRUNCATE";
 	
 	public static Map<String, Object> DEFAULT_QUEUE_FIELDS = new HashMap<String, Object>();
 	

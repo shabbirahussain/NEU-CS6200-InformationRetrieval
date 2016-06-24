@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -170,19 +171,20 @@ public class ElasticClient implements Flushable{
 	 * @throws MalformedURLException 
 	 */
 	public synchronized void enqueue(Float score, URL url, Integer discoveryTime) throws MalformedURLException{
-		Map<String, Object> params = this.enqueueBuffer.getOrDefault(url, new HashMap<String, Object>(DEFAULT_QUEUE_FIELDS));
+		String urlStr = url.toString();
+		Map<String, Object> params = this.enqueueBuffer.getOrDefault(urlStr, new HashMap<String, Object>(DEFAULT_QUEUE_FIELDS));
 		
 		score             = Math.max(score, (Float) params.get(FIELD_PARENT_SCORE));
 		Integer inCnt     = (Integer) params.get(FIELD_IN_CNT) + 1 ;
 		discoveryTime     = Math.min(discoveryTime, (Integer) params.get(FIELD_DISCOVERY_TIME) + 1 );
 		String domainName = InternetDomainName.from(url.getHost()).topPrivateDomain().toString();
-				
+		
 		params.put(FIELD_PARENT_SCORE, score);
 		params.put(FIELD_IN_CNT, inCnt);
 		params.put(FIELD_DISCOVERY_TIME, discoveryTime);
 		params.put(FIELD_DOMAIN_NAME, domainName);
-		
-		this.enqueueBuffer.put(url.toString(), params);
+			
+		this.enqueueBuffer.put(urlStr, params);
 	}
 	
 	
@@ -299,9 +301,12 @@ public class ElasticClient implements Flushable{
 		SearchResponse response2 = _client.prepareSearch()
 				.setIndices(QUEUE_NAME)
 				.setTypes(QUEUE_TYPE)
-			 	.setSize(MAX_QUEUE_SIZE)
+			 	.setSize(10000)
 			 	.setQuery(QueryBuilders.boolQuery()
-			 		.must(QueryBuilders.matchAllQuery())
+			 		.must(QueryBuilders.functionScoreQuery()
+				 			.add(ScoreFunctionBuilders
+				 			.scriptFunction(new Script(SCRIPT_TRUNCATE, ScriptType.INDEXED, "groovy", null)))
+				 			.boostMode("replace"))
 			 		.filter(QueryBuilders.termQuery(FIELD_VISITED, false)))
 			 	.addFields(FIELD_DISCOVERY_TIME)
 			 	.get();
