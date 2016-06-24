@@ -69,7 +69,7 @@ public class ElasticClient implements Flushable{
 		        		new InetSocketTransportAddress(InetAddress.getByName(HOST), PORT));
 		loadDataBuffer  = _client.prepareBulk();
 		
-		enqueueBuffer = new HashMap<String, Map<String, Object>>();
+		enqueueBuffer = new HashMap<String, Map<String, Object>>(MAX_BUFFER_SIZE);
 	}
 	
 	// --------------------------- Loaders ----------------------------
@@ -140,7 +140,7 @@ public class ElasticClient implements Flushable{
 		
 		if(this.enqueueBuffer.size() > 0){
 			this.enqueue(this.enqueueBuffer);
-			this.enqueueBuffer = new HashMap<String, Map<String, Object>>();
+			this.enqueueBuffer = new HashMap<String, Map<String, Object>>(MAX_BUFFER_SIZE);
 		}
 	}
 	

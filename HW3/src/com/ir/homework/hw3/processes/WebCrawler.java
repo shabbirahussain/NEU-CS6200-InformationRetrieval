@@ -85,7 +85,7 @@ public class WebCrawler extends Thread {
 			timeElapsed = (System.currentTimeMillis() - _domainAccessTime.get(host));
 		}
 		_domainAccessTime.put(host, System.currentTimeMillis());
-		this.log("Fetching [" + url + "]");
+		//this.log("Fetching [" + url + "]");
 		
 		try{
 			Response response = Jsoup.connect(url)
@@ -95,21 +95,21 @@ public class WebCrawler extends Thread {
 					.ignoreHttpErrors(true)
 					.execute();
 			
-			this.log("Parsing [" + url + "]");
+			//this.log("Parsing [" + url + "]");
 			ParsedWebPage parsedWebPage = _webPageParser.parseResponse(response);
 			
-			this.log("Buffering1 [" + url + "]");
+			//this.log("Buffering1 [" + url + "]");
 			elasticClient.loadData(url, parsedWebPage);
 		
-			this.log("Scoring [" + url + "]");
+			//this.log("Scoring [" + url + "]");
 			Float score = getScore(parsedWebPage.text);
 			discoveryTime++;
 			
-			this.log("Buffering2 [" + url + "]"+ parsedWebPage.outLinks.size());
+			//this.log("Buffering2 [" + url + "]"+ parsedWebPage.outLinks.size());
 			for(URL link : parsedWebPage.outLinks){
 				elasticClient.enqueue(score, link, discoveryTime);
 			}
-			this.log("Done [" + url + "]");
+			//this.log("Done [" + url + "]");
 		}catch(Exception e){
 //			e.printStackTrace();
 		}
