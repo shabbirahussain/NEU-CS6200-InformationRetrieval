@@ -103,12 +103,12 @@ PUT /links/map/_mapping
       "SRC_LINKS": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "no"
       },
       "DST_LINKS": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "no"
       }
     }
   }
