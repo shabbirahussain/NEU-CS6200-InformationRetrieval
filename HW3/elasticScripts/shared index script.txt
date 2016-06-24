@@ -1,4 +1,3 @@
-
 # START: RESET -----------------------------------------------
 #DELETE /*
 
@@ -49,7 +48,7 @@ PUT /1512_great_mordenist_artist/document/_mapping
         "type": "date",
         "format": "basic_date_time_no_millis",
         "store": true,
-        "index": "not_analyzed"
+        "index": "no"
       },
       "HTML": {
         "type": "string",
@@ -150,7 +149,7 @@ PUT /frontier/queue/_mapping
       "DOMAIN_NAME":{
         "type": "string",
         "store": true,
-        "index":"not_analyzed" 
+        "index":"no" 
       },
       "PARENT_SCORE": {
         "type": "float",
@@ -172,7 +171,7 @@ PUT /frontier/queue/_mapping
         "type": "date",
         "format": "basic_date_time_no_millis",
         "store": true,
-        "index": "not_analyzed"
+        "index": "no"
       }
     },
     "_source": {
