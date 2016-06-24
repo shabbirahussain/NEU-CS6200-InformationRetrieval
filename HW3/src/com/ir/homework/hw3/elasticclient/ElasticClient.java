@@ -31,9 +31,11 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.SearchHit;
@@ -280,8 +282,8 @@ public class ElasticClient implements Flushable{
 	 * @throws IOException 
 	 */
 	public void truncateQueue() throws IOException{
-		Set<String> toKeep = new HashSet<String>();
-		SearchResponse response1 = _client.prepareSearch()
+		TimeValue scrollTimeValue = new TimeValue(60000);
+		SearchResponse response = _client.prepareSearch()
 				.setIndices(QUEUE_NAME)
 				.setTypes(QUEUE_TYPE)
 			 	.setSize(MAX_QUEUE_SIZE)
@@ -292,26 +294,9 @@ public class ElasticClient implements Flushable{
 			 			.boostMode("replace"))
 			 		.filter(QueryBuilders.termQuery(FIELD_VISITED, false)))
 			 	.addFields(FIELD_DISCOVERY_TIME)
-			 	.get();
-
-		for(SearchHit hit : response1.getHits().hits()){
-			toKeep.add(hit.getId());
-		}
-		
-		SearchResponse response2 = _client.prepareSearch()
-				.setIndices(QUEUE_NAME)
-				.setTypes(QUEUE_TYPE)
-			 	.setSize(10000)
-			 	.setQuery(QueryBuilders.boolQuery()
-			 		.must(QueryBuilders.functionScoreQuery()
-				 			.add(ScoreFunctionBuilders
-				 			.scriptFunction(new Script(SCRIPT_TRUNCATE, ScriptType.INDEXED, "groovy", null)))
-				 			.boostMode("replace"))
-			 		.filter(QueryBuilders.termQuery(FIELD_VISITED, false)))
-			 	.addFields(FIELD_DISCOVERY_TIME)
+		        .setScroll(scrollTimeValue)
 			 	.get();
 		
-
 		BulkRequestBuilder bulkBuilder = _client.prepareBulk();
 		XContentBuilder builder = jsonBuilder()
 				.startObject()
@@ -319,17 +304,27 @@ public class ElasticClient implements Flushable{
 					.field(FIELD_VISITED, true)
 				.endObject();
 		
-		for(SearchHit hit : response2.getHits().hits()){
-			String id = hit.getId();
-			if(toKeep.contains(id)) continue;
+		// Scan for results
+		while(true){
+			response = _client.prepareSearchScroll(response.getScrollId())
+					.setScroll(scrollTimeValue)
+					.get();
 			
-			UpdateRequestBuilder request = _client.prepareUpdate()
-				.setIndex(QUEUE_NAME)
-				.setType(QUEUE_TYPE)
-				.setId(id)
-				.setDoc(builder);
+			if((response.status() != RestStatus.OK) 
+					|| (response.getHits().getHits().length == 0))
+				break;
 			
-			bulkBuilder.add(request);
+			SearchHit hit[]=response.getHits().hits();
+			for(SearchHit h:hit){
+				UpdateRequestBuilder request = _client.prepareUpdate()
+					.setIndex(QUEUE_NAME)
+					.setType(QUEUE_TYPE)
+					.setId(h.getId())
+					.setDoc(builder);
+				
+				bulkBuilder.add(request);
+			}
+			
 		}
 		if(bulkBuilder.numberOfActions()>0)
 			bulkBuilder.get();
