@@ -3,6 +3,7 @@ package com.ir.homework.hw3.processes;
 import static com.ir.homework.hw3.Constants.COOL_DOWN_INTERVAL;
 import static com.ir.homework.hw3.Constants.DEQUEUE_SIZE;
 import static com.ir.homework.hw3.Constants.FIELD_DISCOVERY_TIME;
+import static com.ir.homework.hw3.Constants.MAX_BUFFER_SIZE;
 
 import java.net.URL;
 import java.util.Collection;
@@ -99,7 +100,7 @@ public class WebCrawler extends Thread {
 			ParsedWebPage parsedWebPage = _webPageParser.parseResponse(response);
 			
 			//this.log("Buffering1 [" + url + "]");
-			elasticClient.loadData(url, parsedWebPage);
+			Integer bufferSize = elasticClient.loadData(url, parsedWebPage);
 		
 			//this.log("Scoring [" + url + "]");
 			Float score = getScore(parsedWebPage.text);
@@ -108,6 +109,12 @@ public class WebCrawler extends Thread {
 			//this.log("Buffering2 [" + url + "]"+ parsedWebPage.outLinks.size());
 			for(URL link : parsedWebPage.outLinks){
 				elasticClient.enqueue(score, link, discoveryTime);
+			}
+			
+
+			if(bufferSize > MAX_BUFFER_SIZE){
+				this.log("Storing results...");
+				elasticClient.flush();
 			}
 			//this.log("Done [" + url + "]");
 		}catch(Exception e){

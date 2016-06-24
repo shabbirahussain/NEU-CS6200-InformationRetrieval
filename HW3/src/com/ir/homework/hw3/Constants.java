@@ -20,7 +20,7 @@ public abstract class Constants {
 	public static final Integer DEQUEUE_SIZE  = ((Float) (60F / DEQUEUE_RND_PERCENT)).intValue();
 	public static final Integer MAX_QUEUE_SIZE = 5000;
 	public static final Integer COOL_DOWN_INTERVAL  = 1000; // is the amount of time between multiple requests to a domain in ms.
-	public static final Long    TRUNCATION_INTERVAL = 10 * 1000L;
+	public static final Long    TRUNCATION_INTERVAL = 20 * 1000L;
 	public static final Integer MAX_BUFFER_SIZE = 10000;
 	
 	public static final Short   MAX_NO_THREADS = 20;	

@@ -13,13 +13,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -79,15 +76,10 @@ public class ElasticClient implements Flushable{
 	 * Loads data into elasticsearch
 	 * @param id is the id of the document
 	 * @param ParsedWebPage is the object containing parsed webpage response
+	 * @return Number of instructions in the buffer
 	 * @throws IOException
 	 */
-	public synchronized void loadData(String id, ParsedWebPage parsedWebPage) throws IOException{
-		
-		if(this.loadDataBuffer.numberOfActions() > MAX_BUFFER_SIZE){
-			System.out.println("[X] Storing results...");
-			this.flush();
-		}
-		
+	public synchronized Integer loadData(String id, ParsedWebPage parsedWebPage) throws IOException{
 		XContentBuilder source = jsonBuilder()
 			.startObject()
 				.field(FIELD_HTML, parsedWebPage.html)
@@ -125,7 +117,7 @@ public class ElasticClient implements Flushable{
 			
 			loadDataBuffer.add(irBuilder);
 		}
-		return;
+		return this.loadDataBuffer.numberOfActions();
 	}
 	
 	@Override
