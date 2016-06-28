@@ -1,16 +1,21 @@
 # START: RESET -----------------------------------------------
 #DELETE /*
 
-
 POST /_scripts/groovy/MAGIC_DEQUEUE
 {
-     "script": "(_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))"
+     "script": "(ceil(max(0, random() - 0.9999)) * 1000000) + (_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))"
+}
+
+POST /_scripts/groovy/MAGIC_TRUNCATE
+{
+  "script": "1 / (1 + ((_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))))"
 }
 
 POST /_scripts/groovy/MAGIC_ENQUEUE
 {
      "script": "ctx._source.PARENT_SCORE = max(ctx._source.PARENT_SCORE, PARENT_SCORE); ctx._source.DISCOVERY_WAVE_NO = min(ctx._source.DISCOVERY_WAVE_NO, DISCOVERY_WAVE_NO); ctx._source.IN_LINK_CNT += IN_LINK_CNT;"
 }
+
 
 
 DELETE /1512_great_mordenist_artist
