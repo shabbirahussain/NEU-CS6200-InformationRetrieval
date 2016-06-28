@@ -3,7 +3,7 @@
 
 POST /_scripts/groovy/MAGIC_DEQUEUE
 {
-     "script": "(ceil(max(0, random() - 0.9999)) * 1000000) + (_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))"
+     "script": "max((ceil(max(0, random() - 0.9999)) * 1000000), (_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf())))"
 }
 
 POST /_scripts/groovy/MAGIC_TRUNCATE
