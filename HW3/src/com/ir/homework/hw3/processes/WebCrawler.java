@@ -86,11 +86,13 @@ public class WebCrawler extends Thread {
 	 * @throws Exception
 	 */
 	private void crawl(SearchHit hit) throws Exception{
-		String url  = hit.getId();
+		String urlStr  = hit.getId();
+		URL    url     = new URL(urlStr); 
+		if(!this.isCrawlingAllowed(url)) return;
+		
 		Integer discoveryTime = hit.getFields().get(FIELD_DISCOVERY_TIME).getValue();
 		
-
-		String host = new URL(url).getHost();
+		String host = url.getHost();
 		Long timeElapsed = (System.currentTimeMillis() - _domainAccessTime.getOrDefault(host, 0L));
 		while(timeElapsed < COOL_DOWN_INTERVAL){
 			Thread.sleep(COOL_DOWN_INTERVAL - timeElapsed);
@@ -100,7 +102,7 @@ public class WebCrawler extends Thread {
 		//this.log("Fetching [" + url + "]");
 		
 		try{
-			Response response = Jsoup.connect(url)
+			Response response = Jsoup.connect(urlStr)
 					.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.120 Safari/535.2")
 					.followRedirects(true)
 					.timeout(5000)
@@ -111,7 +113,7 @@ public class WebCrawler extends Thread {
 			ParsedWebPage parsedWebPage = _webPageParser.parseResponse(response);
 			
 			//this.log("Buffering1 [" + url + "]");
-			Integer bufferSize = elasticClient.loadData(url, parsedWebPage);
+			Integer bufferSize = elasticClient.loadData(urlStr, parsedWebPage);
 		
 			//this.log("Scoring [" + url + "]");
 			Float score = getScore(parsedWebPage.text);
@@ -119,8 +121,7 @@ public class WebCrawler extends Thread {
 			
 			//this.log("Buffering2 [" + url + "]"+ parsedWebPage.outLinks.size());
 			for(URL link : parsedWebPage.outLinks){
-				if(this.isCrawlingAllowed(link))
-					elasticClient.enqueue(score, link, discoveryTime);
+				elasticClient.enqueue(score, link, discoveryTime);
 			}
 			
 
