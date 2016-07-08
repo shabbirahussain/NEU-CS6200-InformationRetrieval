@@ -67,6 +67,7 @@ public class WebCrawler extends Thread {
 				SearchHit[] queue = elasticClient.dequeue(DEQUEUE_SIZE);
 				
 				if(queue.length == 0) {
+					elasticClient.flush();
 					Thread.sleep(2000);
 				}
 				
@@ -99,7 +100,7 @@ public class WebCrawler extends Thread {
 			timeElapsed = (System.currentTimeMillis() - _domainAccessTime.get(host));
 		}
 		_domainAccessTime.put(host, System.currentTimeMillis());
-		//this.log("Fetching [" + url + "]");
+		this.log("Fetching [" + url + "]");
 		
 		try{
 			Response response = Jsoup.connect(urlStr)
@@ -108,6 +109,7 @@ public class WebCrawler extends Thread {
 					.timeout(5000)
 					.ignoreHttpErrors(true)
 					.execute();
+			//_domainAccessTime.put(host, System.currentTimeMillis());
 			
 			//this.log("Parsing [" + url + "]");
 			ParsedWebPage parsedWebPage = _webPageParser.parseResponse(response);
