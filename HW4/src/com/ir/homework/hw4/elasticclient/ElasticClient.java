@@ -9,7 +9,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -36,7 +39,9 @@ import com.ir.homework.hw4.models.LinkInfo;
 
 
 public class ElasticClient implements Flushable{
+	private static final Integer d = 200;
 	private static Client _client = null;
+	private static Random random = new Random();
 
 	// Local buffers
 	private BulkRequestBuilder loadDataBuffer; // Stores the requests for loading data
@@ -117,7 +122,7 @@ public class ElasticClient implements Flushable{
 				.setIndices(LINK_MAP_NAME)
 				.setTypes(LINK_MAP_TYPE)
 				.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
-				.setSize(40000)
+				.setSize(10000)
 				.setScroll(scrollTimeValue);
 		
 		SearchResponse response = builder.get();
@@ -128,9 +133,7 @@ public class ElasticClient implements Flushable{
 		Long cnt = 0L;
 		while(true){
 			cnt += response.getHits().getHits().length;
-			
 			System.out.println(f.format(cnt*100.0/tot) + "%");
-			
 			
 			if((response.status() != RestStatus.OK) || (response.getHits().getHits().length == 0))
 				break;
@@ -143,7 +146,7 @@ public class ElasticClient implements Flushable{
 				
 				info = result.getOrDefault(dst, new LinkInfo());
 				if(shf != null) {
-					String src = h.getFields().get(FIELD_SRC_LINK).getValue();
+					String src = shf.getValue();
 					info.M.add(src);
 				
 					// Add outlinks count
@@ -164,6 +167,100 @@ public class ElasticClient implements Flushable{
 		return result;
 	}
 	
+	/**
+	 * Loads the connectivity matrix from elastic search
+	 * @return Links connectivity matrix as map
+	 */
+	public Map<String, LinkInfo> loadMapFromRootSet(){
+		Map<String, LinkInfo> result = new HashMap<String, LinkInfo>();
+		LinkInfo info;
+		
+		SearchResponse response = _client.prepareSearch()
+				.setIndices(DAT_IDX_NAME)
+				.setTypes(DAT_IDX_TYPE)
+				.setQuery(QueryBuilders.matchQuery(FIELD_TEXT, QUERY_TERMS))
+				.setNoFields()
+				.setSize(1)
+				.get();
+		
+		List<String> rootSet = new LinkedList<String>();
+		SearchHit hit[] = response.getHits().hits();
+		for(SearchHit h:hit){
+			String id = h.getId();
+			rootSet.add(id); // Add base document to root set;
+			
+			// All outlinks
+			SearchResponse res2 = _client.prepareSearch()
+					.setIndices(LINK_MAP_NAME)
+					.setTypes(LINK_MAP_TYPE)
+					.setQuery(QueryBuilders.termQuery(FIELD_SRC_LINK, id)) // All pages it points to
+					.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
+					.setSize(10000)
+					.get();
+			System.out.println(id);
+			System.out.println(res2.getHits().getTotalHits());
+			SearchHit hit2[] = res2.getHits().hits();
+			for(SearchHit h2:hit2){
+				rootSet.add(h2.getFields().get(FIELD_DST_LINK).getValue());
+				
+				
+				///////////////////////////////////////////////////////////
+				String dst = h2.getFields().get(FIELD_DST_LINK).getValue();
+				SearchHitField shf = h2.getFields().get(FIELD_SRC_LINK);
+				
+				info = result.getOrDefault(dst, new LinkInfo());
+				if(shf != null) {
+					String src = shf.getValue();
+					info.M.add(src);
+				
+					// Add outlinks count
+					info = result.getOrDefault(src, new LinkInfo());
+					info.L.add(dst);
+					result.put(src, info);
+				}
+				// Add in links map
+				result.put(dst, info);
+			}
+			
+			// All inlinks
+			SearchResponse res3 = _client.prepareSearch()
+					.setIndices(LINK_MAP_NAME)
+					.setTypes(LINK_MAP_TYPE)
+					.setQuery(QueryBuilders.termQuery(FIELD_DST_LINK, id)) 
+					.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
+					.setSize(10000)
+					.get();
+			
+			SearchHit hit3[] = res3.getHits().hits();
+			Double threshold = d.doubleValue() / hit3.length;
+			for(SearchHit h3:hit3){
+				if(random.nextDouble() < threshold){
+					rootSet.add(h3.getFields().get(FIELD_SRC_LINK).getValue());
+					
+					///////////////////////////////////////////////////////////
+					String dst = h3.getFields().get(FIELD_DST_LINK).getValue();
+					SearchHitField shf = h3.getFields().get(FIELD_SRC_LINK);
+					
+					info = result.getOrDefault(dst, new LinkInfo());
+					if(shf != null) {
+					String src = shf.getValue();
+					info.M.add(src);
+					
+					// Add outlinks count
+					info = result.getOrDefault(src, new LinkInfo());
+					info.L.add(dst);
+					result.put(src, info);
+					}
+					// Add in links map
+					result.put(dst, info);
+				}
+			}
+		}
+		return result;
+	}
 	// ----------------------------------------------------------------
 	
+	public static void main(String args[]) throws UnknownHostException{
+		System.out.println((new ElasticClient()).loadMapFromRootSet().size());
+	}
 }

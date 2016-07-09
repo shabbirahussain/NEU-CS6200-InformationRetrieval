@@ -73,9 +73,9 @@ public class HITSRanker extends BaseRanker{
 				p_auth += PR_hub.getOrDefault(q, 1.0);
 			}		
 			PR_auth.put(key, p_auth);
-			norm += Math.sqrt(p_auth);					// calculate the sum of the squared auth values to normalise
+			norm += Math.pow(p_auth, 2);					// calculate the sum of the squared auth values to normalise
 		}
-		norm = Math.log(norm);
+		norm = Math.sqrt(norm);
 		for(Entry<String, LinkInfo> e: G.entrySet()){	// update the auth scores 
 			String key = e.getKey();
 			PR_auth.put(key, PR_auth.get(e.getKey())/norm);// normalise the auth values
@@ -91,9 +91,9 @@ public class HITSRanker extends BaseRanker{
 				p_hub += PR_auth.getOrDefault(r, 1.0);	
 			}	
 			PR_hub.put(key, p_hub);
-			norm += Math.sqrt(p_hub);					// calculate the sum of the squared auth values to normalise
+			norm += Math.pow(p_hub, 2);					// calculate the sum of the squared auth values to normalise
 		}
-		norm = Math.log(norm);
+		norm = Math.sqrt(norm);
 		for(Entry<String, LinkInfo> e: G.entrySet()){	// update the hub scores 
 			String key = e.getKey();
 			PR_hub.put(key, PR_hub.get(e.getKey())/norm);// normalise the hub values

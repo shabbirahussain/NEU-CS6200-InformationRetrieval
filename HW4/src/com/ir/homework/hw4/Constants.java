@@ -11,10 +11,16 @@ public final class Constants {
 	public static final String  CLUSTER_NAME = "dead-pool";
 	
 	public static final String LINK_MAP_NAME = "links";
-	public static final String LINK_MAP_TYPE = "map1";
+	public static final String LINK_MAP_TYPE = "map";
+	
+	public static final String DAT_IDX_NAME = "1512_great_mordenist_artist";
+	public static final String DAT_IDX_TYPE = "document";
+
+	public static final String QUERY_TERMS = "modern artists modernist";
 	
 	public static final String FIELD_SRC_LINK       = "SRC_LINK";
 	public static final String FIELD_DST_LINK       = "DST_LINK";
+	public static final String FIELD_TEXT           = "TEXT";
 	
 	public static final String OBJECTSTORE_PATH = BASE_PATH+"/ranking/"+LINK_MAP_NAME+"/"+LINK_MAP_TYPE+"/";
 	
