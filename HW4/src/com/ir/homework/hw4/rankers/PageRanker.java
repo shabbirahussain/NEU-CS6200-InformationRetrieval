@@ -17,6 +17,7 @@ import com.ir.homework.hw4.models.LinkInfo;
 
 public class PageRanker implements Serializable{
 	private static final long serialVersionUID = 1L;
+	private static final Double LOG_BASE2 = Math.log(2);
 
 	public static ElasticClient  _elasticClient;
 	
@@ -96,12 +97,18 @@ public class PageRanker implements Serializable{
 	}
 	
 	/**
-	 * Checks if convergence is reached
-	 * @return True iff convergence is reached.
+	 * Gets perplexity of distribution
+	 * @return Value of perplexity
 	 */
-	public Boolean isConvered(){
-		return false;
-		
+	public Double getPerplexity(){
+		Double entropy = 0.0;
+		for(Entry<String, Double> e: PR.entrySet()){
+			Double pxi = e.getValue();
+			if(pxi != 0){
+				entropy += -pxi*Math.log(pxi)/LOG_BASE2;
+			}
+		}
+		return Math.pow(2, entropy);
 	}
 	
 	/**
