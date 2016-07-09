@@ -7,10 +7,14 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
@@ -26,8 +30,10 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 
-import com.google.common.net.InternetDomainName;
+import com.ir.homework.hw4.models.LinkInfo;
+
 
 public class ElasticClient implements Flushable{
 	private static Client _client = null;
@@ -98,8 +104,65 @@ public class ElasticClient implements Flushable{
 		
 	}
 	
-	
-	public Map<String>
+	/**
+	 * Loads the connectivity matrix from elastic search
+	 * @return Links connectivity matrix as map
+	 */
+	public Map<String, LinkInfo> loadLinksMap(){
+		Map<String, LinkInfo> result = new HashMap<String, LinkInfo>();
+		
+		TimeValue scrollTimeValue = new TimeValue(60000);
+		
+		SearchRequestBuilder builder = _client.prepareSearch()
+				.setIndices(LINK_MAP_NAME)
+				.setTypes(LINK_MAP_TYPE)
+				.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
+				.setSize(40000)
+				.setScroll(scrollTimeValue);
+		
+		SearchResponse response = builder.get();
+		LinkInfo info;
+		
+		DecimalFormat f = new DecimalFormat("##.00");
+		Long tot = response.getHits().getTotalHits();
+		Long cnt = 0L;
+		while(true){
+			cnt += response.getHits().getHits().length;
+			
+			System.out.println(f.format(cnt*100.0/tot) + "%");
+			
+			
+			if((response.status() != RestStatus.OK) || (response.getHits().getHits().length == 0))
+				break;
+			
+			SearchHit hit[]=response.getHits().hits();
+			for(SearchHit h:hit){
+				
+				String key = h.getFields().get(FIELD_DST_LINK).getValue();
+				SearchHitField shf = h.getFields().get(FIELD_SRC_LINK);
+				
+				info = result.getOrDefault(key, new LinkInfo());
+				if(shf != null) {
+					String val = h.getFields().get(FIELD_SRC_LINK).getValue();
+					info.M.add(val);
+				
+					// Add outlinks count
+					info = result.getOrDefault(val, new LinkInfo());
+					info.L++;
+					result.put(val, info);
+				}
+				// Add in links map
+				result.put(key, info);
+			}
+			
+			// fetch next window
+			response = _client.prepareSearchScroll(response.getScrollId())
+					.setScroll(scrollTimeValue)
+					.get();
+		}
+		
+		return result;
+	}
 	
 	// ----------------------------------------------------------------
 	

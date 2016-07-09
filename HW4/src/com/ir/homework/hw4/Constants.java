@@ -16,7 +16,7 @@ public final class Constants {
 	public static final String FIELD_SRC_LINK       = "SRC_LINK";
 	public static final String FIELD_DST_LINK       = "DST_LINK";
 	
-	public static final String TEXT_FIELD_NAME = "TEXT";
+	public static final String OBJECTSTORE_PATH = BASE_PATH+"/ranking/"+LINK_MAP_NAME+"/"+LINK_MAP_TYPE+"/";
 	
 
 }
