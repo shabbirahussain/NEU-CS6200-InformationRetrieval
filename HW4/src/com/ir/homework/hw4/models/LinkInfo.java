@@ -6,13 +6,14 @@ import java.util.LinkedList;
 
 public class LinkInfo implements Serializable{
 	private static final long serialVersionUID = 1L;
+	
 	public Collection<String> M; // In Links
-	public Long L;               // Out links count
+	public Collection<String> L; // Out links count
 	/**
 	 * Default constructor
 	 */
 	public LinkInfo(){
 		M = new LinkedList<String>();
-		L = 0L;
+		L = new LinkedList<String>();
 	}
 }

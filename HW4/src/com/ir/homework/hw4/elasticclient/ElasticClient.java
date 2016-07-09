@@ -138,21 +138,21 @@ public class ElasticClient implements Flushable{
 			SearchHit hit[]=response.getHits().hits();
 			for(SearchHit h:hit){
 				
-				String key = h.getFields().get(FIELD_DST_LINK).getValue();
+				String dst = h.getFields().get(FIELD_DST_LINK).getValue();
 				SearchHitField shf = h.getFields().get(FIELD_SRC_LINK);
 				
-				info = result.getOrDefault(key, new LinkInfo());
+				info = result.getOrDefault(dst, new LinkInfo());
 				if(shf != null) {
-					String val = h.getFields().get(FIELD_SRC_LINK).getValue();
-					info.M.add(val);
+					String src = h.getFields().get(FIELD_SRC_LINK).getValue();
+					info.M.add(src);
 				
 					// Add outlinks count
-					info = result.getOrDefault(val, new LinkInfo());
-					info.L++;
-					result.put(val, info);
+					info = result.getOrDefault(src, new LinkInfo());
+					info.L.add(dst);
+					result.put(src, info);
 				}
 				// Add in links map
-				result.put(key, info);
+				result.put(dst, info);
 			}
 			
 			// fetch next window

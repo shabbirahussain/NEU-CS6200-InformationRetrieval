@@ -1,26 +1,23 @@
 package com.ir.homework.hw4.rankers;
 
 
-import java.io.IOException;
 import java.io.Serializable;
+import java.net.UnknownHostException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw4.elasticclient.ElasticClient;
 import com.ir.homework.hw4.models.LinkInfo;
 
-public class PageRanker implements Serializable{
+public class PageRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
-	private static final Double LOG_BASE2 = Math.log(2);
-
-	public static ElasticClient  _elasticClient;
 	
+	private Double lastPerplexity    = 0.0;
+	private Short  cnt = 0;
+
 	private Map<String, Double>   PR;
 	private Map<String, LinkInfo> P;
 	private Collection<String>    S;
@@ -29,11 +26,12 @@ public class PageRanker implements Serializable{
 	
 	/** 
 	 * Default constructor
+	 * @throws UnknownHostException 
 	 */
-	public PageRanker(){
+	public PageRanker() throws UnknownHostException{
+		super();
 		// Initialize P
-		System.out.println("Loading links map...");
-		this.P = _elasticClient.loadLinksMap();
+		this.P = super.pages;
 		this.S = new LinkedList<String>();
 		
 		//Initialize N
@@ -90,59 +88,38 @@ public class PageRanker implements Serializable{
 			newPR += d*sinkPR/N;
 			
 			for(String q: p.getValue().M){
-				newPR += d*PR.get(q)/p.getValue().L;
+				newPR += d*PR.get(q)/p.getValue().L.size();
 			}
 			PR.put(p.getKey(), newPR);
 		}
 	}
 	
-	/**
-	 * Gets perplexity of distribution
-	 * @return Value of perplexity
-	 */
-	public Double getPerplexity(){
-		Double entropy = 0.0;
-		for(Entry<String, Double> e: PR.entrySet()){
-			Double pxi = e.getValue();
-			if(pxi != 0){
-				entropy += -pxi*Math.log(pxi)/LOG_BASE2;
-			}
-		}
-		return Math.pow(2, entropy);
-	}
-	
-	/**
-	 * Gets list of pages as per current rank sorted by rank
-	 * @return List of pages and rank
-	 */
 	public List<Entry<String, Float>> getTopPages(){
 		return sortByValue(PR);
-	} 
-
-	/**
-	 * sorts given map and returns a linked list to print results in sorted order
-	 * @param map
-	 * @return
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static List<Entry<String, Float>> sortByValue(Map map) {
-	     List<Entry<String, Float>> list = new LinkedList(map.entrySet());
-	     Collections.sort(list, new Comparator() {
-	          public int compare(Object o1, Object o2) {
-	               return -((Comparable) ((Map.Entry) (o1)).getValue())
-	            		   .compareTo(((Map.Entry) (o2)).getValue());
-	          }
-	     });
-	     return list;
 	}
-	
-	public static void main(String[] args) throws IOException {
-		_elasticClient = new ElasticClient();
-		PageRanker pr = new PageRanker();
-		pr.rankPages();
-		List<Entry<String, Float>> topPages = pr.getTopPages();
-		for(int i=0;i<500;i++)
-			System.out.println(topPages.get(i));
+
+
+	@Override
+	public Boolean isConverged(Integer tollerance) {
+		Double p = super.getPerplexity(PR);
 		
+		Double currPerplexity = Math.floor(p)/10;
+		currPerplexity -= Math.floor(currPerplexity);
+		
+		if(lastPerplexity.equals(currPerplexity))
+			cnt++;
+		
+		lastPerplexity = currPerplexity;
+		return cnt > tollerance;
+	}
+
+
+	@Override
+	public void printTopPages(Integer n) {
+		List<Entry<String, Float>> topPages;
+		System.out.println("\nTop " + n + " PageRank pages: ");
+		topPages = sortByValue(PR);
+		for(int i=0;i<n;i++)
+			System.out.println(topPages.get(i));
 	}
 }
