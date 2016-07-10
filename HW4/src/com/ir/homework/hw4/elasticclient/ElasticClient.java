@@ -45,6 +45,7 @@ public class ElasticClient implements Flushable{
 	private static final Integer d = 200;
 	private static Client _client = null;
 	private static Random random = new Random();
+	private static DecimalFormat f = new DecimalFormat("##.00");
 
 	// Local buffers
 	private BulkRequestBuilder loadDataBuffer; // Stores the requests for loading data
@@ -117,19 +118,22 @@ public class ElasticClient implements Flushable{
 	 * @return Links connectivity matrix as map
 	 */
 	public DirectedGraph<String, DefaultEdge> loadLinksMap(){
-		if(LINK_MAP_TYPE == "map1") return loadFullLinksMap();
-		else return loadMapFromRootSet();
+		if(LINK_MAP_TYPE.equals("map1")) 
+			return loadFullLinksMap();
+		else 
+			return loadMapFromRootSet();
 	}
 	/**
 	 * Loads the connectivity matrix from elastic search
 	 * @return Links connectivity matrix as map
 	 */
 	public DirectedGraph<String, DefaultEdge> loadFullLinksMap(){
+		System.out.println("Loading full map...");
 		DirectedGraph<String, DefaultEdge> directedGraph =
 	            new DefaultDirectedGraph<String, DefaultEdge>
 	            (DefaultEdge.class);
 		
-		TimeValue scrollTimeValue = new TimeValue(60000);
+		TimeValue scrollTimeValue = new TimeValue(600000);
 		
 		SearchRequestBuilder builder = _client.prepareSearch()
 				.setIndices(LINK_MAP_NAME)
@@ -140,7 +144,7 @@ public class ElasticClient implements Flushable{
 		
 		SearchResponse response = builder.get();
 		
-		DecimalFormat f = new DecimalFormat("##.00");
+		
 		Long tot = response.getHits().getTotalHits();
 		Long cnt = 0L;
 		while(true){
@@ -176,74 +180,91 @@ public class ElasticClient implements Flushable{
 	 * @return Links connectivity matrix as map
 	 */
 	public DirectedGraph<String, DefaultEdge> loadMapFromRootSet(){
+		System.out.println("Loading map from root set...");
 		DirectedGraph<String, DefaultEdge> directedGraph =
 	            new DefaultDirectedGraph<String, DefaultEdge>
 	            (DefaultEdge.class);
-		
 		
 		SearchResponse response = _client.prepareSearch()
 				.setIndices(DAT_IDX_NAME)
 				.setTypes(DAT_IDX_TYPE)
 				.setQuery(QueryBuilders.matchQuery(FIELD_TEXT, QUERY_TERMS))
 				.setNoFields()
-				.setSize(400)
+				.setSize(ROOT_SET_SIZE)
 				.get();
 		
 		List<String> rootSet = new LinkedList<String>();
 		SearchHit hit[] = response.getHits().hits();
 		for(SearchHit h:hit){
-			String id = h.getId();
-			rootSet.add(id); // Add base document to root set;
-			//System.out.println(id);
-			// All outlinks
-			SearchResponse res2 = _client.prepareSearch()
-					.setIndices(LINK_MAP_NAME)
-					.setTypes(LINK_MAP_TYPE)
-					.setQuery(QueryBuilders.matchPhraseQuery(FIELD_SRC_LINK, id)) // All pages it points to
-					.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
-					.setSize(10000)
-					.get();
-			
-			SearchHit hit2[] = res2.getHits().hits();
-			for(SearchHit h2:hit2){
-				rootSet.add(h2.getFields().get(FIELD_DST_LINK).getValue());
+			rootSet.add(h.getId());
+		}
+		
+		for(int i=1;i<=MAX_STAGES; i++){
+			Long sTime = System.currentTimeMillis();
+			Double cnt = 0.0;
+			List<String> tempRootSet = new LinkedList<String>(rootSet);
+			for(String id : tempRootSet){
+				//////////////////////////////////////////////////////
+				cnt++;
+				if((System.currentTimeMillis()-sTime)>1000){
+					sTime = System.currentTimeMillis();
+					System.out.println("Stage " + i +" of " + MAX_STAGES
+							+ " = " + f.format(cnt*100.0/tempRootSet.size()) + "%");
+				}
+				//////////////////////////////////////////////////////
 				
+				rootSet.add(id); // Add base document to root set;
+				//System.out.println(id);
+				// All outlinks
+				SearchResponse res2 = _client.prepareSearch()
+						.setIndices(LINK_MAP_NAME)
+						.setTypes(LINK_MAP_TYPE)
+						.setQuery(QueryBuilders.matchPhraseQuery(FIELD_SRC_LINK, id)) // All pages it points to
+						.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
+						.setSize(10000)
+						.get();
 				
-				///////////////////////////////////////////////////////////
-				SearchHitField dst = h2.getFields().get(FIELD_DST_LINK);
-				SearchHitField src = h2.getFields().get(FIELD_SRC_LINK);
-				
-				if(src!= null) directedGraph.addVertex(src.value());
-				if(dst!= null) directedGraph.addVertex(dst.value());
-				
-				if(dst!= null && src!= null)
-					directedGraph.addEdge(src.value(), dst.value());
-			}
-			
-			// All inlinks
-			SearchResponse res3 = _client.prepareSearch()
-					.setIndices(LINK_MAP_NAME)
-					.setTypes(LINK_MAP_TYPE)
-					.setQuery(QueryBuilders.matchPhraseQuery(FIELD_DST_LINK, id)) 
-					.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
-					.setSize(10000)
-					.get();
-			
-			SearchHit hit3[] = res3.getHits().hits();
-			Double threshold = d.doubleValue() / hit3.length;
-			for(SearchHit h3:hit3){
-				if(random.nextDouble() < threshold){
-					rootSet.add(h3.getFields().get(FIELD_SRC_LINK).getValue());
+				SearchHit hit2[] = res2.getHits().hits();
+				for(SearchHit h2:hit2){
+					rootSet.add(h2.getFields().get(FIELD_DST_LINK).getValue());
+					
 					
 					///////////////////////////////////////////////////////////
-					SearchHitField dst = h3.getFields().get(FIELD_DST_LINK);
-					SearchHitField src = h3.getFields().get(FIELD_SRC_LINK);
+					SearchHitField dst = h2.getFields().get(FIELD_DST_LINK);
+					SearchHitField src = h2.getFields().get(FIELD_SRC_LINK);
 					
 					if(src!= null) directedGraph.addVertex(src.value());
 					if(dst!= null) directedGraph.addVertex(dst.value());
 					
 					if(dst!= null && src!= null)
 						directedGraph.addEdge(src.value(), dst.value());
+				}
+				
+				// All inlinks
+				SearchResponse res3 = _client.prepareSearch()
+						.setIndices(LINK_MAP_NAME)
+						.setTypes(LINK_MAP_TYPE)
+						.setQuery(QueryBuilders.matchPhraseQuery(FIELD_DST_LINK, id)) 
+						.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
+						.setSize(10000)
+						.get();
+				
+				SearchHit hit3[] = res3.getHits().hits();
+				Double threshold = d.doubleValue() / hit3.length;
+				for(SearchHit h3:hit3){
+					if(random.nextDouble() < threshold){
+						rootSet.add(h3.getFields().get(FIELD_SRC_LINK).getValue());
+						
+						///////////////////////////////////////////////////////////
+						SearchHitField dst = h3.getFields().get(FIELD_DST_LINK);
+						SearchHitField src = h3.getFields().get(FIELD_SRC_LINK);
+						
+						if(src!= null) directedGraph.addVertex(src.value());
+						if(dst!= null) directedGraph.addVertex(dst.value());
+						
+						if(dst!= null && src!= null)
+							directedGraph.addEdge(src.value(), dst.value());
+					}
 				}
 			}
 		}

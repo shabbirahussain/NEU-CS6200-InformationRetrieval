@@ -14,6 +14,8 @@ import java.util.Map.Entry;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import com.ir.homework.hw4.elasticclient.ElasticClient;
+
 
 public class PageRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
@@ -34,7 +36,7 @@ public class PageRanker extends BaseRanker{
 	public PageRanker() throws UnknownHostException{
 		super();
 		// Initialize P
-		this.P = super.pages;
+		this.P = (new ElasticClient()).loadFullLinksMap();
 		this.S = new LinkedList<Object>();
 		
 		
@@ -44,9 +46,7 @@ public class PageRanker extends BaseRanker{
 		
 		System.out.println("Initializing...");
 		Double initialRank = 1.0/N;
-		for(Iterator<String> iter = P.vertexSet().iterator(); iter.hasNext();){
-			 String p = iter.next();
-			
+		for(Object p : P.vertexSet()){
 			//Initialize PR
 			this.PR.put(p.toString(), initialRank);
 			

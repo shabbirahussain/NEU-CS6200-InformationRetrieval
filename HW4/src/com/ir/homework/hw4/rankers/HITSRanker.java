@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import com.ir.homework.hw4.elasticclient.ElasticClient;
+
 public class HITSRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
 	
@@ -29,7 +31,7 @@ public class HITSRanker extends BaseRanker{
 		super();
 		// Initialize P
 		System.out.println("Loading links map...");
-		this.G = super.pages;
+		this.G = (new ElasticClient()).loadMapFromRootSet();
 		
 		this.PR_hub  = new HashMap<String, Double>();
 		this.PR_auth = new HashMap<String, Double>();
@@ -114,13 +116,13 @@ public class HITSRanker extends BaseRanker{
 		List<Entry<String, Float>> topPages;
 		System.out.println("\nTop " + n + " Auth pages: ");
 		topPages = sortByValue(PR_auth);
-		for(int i=0;i<n;i++)
+		for(int i=0;i<n && i<topPages.size();i++)
 			System.out.println(topPages.get(i));
 		
 
 		System.out.println("\nTop " + n + " Hub pages: ");
 		topPages = sortByValue(PR_hub);
-		for(int i=0;i<n;i++)
+		for(int i=0;i<n && i<topPages.size();i++)
 			System.out.println(topPages.get(i));
 		
 	}

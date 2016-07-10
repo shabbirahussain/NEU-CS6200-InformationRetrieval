@@ -16,8 +16,8 @@ public class Executor {
 		System.out.println("Loading object...");
 		
 		/////////////////////////////////////
-		//ranker = loadOrDefaultPR();
-		ranker = loadOrDefaultHITS();
+		ranker = loadOrDefaultPR();
+		//ranker = loadOrDefaultHITS();
 		/////////////////////////////////////
 		
 		calcPageRank();
@@ -31,13 +31,13 @@ public class Executor {
 	 * @throws UnknownHostException
 	 */
 	public static void calcPageRank()	throws UnknownHostException {
-		for(int j=0;j<10;j++){
+		for(int j=1;j<=(NUM_OF_ITERATIONS/PEEK_INTERVAL);j++){
 			System.out.println("Ranking pages...");
-			for(int i=0;i<50;i++){
+			for(int i=1;i<=PEEK_INTERVAL;i++){
 				ranker.rankPages();
 				
 				if(ranker.isConverged(4)){
-					System.out.println("Convergence reached");
+					System.out.println("Convergence reached after " + j*i + " iterations.");
 					return;
 				}
 			}

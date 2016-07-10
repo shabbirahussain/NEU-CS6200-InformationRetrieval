@@ -16,7 +16,7 @@ import com.ir.homework.hw4.elasticclient.ElasticClient;
 
 public abstract class BaseRanker implements Serializable, Ranker{
 	private static final Double LOG_BASE2 = Math.log(2);
-	protected DirectedGraph pages;
+	//protected DirectedGraph pages;
 	
 	/**
 	 * Default constructor
@@ -25,8 +25,7 @@ public abstract class BaseRanker implements Serializable, Ranker{
 	 */
 	public BaseRanker() throws UnknownHostException{
 		System.out.println("Loading links map...");
-		ElasticClient elasticClient = new ElasticClient();
-		this.pages  = elasticClient.loadLinksMap();
+		//this.pages  = elasticClient.loadLinksMap();
 	}
 
 	/**
