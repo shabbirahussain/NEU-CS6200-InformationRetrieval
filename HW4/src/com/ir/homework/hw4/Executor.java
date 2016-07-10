@@ -16,8 +16,8 @@ public class Executor {
 		System.out.println("Loading object...");
 		
 		/////////////////////////////////////
-		ranker = loadOrDefaultPR();
-		//ranker = loadOrDefaultHITS();
+		//ranker = loadOrDefaultPR();
+		ranker = loadOrDefaultHITS();
 		/////////////////////////////////////
 		
 		calcPageRank();

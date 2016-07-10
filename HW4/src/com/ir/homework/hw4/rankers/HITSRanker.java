@@ -2,11 +2,13 @@ package com.ir.homework.hw4.rankers;
 
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw4.models.LinkInfo;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
 
 public class HITSRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
@@ -15,7 +17,7 @@ public class HITSRanker extends BaseRanker{
 	private Double lastPerplexityAUT    = 0.0;
 	private Short  cnt = 0;
 
-	private Map<String, LinkInfo> G;
+	private DirectedGraph G;
 	private Map<String, Double>   PR_hub;
 	private Map<String, Double>   PR_auth;
 	
@@ -65,38 +67,44 @@ public class HITSRanker extends BaseRanker{
 		
 		////////////// AUTH Score Update ///////////
 		Double norm = 0.0;
-		for(Entry<String, LinkInfo> e: G.entrySet()){	// update all authority values first
-			String key = e.getKey();
+		for(Iterator<String> iter = G.vertexSet().iterator(); iter.hasNext();){
+			String p = iter.next();
 			Double p_auth = 0.0;
 			
-			for(String q: e.getValue().M){				// p.incomingNeighbors is the set of pages that link to p
+			for(Iterator<DefaultEdge> iter1 = G.incomingEdgesOf(p).iterator(); iter1.hasNext();){
+				DefaultEdge e = iter1.next();
+				String q = G.getEdgeSource(e).toString();
+				
 				p_auth += PR_hub.getOrDefault(q, 1.0);
 			}		
-			PR_auth.put(key, p_auth);
+			PR_auth.put(p, p_auth);
 			norm += Math.pow(p_auth, 2);					// calculate the sum of the squared auth values to normalise
 		}
 		norm = Math.sqrt(norm);
-		for(Entry<String, LinkInfo> e: G.entrySet()){	// update the auth scores 
-			String key = e.getKey();
-			PR_auth.put(key, PR_auth.get(e.getKey())/norm);// normalise the auth values
+		for(Iterator<String> iter = G.vertexSet().iterator(); iter.hasNext();){
+			String p = iter.next();
+			PR_auth.put(p, PR_auth.get(p)/norm);// normalise the auth values
 		}
 		
 		//////////// HUB Score Update //////////////
 		norm = 0.0;
-		for(Entry<String, LinkInfo> e: G.entrySet()){	// then update all hub values
-			String key = e.getKey();
+		for(Iterator<String> iter = G.vertexSet().iterator(); iter.hasNext();){
+			String p = iter.next();
 			Double p_hub = 0.0;
 			
-			for(String r: e.getValue().L){				// p.outgoingNeighbors is the set of pages that p links to
+			for(Iterator<DefaultEdge> iter1 = G.outgoingEdgesOf(p).iterator(); iter1.hasNext();){
+				DefaultEdge e = iter1.next();
+				String r = G.getEdgeTarget(e).toString();
+				
 				p_hub += PR_auth.getOrDefault(r, 1.0);	
 			}	
-			PR_hub.put(key, p_hub);
+			PR_hub.put(p, p_hub);
 			norm += Math.pow(p_hub, 2);					// calculate the sum of the squared auth values to normalise
 		}
 		norm = Math.sqrt(norm);
-		for(Entry<String, LinkInfo> e: G.entrySet()){	// update the hub scores 
-			String key = e.getKey();
-			PR_hub.put(key, PR_hub.get(e.getKey())/norm);// normalise the hub values
+		for(Iterator<String> iter = G.vertexSet().iterator(); iter.hasNext();){
+			String p = iter.next();
+			PR_hub.put(p, PR_hub.get(p)/norm);// normalise the hub values
 		}
 		
 	}

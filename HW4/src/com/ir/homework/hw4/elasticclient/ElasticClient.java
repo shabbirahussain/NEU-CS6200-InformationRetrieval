@@ -117,8 +117,8 @@ public class ElasticClient implements Flushable{
 	 * @return Links connectivity matrix as map
 	 */
 	public DirectedGraph<String, DefaultEdge> loadLinksMap(){
-		if(LINK_MAP_TYPE == "map1") ;return loadFullLinksMap();
-		//else return loadMapFromRootSet();
+		if(LINK_MAP_TYPE == "map1") return loadFullLinksMap();
+		else return loadMapFromRootSet();
 	}
 	/**
 	 * Loads the connectivity matrix from elastic search
@@ -186,7 +186,7 @@ public class ElasticClient implements Flushable{
 				.setTypes(DAT_IDX_TYPE)
 				.setQuery(QueryBuilders.matchQuery(FIELD_TEXT, QUERY_TERMS))
 				.setNoFields()
-				.setSize(1)
+				.setSize(400)
 				.get();
 		
 		List<String> rootSet = new LinkedList<String>();
@@ -194,12 +194,12 @@ public class ElasticClient implements Flushable{
 		for(SearchHit h:hit){
 			String id = h.getId();
 			rootSet.add(id); // Add base document to root set;
-			
+			//System.out.println(id);
 			// All outlinks
 			SearchResponse res2 = _client.prepareSearch()
 					.setIndices(LINK_MAP_NAME)
 					.setTypes(LINK_MAP_TYPE)
-					.setQuery(QueryBuilders.termQuery(FIELD_SRC_LINK, id)) // All pages it points to
+					.setQuery(QueryBuilders.matchPhraseQuery(FIELD_SRC_LINK, id)) // All pages it points to
 					.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
 					.setSize(10000)
 					.get();
@@ -224,7 +224,7 @@ public class ElasticClient implements Flushable{
 			SearchResponse res3 = _client.prepareSearch()
 					.setIndices(LINK_MAP_NAME)
 					.setTypes(LINK_MAP_TYPE)
-					.setQuery(QueryBuilders.termQuery(FIELD_DST_LINK, id)) 
+					.setQuery(QueryBuilders.matchPhraseQuery(FIELD_DST_LINK, id)) 
 					.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
 					.setSize(10000)
 					.get();
