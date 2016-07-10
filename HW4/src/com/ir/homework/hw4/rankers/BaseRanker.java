@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.jgrapht.DirectedGraph;
+
 import com.ir.homework.hw4.elasticclient.ElasticClient;
-import com.ir.homework.hw4.models.LinkInfo;
+
 
 public abstract class BaseRanker implements Serializable, Ranker{
 	private static final Double LOG_BASE2 = Math.log(2);
-	protected Map<String, LinkInfo> pages;
+	protected DirectedGraph pages;
 	
 	/**
 	 * Default constructor

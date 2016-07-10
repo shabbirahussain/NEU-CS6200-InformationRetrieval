@@ -16,13 +16,13 @@ public class Executor {
 		System.out.println("Loading object...");
 		
 		/////////////////////////////////////
-		//ranker = loadOrDefaultPR();
-		ranker = loadOrDefaultHITS();
+		ranker = loadOrDefaultPR();
+		//ranker = loadOrDefaultHITS();
 		/////////////////////////////////////
 		
 		calcPageRank();
 		
-		ranker.printTopPages(500);
+		ranker.printTopPages(10);
 		saveObject(ranker);
 	}
 	
@@ -33,7 +33,7 @@ public class Executor {
 	public static void calcPageRank()	throws UnknownHostException {
 		for(int j=0;j<10;j++){
 			System.out.println("Ranking pages...");
-			for(int i=0;i<5;i++){
+			for(int i=0;i<50;i++){
 				ranker.rankPages();
 				
 				if(ranker.isConverged(4)){

@@ -35,7 +35,10 @@ import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 
-import com.ir.homework.hw4.models.LinkInfo;
+import org.jgrapht.*;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+
 
 
 public class ElasticClient implements Flushable{
@@ -85,8 +88,8 @@ public class ElasticClient implements Flushable{
 				.endObject();
 		
 		IndexRequestBuilder irBuilder = _client.prepareIndex()
-				.setIndex(LINK_MAP_NAME)
-				.setType(LINK_MAP_TYPE)
+				.setIndex("links1")
+				.setType("map1")
 				.setId(mapId)
 				.setSource(source);
 		
@@ -113,8 +116,18 @@ public class ElasticClient implements Flushable{
 	 * Loads the connectivity matrix from elastic search
 	 * @return Links connectivity matrix as map
 	 */
-	public Map<String, LinkInfo> loadLinksMap(){
-		Map<String, LinkInfo> result = new HashMap<String, LinkInfo>();
+	public DirectedGraph<String, DefaultEdge> loadLinksMap(){
+		if(LINK_MAP_TYPE == "map1") ;return loadFullLinksMap();
+		//else return loadMapFromRootSet();
+	}
+	/**
+	 * Loads the connectivity matrix from elastic search
+	 * @return Links connectivity matrix as map
+	 */
+	public DirectedGraph<String, DefaultEdge> loadFullLinksMap(){
+		DirectedGraph<String, DefaultEdge> directedGraph =
+	            new DefaultDirectedGraph<String, DefaultEdge>
+	            (DefaultEdge.class);
 		
 		TimeValue scrollTimeValue = new TimeValue(60000);
 		
@@ -126,7 +139,6 @@ public class ElasticClient implements Flushable{
 				.setScroll(scrollTimeValue);
 		
 		SearchResponse response = builder.get();
-		LinkInfo info;
 		
 		DecimalFormat f = new DecimalFormat("##.00");
 		Long tot = response.getHits().getTotalHits();
@@ -141,21 +153,14 @@ public class ElasticClient implements Flushable{
 			SearchHit hit[]=response.getHits().hits();
 			for(SearchHit h:hit){
 				
-				String dst = h.getFields().get(FIELD_DST_LINK).getValue();
-				SearchHitField shf = h.getFields().get(FIELD_SRC_LINK);
+				SearchHitField dst = h.getFields().get(FIELD_DST_LINK);
+				SearchHitField src = h.getFields().get(FIELD_SRC_LINK);
 				
-				info = result.getOrDefault(dst, new LinkInfo());
-				if(shf != null) {
-					String src = shf.getValue();
-					info.M.add(src);
+				if(src!= null) directedGraph.addVertex(src.value());
+				if(dst!= null) directedGraph.addVertex(dst.value());
 				
-					// Add outlinks count
-					info = result.getOrDefault(src, new LinkInfo());
-					info.L.add(dst);
-					result.put(src, info);
-				}
-				// Add in links map
-				result.put(dst, info);
+				if(dst!= null && src!= null)
+					directedGraph.addEdge(src.value(), dst.value());
 			}
 			
 			// fetch next window
@@ -163,17 +168,18 @@ public class ElasticClient implements Flushable{
 					.setScroll(scrollTimeValue)
 					.get();
 		}
-		
-		return result;
+		return directedGraph;
 	}
 	
 	/**
 	 * Loads the connectivity matrix from elastic search
 	 * @return Links connectivity matrix as map
 	 */
-	public Map<String, LinkInfo> loadMapFromRootSet(){
-		Map<String, LinkInfo> result = new HashMap<String, LinkInfo>();
-		LinkInfo info;
+	public DirectedGraph<String, DefaultEdge> loadMapFromRootSet(){
+		DirectedGraph<String, DefaultEdge> directedGraph =
+	            new DefaultDirectedGraph<String, DefaultEdge>
+	            (DefaultEdge.class);
+		
 		
 		SearchResponse response = _client.prepareSearch()
 				.setIndices(DAT_IDX_NAME)
@@ -197,29 +203,21 @@ public class ElasticClient implements Flushable{
 					.addFields(FIELD_SRC_LINK, FIELD_DST_LINK)
 					.setSize(10000)
 					.get();
-			System.out.println(id);
-			System.out.println(res2.getHits().getTotalHits());
+			
 			SearchHit hit2[] = res2.getHits().hits();
 			for(SearchHit h2:hit2){
 				rootSet.add(h2.getFields().get(FIELD_DST_LINK).getValue());
 				
 				
 				///////////////////////////////////////////////////////////
-				String dst = h2.getFields().get(FIELD_DST_LINK).getValue();
-				SearchHitField shf = h2.getFields().get(FIELD_SRC_LINK);
+				SearchHitField dst = h2.getFields().get(FIELD_DST_LINK);
+				SearchHitField src = h2.getFields().get(FIELD_SRC_LINK);
 				
-				info = result.getOrDefault(dst, new LinkInfo());
-				if(shf != null) {
-					String src = shf.getValue();
-					info.M.add(src);
+				if(src!= null) directedGraph.addVertex(src.value());
+				if(dst!= null) directedGraph.addVertex(dst.value());
 				
-					// Add outlinks count
-					info = result.getOrDefault(src, new LinkInfo());
-					info.L.add(dst);
-					result.put(src, info);
-				}
-				// Add in links map
-				result.put(dst, info);
+				if(dst!= null && src!= null)
+					directedGraph.addEdge(src.value(), dst.value());
 			}
 			
 			// All inlinks
@@ -238,29 +236,22 @@ public class ElasticClient implements Flushable{
 					rootSet.add(h3.getFields().get(FIELD_SRC_LINK).getValue());
 					
 					///////////////////////////////////////////////////////////
-					String dst = h3.getFields().get(FIELD_DST_LINK).getValue();
-					SearchHitField shf = h3.getFields().get(FIELD_SRC_LINK);
+					SearchHitField dst = h3.getFields().get(FIELD_DST_LINK);
+					SearchHitField src = h3.getFields().get(FIELD_SRC_LINK);
 					
-					info = result.getOrDefault(dst, new LinkInfo());
-					if(shf != null) {
-					String src = shf.getValue();
-					info.M.add(src);
+					if(src!= null) directedGraph.addVertex(src.value());
+					if(dst!= null) directedGraph.addVertex(dst.value());
 					
-					// Add outlinks count
-					info = result.getOrDefault(src, new LinkInfo());
-					info.L.add(dst);
-					result.put(src, info);
-					}
-					// Add in links map
-					result.put(dst, info);
+					if(dst!= null && src!= null)
+						directedGraph.addEdge(src.value(), dst.value());
 				}
 			}
 		}
-		return result;
+		return directedGraph;
 	}
 	// ----------------------------------------------------------------
 	
 	public static void main(String args[]) throws UnknownHostException{
-		System.out.println((new ElasticClient()).loadMapFromRootSet().size());
+		System.out.println((new ElasticClient()).loadMapFromRootSet().vertexSet().size());
 	}
 }

@@ -9,7 +9,7 @@ import com.ir.homework.hw4.elasticclient.ElasticClient;
 import static com.ir.homework.hw4.Constants.*;
 
 public class FileLoader {
-	private static final String SPLITTER = " ";
+	private static final String SPLITTER = "\\s";
 	private static ElasticClient elasticClient;
 	
 	public static void main(String[] args) throws IOException {
@@ -37,10 +37,10 @@ public class FileLoader {
 					elasticClient.flush();
 				}
 			}
-			elasticClient.flush();
 		}
+		System.out.println("Final Flusing...");
+		elasticClient.flush();
 		br.close();
-		
 	}
 	
 }

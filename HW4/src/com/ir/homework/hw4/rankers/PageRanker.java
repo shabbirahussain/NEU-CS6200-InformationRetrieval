@@ -5,12 +5,15 @@ import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw4.models.LinkInfo;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+
 
 public class PageRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
@@ -19,8 +22,8 @@ public class PageRanker extends BaseRanker{
 	private Short  cnt = 0;
 
 	private Map<String, Double>   PR;
-	private Map<String, LinkInfo> P;
-	private Collection<String>    S;
+	private DirectedGraph P;
+	private Collection<Object>    S;
 	private Integer N;
 	private final Double  d = 0.85;
 	
@@ -32,21 +35,24 @@ public class PageRanker extends BaseRanker{
 		super();
 		// Initialize P
 		this.P = super.pages;
-		this.S = new LinkedList<String>();
+		this.S = new LinkedList<Object>();
+		
 		
 		//Initialize N
-		this.N = P.size();
+		this.N = P.vertexSet().size();
 		this.PR = new HashMap<String, Double>();
 		
 		System.out.println("Initializing...");
 		Double initialRank = 1.0/N;
-		for(Entry<String, LinkInfo> e: P.entrySet()){
+		for(Iterator<String> iter = P.vertexSet().iterator(); iter.hasNext();){
+			 String p = iter.next();
+			
 			//Initialize PR
-			this.PR.put(e.getKey(), initialRank);
+			this.PR.put(p.toString(), initialRank);
 			
 			//Initialize S
-			if(e.getValue().M.size() == 0)
-				S.add(e.getKey());
+			if(P.outDegreeOf(p) == 0)
+				S.add(p);
 		}
 	}
 	
@@ -79,18 +85,26 @@ public class PageRanker extends BaseRanker{
 //		return PR
 
 		Double sinkPR = 0.0;
-		for(String p: S)
-			sinkPR += PR.get(p);
+		for(Object p: S)
+			sinkPR += PR.get(p.toString());
 		
-		Double newPR = 0.0;
-		for(Entry<String, LinkInfo> p: P.entrySet()){
-			newPR  = (1-d)/N;
+		Map<String, Double> nPR = new HashMap<String, Double>();
+		for(Iterator<String> iter = P.vertexSet().iterator(); iter.hasNext();){
+			String p = iter.next();
+			Double newPR  = (1-d)/N;
 			newPR += d*sinkPR/N;
 			
-			for(String q: p.getValue().M){
-				newPR += d*PR.get(q)/p.getValue().L.size();
+			for(Iterator<DefaultEdge> iter1 = P.incomingEdgesOf(p).iterator(); iter1.hasNext();){
+				DefaultEdge e = iter1.next();
+				String q = P.getEdgeSource(e).toString();
+				
+				newPR += d*PR.get(q.toString())/P.outDegreeOf(q);
 			}
-			PR.put(p.getKey(), newPR);
+			nPR.put(p.toString(), newPR);
+		}
+		for(Object p: P.vertexSet().toArray(new Object[0])){
+			String key = p.toString();
+			PR.put(key, nPR.get(key));
 		}
 	}
 	
