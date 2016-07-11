@@ -16,8 +16,8 @@ public class Executor {
 		System.out.println("Loading object...");
 		
 		/////////////////////////////////////
-		//ranker = loadOrDefaultPR();
-		ranker = loadOrDefaultHITS();
+		ranker = loadOrDefaultPR();
+		//ranker = loadOrDefaultHITS();
 		/////////////////////////////////////
 		
 		calcPageRank();
@@ -36,10 +36,10 @@ public class Executor {
 			for(int i=1;i<=PEEK_INTERVAL;i++){
 				System.out.println("\tIteration = " + i);
 				ranker.rankPages();
-			}
-			if(ranker.isConverged(4)){
-				System.out.println("Convergence reached after " + j*PEEK_INTERVAL + " iterations.");
-				return;
+				if(ranker.isConverged(4)){
+					System.out.println("Convergence reached after " + j*i + " iterations.");
+					return;
+				}
 			}
 			System.out.println("Result peek:");
 			ranker.printTopPages(5);
