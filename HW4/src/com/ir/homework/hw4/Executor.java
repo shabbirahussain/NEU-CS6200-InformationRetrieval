@@ -16,14 +16,15 @@ public class Executor {
 		System.out.println("Loading object...");
 		
 		/////////////////////////////////////
-		ranker = loadOrDefaultPR();
-		//ranker = loadOrDefaultHITS();
+		//ranker = loadOrDefaultPR();
+		ranker = loadOrDefaultHITS();
 		/////////////////////////////////////
 		ranker.resetConvergence();
+		ranker.buildGraph();
 		
-		calcPageRank();
+		//calcPageRank();
 		
-		ranker.printTopPages(10);
+		ranker.printTopPages(500);
 		saveObject(ranker);
 	}
 	

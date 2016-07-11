@@ -154,7 +154,7 @@ public class ElasticClient implements Flushable{
 					.setScroll(scrollTimeValue)
 					.get();
 		}
-		return directedGraph;
+		return directedGraph.buildGraph();
 	}
 	
 	/**
@@ -237,7 +237,7 @@ public class ElasticClient implements Flushable{
 				}
 			}
 		}
-		return directedGraph;
+		return directedGraph.buildGraph();
 	}
 	// ----------------------------------------------------------------
 	

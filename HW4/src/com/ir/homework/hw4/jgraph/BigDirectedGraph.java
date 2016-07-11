@@ -32,6 +32,15 @@ public class BigDirectedGraph<V,E> extends DefaultDirectedGraph<Integer,E> {
 	}
 	
 	/**
+	 * This method finalizes the graph creation marking nodes as final. 
+	 * No new Nodes and Edges can be added after this call.
+	 */
+	public BigDirectedGraph<V,E> buildGraph(){
+		this.idEncodeMap = null;
+		return this;
+	}
+	
+	/**
 	 * Adds vertex to the current graph
 	 * @param v is the vertex to add
 	 * @return True iff vertex is successfully added

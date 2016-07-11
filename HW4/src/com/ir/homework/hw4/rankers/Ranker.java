@@ -24,4 +24,9 @@ public interface Ranker {
 	 * Resets convergence counter
 	 */
 	void resetConvergence();
+	
+	/**
+	 * Builds the underlying graph
+	 */
+	void buildGraph();
 }

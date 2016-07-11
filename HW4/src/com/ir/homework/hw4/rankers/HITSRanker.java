@@ -126,7 +126,14 @@ public class HITSRanker extends BaseRanker{
 					+"\t" + e.getValue());
 		}
 	}
-
+	
+	/**
+	 * Builds the underlying graph
+	 */
+	public void buildGraph(){
+		G.buildGraph();
+	}
+	
 	@Override
 	public Boolean isConverged(Integer tollerance) {
 		Double p = super.getPerplexity(PR_hub);

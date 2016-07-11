@@ -117,6 +117,13 @@ public class PageRanker extends BaseRanker{
 		lastPerplexity = currPerplexity;
 		return cnt > tollerance;
 	}
+	
+	/**
+	 * Builds the underlying graph
+	 */
+	public void buildGraph(){
+		P.buildGraph();
+	}
 
 
 	@Override
