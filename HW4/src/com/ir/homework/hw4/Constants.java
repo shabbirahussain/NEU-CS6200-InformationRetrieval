@@ -23,7 +23,7 @@ public final class Constants {
 	public static final String FIELD_TEXT           = "TEXT";
 	
 	public static final Integer NUM_OF_ITERATIONS = 5000;
-	public static final Integer PEEK_INTERVAL     = 50;
+	public static final Integer PEEK_INTERVAL     = 200;
 	
 	public static final Integer ROOT_SET_SIZE     = 150;
 	public static final Integer MAX_STAGES        = 2;

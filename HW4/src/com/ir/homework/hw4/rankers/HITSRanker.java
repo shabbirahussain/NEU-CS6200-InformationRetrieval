@@ -113,15 +113,19 @@ public class HITSRanker extends BaseRanker{
 		List<Entry<Object, Double>> topPages;
 		System.out.println("\nTop " + n + " Auth pages: ");
 		topPages = sortByValue(PR_auth);
-		for(int i=0;i<n && i<topPages.size();i++)
-			System.out.println(topPages.get(i));
-		
+		for(int i=0;i<n && i<topPages.size();i++){
+			Entry<Object, Double> e = topPages.get(i);
+			System.out.println(G.decodeVertex((Integer) e.getKey())
+					+"\t" + e.getValue());
+		}
 
 		System.out.println("\nTop " + n + " Hub pages: ");
 		topPages = sortByValue(PR_hub);
-		for(int i=0;i<n && i<topPages.size();i++)
-			System.out.println(topPages.get(i));
-		
+		for(int i=0;i<n && i<topPages.size();i++){
+			Entry<Object, Double> e = topPages.get(i);
+			System.out.println(G.decodeVertex((Integer) e.getKey())
+					+"\t" + e.getValue());
+		}
 	}
 
 	@Override

@@ -16,8 +16,8 @@ public class Executor {
 		System.out.println("Loading object...");
 		
 		/////////////////////////////////////
-		ranker = loadOrDefaultPR();
-		//ranker = loadOrDefaultHITS();
+		//ranker = loadOrDefaultPR();
+		ranker = loadOrDefaultHITS();
 		/////////////////////////////////////
 		
 		calcPageRank();
@@ -34,6 +34,7 @@ public class Executor {
 		for(int j=1;j<=(NUM_OF_ITERATIONS/PEEK_INTERVAL);j++){
 			System.out.println("Ranking pages...");
 			for(int i=1;i<=PEEK_INTERVAL;i++){
+				System.out.println("\tIteration = " + i);
 				ranker.rankPages();
 			}
 			if(ranker.isConverged(4)){
