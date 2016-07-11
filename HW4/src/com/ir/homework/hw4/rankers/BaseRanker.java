@@ -15,7 +15,9 @@ import com.ir.homework.hw4.elasticclient.ElasticClient;
 
 
 public abstract class BaseRanker implements Serializable, Ranker{
+	private static final long serialVersionUID = -4585540317119136972L;
 	private static final Double LOG_BASE2 = Math.log(2);
+	protected Short  cnt = 0;
 	//protected DirectedGraph pages;
 	
 	/**
@@ -60,5 +62,9 @@ public abstract class BaseRanker implements Serializable, Ranker{
 			}
 		}
 		return Math.pow(2, entropy);
+	}
+	
+	public void resetConvergence(){
+		this.cnt = 0;
 	}
 }

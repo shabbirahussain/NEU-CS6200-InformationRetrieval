@@ -18,7 +18,6 @@ public class PageRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
 	
 	private Double lastPerplexity    = 0.0;
-	private Short  cnt = 0;
 
 	private BigDirectedGraph<?, DefaultEdge> P;
 	private Map<Object, Double>  PR;
@@ -113,7 +112,8 @@ public class PageRanker extends BaseRanker{
 		
 		if(lastPerplexity.equals(currPerplexity))
 			cnt++;
-		
+		else 
+			cnt = 0;
 		lastPerplexity = currPerplexity;
 		return cnt > tollerance;
 	}

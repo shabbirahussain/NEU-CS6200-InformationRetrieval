@@ -19,6 +19,7 @@ public class Executor {
 		ranker = loadOrDefaultPR();
 		//ranker = loadOrDefaultHITS();
 		/////////////////////////////////////
+		ranker.resetConvergence();
 		
 		calcPageRank();
 		
@@ -59,6 +60,7 @@ public class Executor {
 		try{
 			result = (PageRanker) ObjectStore.get(PageRanker.class, OBJECTSTORE_PATH);
 		}catch(Exception e){
+			e.printStackTrace();
 			result = new PageRanker();
 		}
 		return result;

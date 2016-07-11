@@ -18,7 +18,6 @@ public class HITSRanker extends BaseRanker{
 	
 	private Double lastPerplexityHUB    = 0.0;
 	private Double lastPerplexityAUT    = 0.0;
-	private Short  cnt = 0;
 
 	private BigDirectedGraph<?, DefaultEdge> G;
 	private Map<Object, Double>   PR_hub;
@@ -141,6 +140,8 @@ public class HITSRanker extends BaseRanker{
 		if(lastPerplexityHUB.equals(currPerplexityHUB)
 				&& lastPerplexityAUT.equals(currPerplexityAUT))
 			cnt++;
+		else 
+			cnt = 0;
 		
 		lastPerplexityAUT = currPerplexityAUT;
 		lastPerplexityHUB = currPerplexityHUB;

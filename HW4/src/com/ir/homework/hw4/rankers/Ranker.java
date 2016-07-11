@@ -19,4 +19,9 @@ public interface Ranker {
 	 * @param n is the number of top pages to print
 	 */
 	void printTopPages(Integer n);
+	
+	/**
+	 * Resets convergence counter
+	 */
+	void resetConvergence();
 }
