@@ -5,12 +5,20 @@ import java.util.Map;
 
 import org.jgrapht.graph.DefaultDirectedGraph;
 
-public class BigDirectedGraph<V,E> extends DefaultDirectedGraph<Long,E> {
+/**
+ * 
+ * @author shabbirhussain
+ *
+ * @param <V> is the vertex node to be stored
+ * @param <T> is the numeric translation type which maps vertices to number
+ * @param <E> is the Graph Edge
+ */
+public class BigDirectedGraph<V,E> extends DefaultDirectedGraph<Integer,E> {
 	private static final long serialVersionUID = 1L;
 	
-	private Map<V, Long> idEncodeMap;
-	private Map<Long, V> idDecodeMap;
-	private Long idSeq;
+	private Map<V, Integer> idEncodeMap;
+	private Map<Integer, V> idDecodeMap;
+	private Integer idSeq;
 
 	/**
 	 * Creates a big directed graph
@@ -18,9 +26,9 @@ public class BigDirectedGraph<V,E> extends DefaultDirectedGraph<Long,E> {
 	 */
 	public BigDirectedGraph(Class<? extends E> edge) {
 		super(edge);
-		idEncodeMap = new HashMap<V, Long>();
-		idDecodeMap = new HashMap<Long, V>();
-		idSeq = 0L;
+		idEncodeMap = new HashMap<V, Integer>();
+		idDecodeMap = new HashMap<Integer, V>();
+		idSeq = 0;
 	}
 	
 	/**
@@ -49,7 +57,7 @@ public class BigDirectedGraph<V,E> extends DefaultDirectedGraph<Long,E> {
 	 * @param v is the vertex to translate to
 	 * @return Numeric id of the vertex
 	 */
-	public V decodeVertex(Long v){
+	public V decodeVertex(Integer v){
 		return idDecodeMap.get(v);
 	}
 	
@@ -60,8 +68,8 @@ public class BigDirectedGraph<V,E> extends DefaultDirectedGraph<Long,E> {
 	 * @param v is the vertex to translate to
 	 * @return Numeric id of the vertex
 	 */
-	private Long encodeVertex(V v){
-		Long vertexId = idEncodeMap.get(v);
+	private Integer encodeVertex(V v){
+		Integer vertexId = idEncodeMap.get(v);
 		if(vertexId == null){
 			vertexId = idSeq++;
 			idEncodeMap.put(v, vertexId);

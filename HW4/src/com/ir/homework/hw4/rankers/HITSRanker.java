@@ -11,6 +11,7 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import com.ir.homework.hw4.elasticclient.ElasticClient;
+import com.ir.homework.hw4.jgraph.BigDirectedGraph;
 
 public class HITSRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
@@ -19,9 +20,9 @@ public class HITSRanker extends BaseRanker{
 	private Double lastPerplexityAUT    = 0.0;
 	private Short  cnt = 0;
 
-	private DirectedGraph G;
-	private Map<String, Double>   PR_hub;
-	private Map<String, Double>   PR_auth;
+	private BigDirectedGraph<?, DefaultEdge> G;
+	private Map<Object, Double>   PR_hub;
+	private Map<Object, Double>   PR_auth;
 	
 	/** 
 	 * Default constructor
@@ -33,8 +34,8 @@ public class HITSRanker extends BaseRanker{
 		System.out.println("Loading links map...");
 		this.G = (new ElasticClient()).loadMapFromRootSet();
 		
-		this.PR_hub  = new HashMap<String, Double>();
-		this.PR_auth = new HashMap<String, Double>();
+		this.PR_hub  = new HashMap<Object, Double>();
+		this.PR_auth = new HashMap<Object, Double>();
 	}
 	
 	
@@ -69,11 +70,10 @@ public class HITSRanker extends BaseRanker{
 		
 		////////////// AUTH Score Update ///////////
 		Double norm = 0.0;
-		for(Iterator<String> iter = G.vertexSet().iterator(); iter.hasNext();){
-			String p = iter.next();
+		for(Object p: G.vertexSet()){
 			Double p_auth = 0.0;
 			
-			for(Iterator<DefaultEdge> iter1 = G.incomingEdgesOf(p).iterator(); iter1.hasNext();){
+			for(Iterator<DefaultEdge> iter1 = G.incomingEdgesOf((Integer)p).iterator(); iter1.hasNext();){
 				DefaultEdge e = iter1.next();
 				String q = G.getEdgeSource(e).toString();
 				
@@ -83,18 +83,16 @@ public class HITSRanker extends BaseRanker{
 			norm += Math.pow(p_auth, 2);					// calculate the sum of the squared auth values to normalise
 		}
 		norm = Math.sqrt(norm);
-		for(Iterator<String> iter = G.vertexSet().iterator(); iter.hasNext();){
-			String p = iter.next();
+		for(Object p: G.vertexSet()){
 			PR_auth.put(p, PR_auth.get(p)/norm);// normalise the auth values
 		}
 		
 		//////////// HUB Score Update //////////////
 		norm = 0.0;
-		for(Iterator<String> iter = G.vertexSet().iterator(); iter.hasNext();){
-			String p = iter.next();
+		for(Object p: G.vertexSet()){
 			Double p_hub = 0.0;
 			
-			for(Iterator<DefaultEdge> iter1 = G.outgoingEdgesOf(p).iterator(); iter1.hasNext();){
+			for(Iterator<DefaultEdge> iter1 = G.outgoingEdgesOf((Integer) p).iterator(); iter1.hasNext();){
 				DefaultEdge e = iter1.next();
 				String r = G.getEdgeTarget(e).toString();
 				
@@ -104,8 +102,7 @@ public class HITSRanker extends BaseRanker{
 			norm += Math.pow(p_hub, 2);					// calculate the sum of the squared auth values to normalise
 		}
 		norm = Math.sqrt(norm);
-		for(Iterator<String> iter = G.vertexSet().iterator(); iter.hasNext();){
-			String p = iter.next();
+		for(Object p: G.vertexSet()){
 			PR_hub.put(p, PR_hub.get(p)/norm);// normalise the hub values
 		}
 		
@@ -113,7 +110,7 @@ public class HITSRanker extends BaseRanker{
 	
 	@Override
 	public void printTopPages(Integer n){
-		List<Entry<String, Float>> topPages;
+		List<Entry<Object, Double>> topPages;
 		System.out.println("\nTop " + n + " Auth pages: ");
 		topPages = sortByValue(PR_auth);
 		for(int i=0;i<n && i<topPages.size();i++)

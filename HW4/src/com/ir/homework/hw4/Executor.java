@@ -35,11 +35,10 @@ public class Executor {
 			System.out.println("Ranking pages...");
 			for(int i=1;i<=PEEK_INTERVAL;i++){
 				ranker.rankPages();
-				
-				if(ranker.isConverged(4)){
-					System.out.println("Convergence reached after " + j*i + " iterations.");
-					return;
-				}
+			}
+			if(ranker.isConverged(4)){
+				System.out.println("Convergence reached after " + j*PEEK_INTERVAL + " iterations.");
+				return;
 			}
 			System.out.println("Result peek:");
 			ranker.printTopPages(5);

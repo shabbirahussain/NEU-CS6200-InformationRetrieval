@@ -30,13 +30,14 @@ public abstract class BaseRanker implements Serializable, Ranker{
 
 	/**
 	 * sorts given map and returns a linked list to print results in sorted order
+	 * @param <K>
+	 * @param <V>
 	 * @param map
 	 * @return
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected
-	static List<Entry<String, Float>> sortByValue(Map map) {
-	     List<Entry<String, Float>> list = new LinkedList(map.entrySet());
+	protected static <K, V extends Number> List<Entry<K, V>> sortByValue(Map<K,V> map) {
+	     List<Entry<K, V>> list = new LinkedList(map.entrySet());
 	     Collections.sort(list, new Comparator() {
 	          public int compare(Object o1, Object o2) {
 	               return -((Comparable) ((Map.Entry) (o1)).getValue())
@@ -50,12 +51,12 @@ public abstract class BaseRanker implements Serializable, Ranker{
 	 * Gets perplexity of distribution
 	 * @return Value of perplexity
 	 */
-	public Double getPerplexity(Map<String, Double> rankMap){
+	public static <K, V extends Number>  Double getPerplexity(Map<K, V> rankMap){
 		Double entropy = 0.0;
-		for(Entry<String, Double> e: rankMap.entrySet()){
-			Double pxi = e.getValue();
-			if(pxi != 0){
-				entropy += -pxi*Math.log(pxi)/LOG_BASE2;
+		for(Entry<K, V> e: rankMap.entrySet()){
+			V pxi = e.getValue();
+			if(pxi.equals(0)){
+				entropy += -pxi.doubleValue()*Math.log(pxi.doubleValue())/LOG_BASE2;
 			}
 		}
 		return Math.pow(2, entropy);

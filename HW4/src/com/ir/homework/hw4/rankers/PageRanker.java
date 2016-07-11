@@ -1,20 +1,17 @@
 package com.ir.homework.hw4.rankers;
 
-
-import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import com.ir.homework.hw4.elasticclient.ElasticClient;
+import com.ir.homework.hw4.jgraph.BigDirectedGraph;
 
 
 public class PageRanker extends BaseRanker{
@@ -23,8 +20,8 @@ public class PageRanker extends BaseRanker{
 	private Double lastPerplexity    = 0.0;
 	private Short  cnt = 0;
 
-	private Map<String, Double>   PR;
-	private DirectedGraph P;
+	private BigDirectedGraph<?, DefaultEdge> P;
+	private Map<Object, Double>  PR;
 	private Collection<Object>    S;
 	private Integer N;
 	private final Double  d = 0.85;
@@ -41,18 +38,18 @@ public class PageRanker extends BaseRanker{
 		
 		
 		//Initialize N
-		this.N = P.vertexSet().size();
-		this.PR = new HashMap<String, Double>();
+		this.N  = P.vertexSet().size();
+		this.PR = new HashMap<Object, Double>();
 		
 		System.out.println("Initializing...");
 		Double initialRank = 1.0/N;
-		for(Object p : P.vertexSet()){
+		for(Object pObj : P.vertexSet()){
 			//Initialize PR
-			this.PR.put(p.toString(), initialRank);
+			this.PR.put(pObj, initialRank);
 			
 			//Initialize S
-			if(P.outDegreeOf(p) == 0)
-				S.add(p);
+			if(P.outDegreeOf((Integer) pObj) == 0)
+				S.add(pObj);
 		}
 	}
 	
@@ -86,32 +83,26 @@ public class PageRanker extends BaseRanker{
 
 		Double sinkPR = 0.0;
 		for(Object p: S)
-			sinkPR += PR.get(p.toString());
+			sinkPR += PR.get(p);
 		
-		Map<String, Double> nPR = new HashMap<String, Double>();
-		for(Iterator<String> iter = P.vertexSet().iterator(); iter.hasNext();){
-			String p = iter.next();
+		Map<Object, Double> nPR = new HashMap<Object, Double>();
+		for(Object p : P.vertexSet()){
 			Double newPR  = (1-d)/N;
 			newPR += d*sinkPR/N;
 			
-			for(Iterator<DefaultEdge> iter1 = P.incomingEdgesOf(p).iterator(); iter1.hasNext();){
-				DefaultEdge e = iter1.next();
-				String q = P.getEdgeSource(e).toString();
-				
-				newPR += d*PR.get(q.toString())/P.outDegreeOf(q);
+			for(Object edge : P.incomingEdgesOf((Integer) p)){
+				Object q = P.getEdgeSource((DefaultEdge) edge);
+				newPR   += d*PR.get(q)/P.outDegreeOf((Integer) q);
 			}
-			nPR.put(p.toString(), newPR);
+			nPR.put(p, newPR);
 		}
-		for(Object p: P.vertexSet().toArray(new Object[0])){
-			String key = p.toString();
-			PR.put(key, nPR.get(key));
-		}
+		this.PR = nPR;
+		
+//		for(Object obj: P.vertexSet()){
+//			Integer p = (Integer) obj;
+//			PR.put(p, nPR.get(p));
+//		}
 	}
-	
-	public List<Entry<String, Float>> getTopPages(){
-		return sortByValue(PR);
-	}
-
 
 	@Override
 	public Boolean isConverged(Integer tollerance) {
@@ -130,10 +121,12 @@ public class PageRanker extends BaseRanker{
 
 	@Override
 	public void printTopPages(Integer n) {
-		List<Entry<String, Float>> topPages;
+		List<Entry<Object, Double>> topPages;
 		System.out.println("\nTop " + n + " PageRank pages: ");
-		topPages = sortByValue(PR);
-		for(int i=0;i<n;i++)
-			System.out.println(topPages.get(i));
+		topPages = super.sortByValue(PR);
+		for(int i=0;i<n && i<topPages.size();i++){
+			Entry<Object, Double> e = topPages.get(i);
+			System.out.println(P.decodeVertex((Integer) e.getKey()) + "\t" + e.getValue());
+		}	
 	}
 }

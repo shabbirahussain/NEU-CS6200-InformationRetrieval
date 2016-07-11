@@ -8,10 +8,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -38,6 +36,8 @@ import org.elasticsearch.search.SearchHitField;
 import org.jgrapht.*;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+
+import com.ir.homework.hw4.jgraph.BigDirectedGraph;
 
 
 
@@ -117,20 +117,10 @@ public class ElasticClient implements Flushable{
 	 * Loads the connectivity matrix from elastic search
 	 * @return Links connectivity matrix as map
 	 */
-	public DirectedGraph<String, DefaultEdge> loadLinksMap(){
-		if(LINK_MAP_TYPE.equals("map1")) 
-			return loadFullLinksMap();
-		else 
-			return loadMapFromRootSet();
-	}
-	/**
-	 * Loads the connectivity matrix from elastic search
-	 * @return Links connectivity matrix as map
-	 */
-	public DirectedGraph<String, DefaultEdge> loadFullLinksMap(){
+	public BigDirectedGraph<String, DefaultEdge> loadFullLinksMap(){
 		System.out.println("Loading full map...");
-		DirectedGraph<String, DefaultEdge> directedGraph =
-	            new DefaultDirectedGraph<String, DefaultEdge>
+		BigDirectedGraph<String, DefaultEdge> directedGraph =
+	            new BigDirectedGraph<String, DefaultEdge>
 	            (DefaultEdge.class);
 		
 		TimeValue scrollTimeValue = new TimeValue(600000);
@@ -156,15 +146,7 @@ public class ElasticClient implements Flushable{
 			
 			SearchHit hit[]=response.getHits().hits();
 			for(SearchHit h:hit){
-				
-				SearchHitField dst = h.getFields().get(FIELD_DST_LINK);
-				SearchHitField src = h.getFields().get(FIELD_SRC_LINK);
-				
-				if(src!= null) directedGraph.addVertex(src.value());
-				if(dst!= null) directedGraph.addVertex(dst.value());
-				
-				if(dst!= null && src!= null)
-					directedGraph.addEdge(src.value(), dst.value());
+				directedGraph = addConnection(directedGraph, h);
 			}
 			
 			// fetch next window
@@ -179,10 +161,10 @@ public class ElasticClient implements Flushable{
 	 * Loads the connectivity matrix from elastic search
 	 * @return Links connectivity matrix as map
 	 */
-	public DirectedGraph<String, DefaultEdge> loadMapFromRootSet(){
+	public BigDirectedGraph<String, DefaultEdge> loadMapFromRootSet(){
 		System.out.println("Loading map from root set...");
-		DirectedGraph<String, DefaultEdge> directedGraph =
-	            new DefaultDirectedGraph<String, DefaultEdge>
+		BigDirectedGraph<String, DefaultEdge> directedGraph =
+	            new BigDirectedGraph<String, DefaultEdge>
 	            (DefaultEdge.class);
 		
 		SearchResponse response = _client.prepareSearch()
@@ -230,14 +212,7 @@ public class ElasticClient implements Flushable{
 					
 					
 					///////////////////////////////////////////////////////////
-					SearchHitField dst = h2.getFields().get(FIELD_DST_LINK);
-					SearchHitField src = h2.getFields().get(FIELD_SRC_LINK);
-					
-					if(src!= null) directedGraph.addVertex(src.value());
-					if(dst!= null) directedGraph.addVertex(dst.value());
-					
-					if(dst!= null && src!= null)
-						directedGraph.addEdge(src.value(), dst.value());
+					directedGraph = addConnection(directedGraph, h2);
 				}
 				
 				// All inlinks
@@ -256,14 +231,8 @@ public class ElasticClient implements Flushable{
 						rootSet.add(h3.getFields().get(FIELD_SRC_LINK).getValue());
 						
 						///////////////////////////////////////////////////////////
-						SearchHitField dst = h3.getFields().get(FIELD_DST_LINK);
-						SearchHitField src = h3.getFields().get(FIELD_SRC_LINK);
+						directedGraph = addConnection(directedGraph, h3);
 						
-						if(src!= null) directedGraph.addVertex(src.value());
-						if(dst!= null) directedGraph.addVertex(dst.value());
-						
-						if(dst!= null && src!= null)
-							directedGraph.addEdge(src.value(), dst.value());
 					}
 				}
 			}
@@ -272,7 +241,16 @@ public class ElasticClient implements Flushable{
 	}
 	// ----------------------------------------------------------------
 	
-	public static void main(String args[]) throws UnknownHostException{
-		System.out.println((new ElasticClient()).loadMapFromRootSet().vertexSet().size());
+	private <V,E> BigDirectedGraph<V,E> addConnection(BigDirectedGraph<V,E> graph,SearchHit hit){
+		SearchHitField dst = hit.getFields().get(FIELD_DST_LINK);
+		SearchHitField src = hit.getFields().get(FIELD_SRC_LINK);
+		
+		if(src!= null) graph.encodeAndAddVertex(src.value());
+		if(dst!= null) graph.encodeAndAddVertex(dst.value());
+		
+		if(dst!= null && src!= null)
+			graph.encodeAndAddEdge(src.value(), dst.value());
+		
+		return graph;
 	}
 }
