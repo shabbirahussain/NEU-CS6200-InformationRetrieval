@@ -13,6 +13,8 @@ import org.jgrapht.graph.DefaultEdge;
 import com.ir.homework.hw4.elasticclient.ElasticClient;
 import com.ir.homework.hw4.jgraph.BigDirectedGraph;
 
+import static com.ir.homework.hw4.Constants.*;
+
 
 public class PageRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
@@ -107,10 +109,10 @@ public class PageRanker extends BaseRanker{
 	public Boolean isConverged(Integer tollerance) {
 		Double p = super.getPerplexity(PR);
 		
-		Double currPerplexity = Math.floor(p)/10;
-		currPerplexity -= Math.floor(currPerplexity);
+		Double currPerplexity = p;//Math.floor(p)/10;
+		//currPerplexity -= Math.floor(currPerplexity);
 		
-		if(lastPerplexity.equals(currPerplexity))
+		if(Math.abs(lastPerplexity - currPerplexity) < EPSILON_PRECISION)
 			cnt++;
 		else 
 			cnt = 0;
@@ -133,7 +135,10 @@ public class PageRanker extends BaseRanker{
 		topPages = super.sortByValue(PR);
 		for(int i=0;i<n && i<topPages.size();i++){
 			Entry<Object, Double> e = topPages.get(i);
-			System.out.println(P.decodeVertex((Integer) e.getKey()) + "\t" + e.getValue());
+			Integer v = (Integer) e.getKey();
+			System.out.println(P.decodeVertex(v) 
+					+ "\t" + e.getValue()
+					+ "\t" + P.inDegreeOf(v));
 		}	
 	}
 }

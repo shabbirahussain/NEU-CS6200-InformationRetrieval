@@ -13,6 +13,8 @@ import org.jgrapht.graph.DefaultEdge;
 import com.ir.homework.hw4.elasticclient.ElasticClient;
 import com.ir.homework.hw4.jgraph.BigDirectedGraph;
 
+import static com.ir.homework.hw4.Constants.*;
+
 public class HITSRanker extends BaseRanker{
 	private static final long serialVersionUID = 1L;
 	
@@ -68,7 +70,7 @@ public class HITSRanker extends BaseRanker{
 //		24       p.hub = p.hub / norm   	// normalise the hub values
 		
 		////////////// AUTH Score Update ///////////
-		Double norm = 0.0;
+		Double normAUT = 0.0;
 		for(Object p: G.vertexSet()){
 			Double p_auth = 0.0;
 			
@@ -79,15 +81,15 @@ public class HITSRanker extends BaseRanker{
 				p_auth += PR_hub.getOrDefault(q, 1.0);
 			}		
 			PR_auth.put(p, p_auth);
-			norm += Math.pow(p_auth, 2);					// calculate the sum of the squared auth values to normalise
+			normAUT += Math.pow(p_auth, 2);					// calculate the sum of the squared auth values to normalise
 		}
-		norm = Math.sqrt(norm);
+		normAUT = Math.sqrt(normAUT);
 		for(Object p: G.vertexSet()){
-			PR_auth.put(p, PR_auth.get(p)/norm);// normalise the auth values
+			PR_auth.put(p, PR_auth.get(p)/normAUT);// normalise the auth values
 		}
 		
 		//////////// HUB Score Update //////////////
-		norm = 0.0;
+		Double normHUB = 0.0;
 		for(Object p: G.vertexSet()){
 			Double p_hub = 0.0;
 			
@@ -98,12 +100,14 @@ public class HITSRanker extends BaseRanker{
 				p_hub += PR_auth.getOrDefault(r, 1.0);	
 			}	
 			PR_hub.put(p, p_hub);
-			norm += Math.pow(p_hub, 2);					// calculate the sum of the squared auth values to normalise
+			normHUB += Math.pow(p_hub, 2);					// calculate the sum of the squared auth values to normalise
 		}
-		norm = Math.sqrt(norm);
+		normHUB = Math.sqrt(normHUB);
 		for(Object p: G.vertexSet()){
-			PR_hub.put(p, PR_hub.get(p)/norm);// normalise the hub values
+			PR_hub.put(p, PR_hub.get(p)/normHUB);// normalise the hub values
 		}
+		
+		
 		
 	}
 	
@@ -114,16 +118,20 @@ public class HITSRanker extends BaseRanker{
 		topPages = sortByValue(PR_auth);
 		for(int i=0;i<n && i<topPages.size();i++){
 			Entry<Object, Double> e = topPages.get(i);
-			System.out.println(G.decodeVertex((Integer) e.getKey())
-					+"\t" + e.getValue());
+			Integer v = (Integer) e.getKey();
+			System.out.println(G.decodeVertex(v)
+					+ "\t" + e.getValue()
+					+ "\t" + G.inDegreeOf(v));
 		}
 
 		System.out.println("\nTop " + n + " Hub pages: ");
 		topPages = sortByValue(PR_hub);
 		for(int i=0;i<n && i<topPages.size();i++){
 			Entry<Object, Double> e = topPages.get(i);
-			System.out.println(G.decodeVertex((Integer) e.getKey())
-					+"\t" + e.getValue());
+			Integer v = (Integer) e.getKey();
+			System.out.println(G.decodeVertex(v)
+					+ "\t" + e.getValue()
+					+ "\t" + G.outDegreeOf(v));
 		}
 	}
 	
@@ -137,15 +145,15 @@ public class HITSRanker extends BaseRanker{
 	@Override
 	public Boolean isConverged(Integer tollerance) {
 		Double p = super.getPerplexity(PR_hub);
-		Double currPerplexityHUB = Math.floor(p)/10;
-		currPerplexityHUB -= Math.floor(currPerplexityHUB);
+		Double currPerplexityHUB = p;//Math.floor(p)/10;
+		//currPerplexityHUB -= Math.floor(currPerplexityHUB);
 		
 		p = super.getPerplexity(PR_auth);
-		Double currPerplexityAUT = Math.floor(p)/10;
-		currPerplexityAUT -= Math.floor(currPerplexityAUT);
+		Double currPerplexityAUT = p;//Math.floor(p)/10;
+		//currPerplexityAUT -= Math.floor(currPerplexityAUT);
 		
-		if(lastPerplexityHUB.equals(currPerplexityHUB)
-				&& lastPerplexityAUT.equals(currPerplexityAUT))
+		if(Math.abs(lastPerplexityHUB - currPerplexityHUB) < EPSILON_PRECISION
+		&& Math.abs(lastPerplexityAUT - currPerplexityAUT) < EPSILON_PRECISION)
 			cnt++;
 		else 
 			cnt = 0;
@@ -153,6 +161,8 @@ public class HITSRanker extends BaseRanker{
 		lastPerplexityAUT = currPerplexityAUT;
 		lastPerplexityHUB = currPerplexityHUB;
 
+		System.out.println("lastPerplexityAUT="+ lastPerplexityAUT
+				         + "\tlastPerplexityHUB="+ lastPerplexityHUB);
 		return cnt > tollerance;
 	}
 }

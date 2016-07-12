@@ -22,7 +22,7 @@ public class Executor {
 		ranker.resetConvergence();
 		ranker.buildGraph();
 		
-		//calcPageRank();
+		calcPageRank();
 		
 		ranker.printTopPages(500);
 		saveObject(ranker);
@@ -33,13 +33,13 @@ public class Executor {
 	 * @throws UnknownHostException
 	 */
 	public static void calcPageRank()	throws UnknownHostException {
-		for(int j=1;j<=(NUM_OF_ITERATIONS/PEEK_INTERVAL);j++){
+		for(int j=0;j<(NUM_OF_ITERATIONS/PEEK_INTERVAL);j++){
 			System.out.println("Ranking pages...");
 			for(int i=1;i<=PEEK_INTERVAL;i++){
 				System.out.println("\tIteration = " + i);
 				ranker.rankPages();
 				if(ranker.isConverged(4)){
-					System.out.println("Convergence reached after " + j*i + " iterations.");
+					System.out.println("Convergence reached after " + (j*PEEK_INTERVAL + i) + " iterations.");
 					return;
 				}
 			}

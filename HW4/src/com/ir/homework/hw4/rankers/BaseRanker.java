@@ -57,7 +57,8 @@ public abstract class BaseRanker implements Serializable, Ranker{
 		Double entropy = 0.0;
 		for(Entry<K, V> e: rankMap.entrySet()){
 			V pxi = e.getValue();
-			if(pxi.equals(0)){
+			if(!pxi.equals(0.0)){
+				//System.out.println(pxi + "\t" + Math.log(pxi.doubleValue()));
 				entropy += -pxi.doubleValue()*Math.log(pxi.doubleValue())/LOG_BASE2;
 			}
 		}
