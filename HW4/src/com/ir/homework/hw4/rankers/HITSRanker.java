@@ -165,4 +165,19 @@ public class HITSRanker extends BaseRanker{
 				         + "\tlastPerplexityHUB="+ lastPerplexityHUB);
 		return cnt > tollerance;
 	}
+	
+	@Override
+	public void printTotalRank() {
+		Double total = 0.0;
+		for(Double  val: PR_hub.values()){
+			total +=val;
+		}
+		System.out.println("Total HUB="+total);
+		
+		total = 0.0;
+		for(Double  val: PR_auth.values()){
+			total +=val;
+		}
+		System.out.println("Total AUTH="+total);
+	}
 }

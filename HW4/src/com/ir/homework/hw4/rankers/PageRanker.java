@@ -141,4 +141,14 @@ public class PageRanker extends BaseRanker{
 					+ "\t" + P.inDegreeOf(v));
 		}	
 	}
+
+
+	@Override
+	public void printTotalRank() {
+		Double total = 0.0;
+		for(Double  val: PR.values()){
+			total +=val;
+		}
+		System.out.println("Total PageRank="+total);
+	}
 }

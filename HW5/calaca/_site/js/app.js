@@ -9,7 +9,7 @@
  */
 
 /* Module */
-window.Calaca = angular.module('calaca', ['elasticsearch', 'ngAnimate', 'ngSanitize'],
+window.Calaca = angular.module('calaca', ['elasticsearch', 'ngAnimate', 'ngSanitize', 'ngWindowManager', 'ngclipboard'],
     ['$locationProvider', function($locationProvider){
         $locationProvider.html5Mode(true);
     }]

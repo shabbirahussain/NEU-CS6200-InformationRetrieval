@@ -14,9 +14,14 @@
  *
 */
 Calaca.controller('calacaCtrl', ['calacaService', '$scope', '$location', function(results, $scope, $location){
-
+		
+		$scope.options = {
+        	position: {x: 10, y:10},
+       	 	size: {width: 300, height:100}
+    	};
         //Init empty array
         $scope.results = [];
+        $scope.ranking = {};
 
         //Init offset
         $scope.offset = 0;
@@ -35,6 +40,9 @@ Calaca.controller('calacaCtrl', ['calacaService', '$scope', '$location', functio
         //On search, reinitialize array, then perform search and load results
         $scope.search = function(m){
             $scope.results = [];
+            if($scope.ranking[$scope.query] == undefined)
+	            $scope.ranking[$scope.query] = {};
+            
             $scope.offset = m == 0 ? 0 : $scope.offset;//Clear offset if new query
             $scope.loading = m == 0 ? false : true;//Reset loading flag if new query
 
@@ -82,6 +90,18 @@ Calaca.controller('calacaCtrl', ['calacaService', '$scope', '$location', functio
             return paginationTriggered ? true : false;
         };
 
-
+		$scope.setScore = function(pageId, score){
+			$scope.ranking[$scope.query][pageId] = score;
+			
+			$scope.rank = "Query\tURL\tScore";
+			for(q in $scope.ranking){
+				for(u in $scope.ranking[q]){
+					$scope.rank = $scope.rank + "\n" 
+								+ q + "\t"
+								+ u + "\t"
+								+ $scope.ranking[q][u];
+				}
+			}
+		}
     }]
 );

@@ -16,23 +16,27 @@ public class Executor {
 		System.out.println("Loading object...");
 		
 		/////////////////////////////////////
-		//ranker = loadOrDefaultPR();
-		ranker = loadOrDefaultHITS();
+		ranker = loadOrDefaultPR();
+		//ranker = loadOrDefaultHITS();
 		/////////////////////////////////////
-		ranker.resetConvergence();
-		ranker.buildGraph();
 		
+		ranker.resetConvergence();
+		//ranker.buildGraph();
 		calcPageRank();
 		
-		ranker.printTopPages(500);
+		ranker.printTotalRank();
+		
+		ranker.printTopPages(50);
 		saveObject(ranker);
 	}
+	
+	
 	
 	/**
 	 * Calculates the page rank
 	 * @throws UnknownHostException
 	 */
-	public static void calcPageRank()	throws UnknownHostException {
+	private static void calcPageRank()	throws UnknownHostException {
 		for(int j=0;j<(NUM_OF_ITERATIONS/PEEK_INTERVAL);j++){
 			System.out.println("Ranking pages...");
 			for(int i=1;i<=PEEK_INTERVAL;i++){

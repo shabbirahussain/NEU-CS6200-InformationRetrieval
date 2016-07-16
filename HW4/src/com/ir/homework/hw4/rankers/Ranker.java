@@ -29,4 +29,9 @@ public interface Ranker {
 	 * Builds the underlying graph
 	 */
 	void buildGraph();
+	
+	/**
+	 * Print Total of Ranks
+	 */
+	void printTotalRank();
 }

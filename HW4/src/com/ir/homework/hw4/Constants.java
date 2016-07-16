@@ -10,8 +10,8 @@ public final class Constants {
 	public static final Integer PORT = 9300;
 	public static final String  CLUSTER_NAME = "dead-pool";
 	
-	public static final String LINK_MAP_NAME = "links";
-	public static final String LINK_MAP_TYPE = "map";
+	public static final String LINK_MAP_NAME = "links1";
+	public static final String LINK_MAP_TYPE = "map1";
 	
 	public static final String DAT_IDX_NAME = "1512_great_mordenist_artist";
 	public static final String DAT_IDX_TYPE = "document";
