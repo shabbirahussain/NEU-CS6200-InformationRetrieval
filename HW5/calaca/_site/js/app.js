@@ -14,3 +14,23 @@ window.Calaca = angular.module('calaca', ['elasticsearch', 'ngAnimate', 'ngSanit
         $locationProvider.html5Mode(true);
     }]
 );
+
+
+window.Calaca.directive('ngColResizeable', function() {
+  return {
+    restrict: 'A',
+    link: function(scope, elem) {
+      setTimeout(function() {
+        elem.colResizable({
+          liveDrag: true,
+          gripInnerHtml: "<div class='grip'></div>",
+          draggingClass: "dragging",
+          onDrag: function() {
+            //trigger a resize event, so width dependent stuff will be updated
+            $(window).trigger('resize');
+          }
+        });
+      });
+    }
+  };
+});

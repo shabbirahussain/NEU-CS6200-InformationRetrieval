@@ -15,10 +15,16 @@
 */
 Calaca.controller('calacaCtrl', ['calacaService', '$scope', '$location', function(results, $scope, $location){
 		
-		$scope.options = {
+		$scope.options1 = {
         	position: {x: 10, y:10},
        	 	size: {width: 300, height:100}
     	};
+    	
+    	$scope.options2 = {
+        	position: {x: 100, y:10},
+       	 	size: {width: 300, height:500}
+    	};
+    	
         //Init empty array
         $scope.results = [];
         $scope.ranking = {};
@@ -32,6 +38,7 @@ Calaca.controller('calacaCtrl', ['calacaService', '$scope', '$location', functio
 
         $scope.delayedSearch = function(mode) {
             clearTimeout(searchTimeout);
+
             searchTimeout = setTimeout(function() {
                 $scope.search(mode)
             }, CALACA_CONFIGS.search_delay);
