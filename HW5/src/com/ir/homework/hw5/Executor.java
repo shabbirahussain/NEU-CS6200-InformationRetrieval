@@ -19,11 +19,12 @@ public class Executor {
 	
 	public static void main(String[] args) throws ArrayIndexOutOfBoundsException, IOException{
 		List<Evaluator> evaluators = new LinkedList<Evaluator>();
-
+		
 		//////////////////////////////////////////////////////////////////////////
-		//
+		// Add evaluators to the system
 		//////////////////////////////////////////////////////////////////////////
 		
+		evaluators.add(new RPrecisionEvaluator("R-precision"));
 		
 		
 		

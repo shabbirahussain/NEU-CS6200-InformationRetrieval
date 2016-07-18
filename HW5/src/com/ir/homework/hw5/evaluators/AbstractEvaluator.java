@@ -4,7 +4,7 @@ import java.io.PrintStream;
 
 public abstract class AbstractEvaluator implements Evaluator {
 	private String displayLabel;
-	private Double score;
+	protected Double score;
 	
 	
 	/**
