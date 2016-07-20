@@ -36,7 +36,7 @@ public final class ModelQresDAO {
 			String docID = fields[2];
 			Double score = Double.parseDouble(fields[4]);
 			
-			score = (score>MAX_GRADE)?MAX_GRADE:score;
+			//score = (score>MAX_GRADE)?MAX_GRADE:score;
 			
 			// Store results into model
 			Map<String, Double> docMap = qDocMap.getOrDefault(query, new ModelQrel());
