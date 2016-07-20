@@ -52,8 +52,8 @@ public class PRGraphEvaluator extends AbstractEvaluator {
 			precn.add(totPrcn/cntPrcn);
 			recll.add(totRcll/cntPrcn);
 		}
-		double[] xData = Stream.of(precn.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
-		double[] yData = Stream.of(recll.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
+		double[] xData = Stream.of(recll.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
+		double[] yData = Stream.of(precn.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
 		
 		// Create Chart
 		Chart chart = QuickChart.getChart("Precision Recall Graph", "Recall", "Precision", "y(x)", xData, yData);

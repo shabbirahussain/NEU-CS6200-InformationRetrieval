@@ -8,7 +8,7 @@ public final class Constants {
 	public static final String QRES_PATH = OUTPUT_FOLDR_PATH + "/output1000_OkapiTFController.txt";
 	public static final String QPNG_PATH = QRES_PATH + ".png";
 	
-	public static final Boolean ENABLE_INDIVIDUAL_OUTPUT = false;
-	
+	public static final Boolean ENABLE_INDIVIDUAL_OUTPUT = true;
+	public static final Double MAX_GRADE = 1.0;
 
 }

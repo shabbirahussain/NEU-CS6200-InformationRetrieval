@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 
 import com.ir.homework.hw5.models.ModelQrel;
 import com.ir.homework.hw5.models.ModelQres;
+import static com.ir.homework.hw5.Constants.*;
 
 public final class ModelQresDAO {
 	private static final String FIELD_SPERATOR = "\t|\\s";
@@ -33,7 +34,9 @@ public final class ModelQresDAO {
 			String fields[]= line.split(FIELD_SPERATOR);
 			String query = fields[0];
 			String docID = fields[2];
-			Double score = Double.parseDouble(fields[3]);
+			Double score = Double.parseDouble(fields[4]);
+			
+			score = (score>MAX_GRADE)?MAX_GRADE:score;
 			
 			// Store results into model
 			Map<String, Double> docMap = qDocMap.getOrDefault(query, new ModelQrel());
@@ -43,7 +46,7 @@ public final class ModelQresDAO {
 		Map<String, ModelQres> result = new HashMap<String, ModelQres>();
 		
 		for(Entry<String, Map<String, Double>> e: qDocMap.entrySet()){
-			result.put(e.getKey(), sortAscByValue(e.getValue())); //sortByValue(e.getValue()));
+			result.put(e.getKey(), sortDscByValue(e.getValue())); //sortByValue(e.getValue()));
 		}
 		
 		br.close();
@@ -63,6 +66,25 @@ public final class ModelQresDAO {
 	     Collections.sort(list, new Comparator() {
 	          public int compare(Object o1, Object o2) {
 	               return ((Comparable) ((Map.Entry) (o1)).getValue())
+	            		   .compareTo(((Map.Entry) (o2)).getValue());
+	          }
+	     });
+	     return list;
+	}
+	
+	/**
+	 * sorts given map and returns a linked list to print results in sorted order
+	 * @param <K>
+	 * @param <V>
+	 * @param map
+	 * @return
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static ModelQres sortDscByValue(Map<String, Double> map) {
+		 ModelQres list = new ModelQres(map.entrySet());
+	     Collections.sort(list, new Comparator() {
+	          public int compare(Object o1, Object o2) {
+	               return -((Comparable) ((Map.Entry) (o1)).getValue())
 	            		   .compareTo(((Map.Entry) (o2)).getValue());
 	          }
 	     });

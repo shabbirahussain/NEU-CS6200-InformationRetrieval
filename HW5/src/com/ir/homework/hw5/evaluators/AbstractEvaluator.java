@@ -46,7 +46,8 @@ public abstract class AbstractEvaluator implements Evaluator {
 				cntRet++;
 				
 				Integer relScore = (qrel1.getOrDefault(d.getKey(), 0.0)>0)? 1: 0;
-				Integer docScore = (d.getValue() > 0)? 1: 0;
+				Integer docScore = 1;//(d.getValue() > 0.0)? 1: 0;
+				//System.out.println(d);
 				
 				tmpResultLst = resultMap.getOrDefault(qeryKey, new LinkedList<Result>());
 				tmpResult = new Result();
@@ -61,11 +62,6 @@ public abstract class AbstractEvaluator implements Evaluator {
 				tmpResultLst.add(tmpResult);
 				resultMap.put(qeryKey, tmpResultLst);
 			}
-			//System.out.println(prcisn);
 		}
 	}
-	
-//	public void printResults(PrintStream out){
-//		out.println(displayLabel + ": " + f.format(score));
-//	}
 }
