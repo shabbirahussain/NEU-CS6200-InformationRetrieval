@@ -28,6 +28,8 @@ public class Executor {
 
 		evaluators.add(new PrecisionEvaluator());
 		evaluators.add(new RPrecisionEvaluator());
+		evaluators.add(new RecallEvaluator());
+		evaluators.add(new F1Evaluator());
 		
 		
 		
