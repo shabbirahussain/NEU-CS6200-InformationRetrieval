@@ -12,10 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw5.models.ModelRelevance;
+import com.ir.homework.hw5.models.ModelQrel;
+import com.ir.homework.hw5.models.ModelQres;
 
-public final class RelevanceModelDAO {
-	private static final String FIELD_SPERATOR = "\t";
+public final class ModelQresDAO {
+	private static final String FIELD_SPERATOR = "\t|\\s";
 	
 	/**
 	 * Loads and builds the relevance model
@@ -24,7 +25,7 @@ public final class RelevanceModelDAO {
 	 * @throws IOException
 	 * @throws ArrayIndexOutOfBoundsException if invalid file is provided
 	 */
-	public static Map<String, ModelRelevance> buildModel(String filePath) throws IOException, ArrayIndexOutOfBoundsException{
+	public static Map<String, ModelQres> readModel(String filePath) throws IOException, ArrayIndexOutOfBoundsException{
 		Map<String, Map<String, Double>> qDocMap = new HashMap<String, Map<String, Double>>();
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
 		
@@ -33,18 +34,18 @@ public final class RelevanceModelDAO {
 			// Read and parse fields
 			String fields[]= line.split(FIELD_SPERATOR);
 			String query = fields[0];
-			String docID = fields[1];
-			Double score = Double.parseDouble(fields[2]);
+			String docID = fields[2];
+			Double score = Double.parseDouble(fields[3]);
 			
 			// Store results into model
-			Map<String, Double> docMap = qDocMap.getOrDefault(query, new HashMap<String, Double>());
+			Map<String, Double> docMap = qDocMap.getOrDefault(query, new ModelQrel());
 			docMap.put(docID, score);
 			qDocMap.put(query, docMap);
 		}
-		Map<String, ModelRelevance> result = new HashMap<String, ModelRelevance>();
+		Map<String, ModelQres> result = new HashMap<String, ModelQres>();
 		
 		for(Entry<String, Map<String, Double>> e: qDocMap.entrySet()){
-			result.put(e.getKey(), (ModelRelevance) sortByValue(e.getValue()));
+			result.put(e.getKey(), sortAscByValue(e.getValue())); //sortByValue(e.getValue()));
 		}
 		
 		br.close();
@@ -59,11 +60,11 @@ public final class RelevanceModelDAO {
 	 * @return
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static <K, V extends Number> List<Entry<K, V>> sortByValue(Map<K,V> map) {
-	     List<Entry<K, V>> list = new LinkedList(map.entrySet());
+	private static ModelQres sortAscByValue(Map<String, Double> map) {
+		 ModelQres list = new ModelQres(map.entrySet());
 	     Collections.sort(list, new Comparator() {
 	          public int compare(Object o1, Object o2) {
-	               return -((Comparable) ((Map.Entry) (o1)).getValue())
+	               return ((Comparable) ((Map.Entry) (o1)).getValue())
 	            		   .compareTo(((Map.Entry) (o2)).getValue());
 	          }
 	     });

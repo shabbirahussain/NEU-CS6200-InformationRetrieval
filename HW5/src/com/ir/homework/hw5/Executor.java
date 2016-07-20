@@ -12,8 +12,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.ir.homework.hw5.evaluators.*;
-import com.ir.homework.hw5.io.RelevanceModelDAO;
-import com.ir.homework.hw5.models.ModelRelevance;
+import com.ir.homework.hw5.io.ModelQrelDAO;
+import com.ir.homework.hw5.io.ModelQresDAO;
+import com.ir.homework.hw5.models.ModelQrel;
+import com.ir.homework.hw5.models.ModelQres;
 
 public class Executor {
 	
@@ -24,8 +26,7 @@ public class Executor {
 		// Add evaluators to the system
 		//////////////////////////////////////////////////////////////////////////
 		
-		evaluators.add(new RPrecisionEvaluator("R-precision"));
-		
+		evaluators.add(new PrecisionEvaluator("Precision"));
 		
 		
 		
@@ -33,22 +34,23 @@ public class Executor {
 		// Load qrel and results files
 		//////////////////////////////////////////////////////////////////////////
 		
-		Map<String, ModelRelevance> qrel = RelevanceModelDAO.buildModel(QREL_PATH);
-		Map<String, ModelRelevance> qres = RelevanceModelDAO.buildModel(QRES_PATH);
+		Map<String, ModelQrel> qrel = ModelQrelDAO.readModel(QREL_PATH);
+		Map<String, ModelQres> qres = ModelQresDAO.readModel(QRES_PATH);
 		
 		if(ENABLE_INDIVIDUAL_OUTPUT){
-			for(Entry<String, ModelRelevance> entry: qres.entrySet()){
-				Map<String, ModelRelevance> newQres = new HashMap<String, ModelRelevance>();
+			for(Entry<String, ModelQres> entry: qres.entrySet()){
+				if(!entry.getKey().equals("100")) continue;
+				Map<String, ModelQres> newQres = new HashMap<String, ModelQres>();
 				newQres.put(entry.getKey(), entry.getValue());
 				
-				System.out.println("\n" + entry.getKey() + ":");
+				System.out.println("\nQueryid (Num):\t" + entry.getKey() + ":");
 				executeEvaluations(evaluators, qrel, newQres);
 			}
 		}
 		
 		// Print summary results
 		System.out.println("\nSummary:");
-		executeEvaluations(evaluators, qrel, qres);
+		//executeEvaluations(evaluators, qrel, qres);
 	}
 	
 	/**
@@ -57,10 +59,10 @@ public class Executor {
 	 * @param qrel is the relevance model
 	 * @param qres is the output model to evaluate
 	 */
-	private static void executeEvaluations(List<Evaluator> evaluators, Map<String, ModelRelevance> qrel, Map<String, ModelRelevance> qres){
+	private static void executeEvaluations(List<Evaluator> evaluators, Map<String, ModelQrel> qrel, Map<String, ModelQres> qres){
 		for(Evaluator e: evaluators){
-			e.calculateScore(qrel, qres);
-			e.printResults(System.out);
+			e.initialize(qrel, qres);
+			e.execute(System.out);
 		}
 	}
 }

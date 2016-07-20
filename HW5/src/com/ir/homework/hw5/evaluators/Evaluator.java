@@ -3,7 +3,8 @@ package com.ir.homework.hw5.evaluators;
 import java.io.PrintStream;
 import java.util.Map;
 
-import com.ir.homework.hw5.models.ModelRelevance;
+import com.ir.homework.hw5.models.ModelQrel;
+import com.ir.homework.hw5.models.ModelQres;
 
 public interface Evaluator {
 	
@@ -11,13 +12,12 @@ public interface Evaluator {
 	 * Prints summary results to the output stream
 	 * @param out is the output stream results should be printed
 	 */
-	void printResults(PrintStream out);
+	void execute(PrintStream out);
 	
 	/**
-	 * Calculates the score for given collection of relevance and results
-	 * @param qrel is the collection of relevance to compare results against
-	 * @param qresults is the results to evaluate for quality
-	 * @return Quality score of the model
+	 * Initializes the evaluator
+	 * @param qrel is the qrel model
+	 * @param qres is the qres model
 	 */
-	Double calculateScore(Map<String, ModelRelevance> qrel, Map<String, ModelRelevance> qresults); 
+	void initialize(Map<String, ModelQrel> qrel, Map<String, ModelQres> qres);
 }
