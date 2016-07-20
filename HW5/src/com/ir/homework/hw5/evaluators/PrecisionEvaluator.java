@@ -45,7 +45,7 @@ public class PrecisionEvaluator extends AbstractEvaluator {
 			totTotPrcn += (totPrcn/cntPrcn);
 		}
 		out.println("Average precision (non-interpolated) for all rel docs(averaged over queries):\n\t" 
-				+ FORMATTER.format(totTotPrcn/totCntPrcn));
+				+"\t"+ FORMATTER.format(totTotPrcn/totCntPrcn));
 	}
 	
 }
