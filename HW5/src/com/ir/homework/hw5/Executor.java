@@ -30,8 +30,8 @@ public class Executor {
 		evaluators.add(new RPrecisionEvaluator());
 		evaluators.add(new RecallEvaluator());
 		evaluators.add(new F1Evaluator());
-		evaluators.add(new PRGraphEvaluator());
 		evaluators.add(new NDCGEvaluator());
+		evaluators.add(new PRGraphEvaluator());
 		
 		
 		

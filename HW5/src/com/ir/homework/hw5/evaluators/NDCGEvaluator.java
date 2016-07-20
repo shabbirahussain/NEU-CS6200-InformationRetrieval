@@ -13,7 +13,7 @@ import com.ir.homework.hw5.models.ModelQrel;
 import com.ir.homework.hw5.models.ModelQres;
 
 public class NDCGEvaluator extends AbstractEvaluator {
-	public static final Integer[] K_VAL = {5};
+	public static final Integer[] K_VAL = {5, 10,15,30};
 	private static final DecimalFormat f = new DecimalFormat("###0");
 	
 	
@@ -27,17 +27,20 @@ public class NDCGEvaluator extends AbstractEvaluator {
 			for(Entry<String, ModelQres> query: qres.entrySet()){
 				String queryKey = query.getKey();
 				
-				List<Entry<String, Double>> qrel = sortDscByValue(super.qrel.get(queryKey));
+				ModelQrel qrelMap = super.qrel.get(queryKey);
+				List<Entry<String, Double>> qrel = sortDscByValue(qrelMap);
 				ModelQres                   qres = super.qres.get(queryKey);
 				
 				Double indcg = 0.0;
 				for(int i=0;i<qrel.size() && i<k;i++){
-					indcg += qrel.get(i).getValue()*Math.log(2)/Math.log(i+2);
+					indcg += qrel.get(i).getValue()
+							*Math.log(2)/Math.log(i+2);
 				}
 				
 				Double ndcg = 0.0;
 				for(int i=0;i<qres.size() && i<k;i++){
-					ndcg += qres.get(i).getValue()*Math.log(2)/Math.log(i+2);
+					ndcg += qrelMap.getOrDefault(qres.get(i).getKey(),0.0)
+							*Math.log(2)/Math.log(i+2);
 				}
 				
 				totPrcn += 	ndcg/indcg;
