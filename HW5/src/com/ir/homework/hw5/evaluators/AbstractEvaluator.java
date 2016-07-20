@@ -13,7 +13,6 @@ import com.ir.homework.hw5.models.ModelQres;
 public abstract class AbstractEvaluator implements Evaluator {
 	protected static final DecimalFormat FORMATTER = new DecimalFormat("#0.0000");
 	
-	protected String displayLabel;
 	protected Map<String, ModelQrel> qrel;
 	protected Map<String, ModelQres> qres;
 	
@@ -26,13 +25,6 @@ public abstract class AbstractEvaluator implements Evaluator {
 	} 
 	
 	
-	/**
-	 * Default constructor
-	 * @param displayLabel is the label that should be assigned to the results
-	 */
-	public AbstractEvaluator(String displayLabel){
-		this.displayLabel = displayLabel;
-	}
 
 	public void initialize(Map<String, ModelQrel> qrel, Map<String, ModelQres> qres){
 		this.qrel = qrel;

@@ -25,8 +25,9 @@ public class Executor {
 		//////////////////////////////////////////////////////////////////////////
 		// Add evaluators to the system
 		//////////////////////////////////////////////////////////////////////////
-		
-		evaluators.add(new PrecisionEvaluator("Precision"));
+
+		evaluators.add(new PrecisionEvaluator());
+		evaluators.add(new RPrecisionEvaluator());
 		
 		
 		
@@ -39,11 +40,11 @@ public class Executor {
 		
 		if(ENABLE_INDIVIDUAL_OUTPUT){
 			for(Entry<String, ModelQres> entry: qres.entrySet()){
-				if(!entry.getKey().equals("100")) continue;
+				//if(!entry.getKey().equals("54")) continue;
 				Map<String, ModelQres> newQres = new HashMap<String, ModelQres>();
 				newQres.put(entry.getKey(), entry.getValue());
 				
-				System.out.println("\nQueryid (Num):\t" + entry.getKey() + ":");
+				System.out.println("\nQueryid (Num):\t" + entry.getKey());
 				executeEvaluations(evaluators, qrel, newQres);
 			}
 		}
