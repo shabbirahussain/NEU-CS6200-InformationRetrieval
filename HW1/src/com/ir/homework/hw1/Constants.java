@@ -3,18 +3,22 @@ package com.ir.homework.hw1;
 public final class Constants {
 	private static final String BASE_PATH = "/Users/shabbirhussain/Data/IRData";
 	
-	public static final String DATA_PATH = BASE_PATH + "/AP_DATA/ap89_collection";
+	public static final String DATA_PATH = BASE_PATH + "/1512_great_mordenist_artist/";
 	public static final String PRE_PROCESS_SRC_PATH = BASE_PATH + "/AP_DATA_RO/ap89_collection";
 	public static final String PRE_PROCESS_DST_PATH = BASE_PATH + "/AP_DATA/ap89_collection";
 
+	
+	private static final String WORKING_FOLDER_PATH = BASE_PATH + "/1512_great_mordenist_artist";
+	//private static final String WORKING_FOLDER_PATH = BASE_PATH + "/AP_DATA";
+	
 	//public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/query_desc.51-100.short.txt";
-	public static final String QUERY_FILE_PATH   = BASE_PATH + "/AP_DATA/queries/query_desc.51-100.short copy.txt";
+	public static final String QUERY_FILE_PATH   = WORKING_FOLDER_PATH + "/queries/query_desc.txt";
 	
 	public static final String STOP_WORDS_FILE_PATH = BASE_PATH + "/AP_DATA/stoplist.txt";
-	public static final String OUTPUT_FOLDR_PATH    = BASE_PATH + "/AP_DATA/results";
+	public static final String OUTPUT_FOLDR_PATH    = WORKING_FOLDER_PATH + "/results";
 	public static final String OUTPUT_FILE_PATH     = OUTPUT_FOLDR_PATH + "/output1000_";
 	public static final String TRECK_EVAL_PATH      = OUTPUT_FOLDR_PATH + "/trec_eval";
-	public static final String TRECK_EVAL_PARAMS[]  = {OUTPUT_FOLDR_PATH + "/qrels.adhoc.51-100.AP89.txt"};
+	public static final String TRECK_EVAL_PARAMS[]  = {OUTPUT_FOLDR_PATH + "/qrels.1512.txt"};
 	
 	
 	
@@ -23,11 +27,11 @@ public final class Constants {
 	public static final String DATA_FILE_PREFIX = "ap";
 	public static final String QUERY_NUMBER = ""; // Good docs = [98, 93, 58, 59, 100] 
 	
-	public static final String  HOST = "localhost";//"192.168.1.105"; //"localhost";
+	public static final String  HOST = "elastichost";//"192.168.1.105"; //"localhost";
 	public static final Integer PORT = 9300;
 	public static final String  CLUSTER_NAME = "dead-pool";
 	
-	public static final String INDEX_NAME = "ap_dataset";
+	public static final String INDEX_NAME = "1512_great_mordenist_artist";
 	public static final String INDEX_TYPE = "document";
 	
 	public static final Boolean ENABLE_BULK_INSERT = false;

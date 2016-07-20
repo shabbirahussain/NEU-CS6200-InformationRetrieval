@@ -62,7 +62,8 @@ public final class Executor {
 		
 		if(ENABLE_PERSISTENT_CACHE){
 			System.out.println("Loading cache...");
-			elasticClient = (ElasticClient) ObjectStore.getOrDefault(eBuilder1.build());
+			elasticClient = eBuilder1.build();
+//			elasticClient = (ElasticClient) ObjectStore.getOrDefault(eBuilder1.build());
 			elasticClient1 = (ElasticClient) ObjectStore.getOrDefault(eBuilder2.build());
 		}
 		eBuilder1.build(elasticClient);
@@ -72,19 +73,19 @@ public final class Executor {
 		
 		// OkapiTF
 		controllers.add(new OkapiTFController(elasticClient));
-		controllers.add(new OkapiTFController(elasticClient1));
+//		controllers.add(new OkapiTFController(elasticClient1));
 		
 		// TF-IDF
-		//controllers.add(new TF_IDFController(elasticClient));
+		controllers.add(new TF_IDFController(elasticClient));
 		
 		// OkapiBM25
-		//controllers.add(new OkapiBM25Controller(elasticClient));
+		controllers.add(new OkapiBM25Controller(elasticClient));
 		
 		// UnigramLM LaplaceSmoothing
-		//controllers.add(new UnigramLM_LaplaceSmoothing(elasticClient));
+		controllers.add(new UnigramLM_LaplaceSmoothing(elasticClient));
 		
 		// UnigramLM Jelinek-Mercer smoothing
-		//controllers.add(new UnigramLM_JelinekMercer(elasticClient));
+		controllers.add(new UnigramLM_JelinekMercer(elasticClient));
 		
 		// MetaSearchController
 		controllers.add(new MetaSearchController(elasticClient, controllers));

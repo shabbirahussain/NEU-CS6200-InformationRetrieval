@@ -44,7 +44,7 @@ public class Executor {
 		
 		if(ENABLE_INDIVIDUAL_OUTPUT){
 			for(Entry<String, ModelQres> entry: qres.entrySet()){
-				if(!entry.getKey().equals("54")) continue;
+				//if(!entry.getKey().equals("87")) continue;
 				Map<String, ModelQres> newQres = new HashMap<String, ModelQres>();
 				newQres.put(entry.getKey(), entry.getValue());
 				

@@ -33,12 +33,18 @@ public class PRGraphEvaluator extends AbstractEvaluator {
 		
 		Integer k = 0;
 		Set<String> doneQ = new HashSet<String>();
+		String title = null;
 		while(doneQ.size() != qres.keySet().size()){
 			Double totPrcn = 0.0;
 			Double totRcll = 0.0;
 			Double cntPrcn = 0.0;
 			
 			for(Entry<String, ModelQres> query: qres.entrySet()){
+				if(title==null) 
+					title = query.getKey();
+				else if(title!=query.getKey())  
+					title = "Summary";
+				
 				List<Result> qResult = super.resultMap.get(query.getKey());
 				if(k<qResult.size()){
 					totPrcn += qResult.get(k).prcisn;
@@ -49,14 +55,20 @@ public class PRGraphEvaluator extends AbstractEvaluator {
 				
 				k++; // go to next index in sparse matrix
 			}
+			//cntPrcn = Math.max(1.0, cntPrcn);
 			precn.add(totPrcn/cntPrcn);
 			recll.add(totRcll/cntPrcn);
 		}
+		System.out.println("precn:"+precn);
+		System.out.println("recall:"+recll);
+		
 		double[] xData = Stream.of(recll.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
 		double[] yData = Stream.of(precn.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
 		
+		title = "PRGraph: " + title;
+		
 		// Create Chart
-		Chart chart = QuickChart.getChart("Precision Recall Graph", "Recall", "Precision", "y(x)", xData, yData);
+		Chart chart = QuickChart.getChart(title, "Recall", "Precision", "y(x)", xData, yData);
 		
 		// Show it
 		new SwingWrapper(chart).displayChart();

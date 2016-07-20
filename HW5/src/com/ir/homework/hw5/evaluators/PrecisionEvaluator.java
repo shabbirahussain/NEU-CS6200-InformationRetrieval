@@ -42,7 +42,10 @@ public class PrecisionEvaluator extends AbstractEvaluator {
 					cntPrcn = r.numRel;
 				}
 			}
+			cntPrcn = Math.max(1.0, cntPrcn);
 			totTotPrcn += (totPrcn/cntPrcn);
+			if(totTotPrcn.equals(Double.NaN))
+				System.out.println(totPrcn + "\t" + cntPrcn);
 		}
 		out.println("Average precision (non-interpolated) for all rel docs(averaged over queries):\n\t" 
 				+"\t"+ FORMATTER.format(totTotPrcn/totCntPrcn));

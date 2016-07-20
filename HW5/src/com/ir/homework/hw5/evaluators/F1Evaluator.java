@@ -23,10 +23,13 @@ public class F1Evaluator extends AbstractEvaluator {
 				if(qResult != null && k<=qResult.size()){
 					Double precision = qResult.get(k-1).prcisn;
 					Double recall    = qResult.get(k-1).recall;
-					totPrcn += 2 * precision * recall /(precision + recall);
+					
+					Double f1Score = 2 * precision * recall /(precision + recall);
+					totPrcn += (f1Score.isNaN())? 0: f1Score;
 					cntPrcn += 1;
 				}		
 			}
+			//cntPrcn = Math.max(1.0, cntPrcn);
 			out.println("  At " + f.format(k) + " docs:\t" 
 					+ FORMATTER.format(totPrcn/cntPrcn));
 		}
