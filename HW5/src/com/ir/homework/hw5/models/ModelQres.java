@@ -10,6 +10,9 @@ public class ModelQres extends LinkedList<Entry<String, Double>> implements Seri
 		super(entrySet);
 	}
 
-	private static final long serialVersionUID = 1L;
-	
+	public ModelQres() {
+		// TODO Auto-generated constructor stub
+	}
+
+	private static final long serialVersionUID = 1L;	
 }

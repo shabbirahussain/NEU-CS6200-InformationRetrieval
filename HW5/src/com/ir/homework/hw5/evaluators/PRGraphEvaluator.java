@@ -11,6 +11,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.BitmapEncoder.BitmapFormat;
 import org.knowm.xchart.QuickChart;
@@ -23,8 +25,17 @@ import static com.ir.homework.hw5.Constants.*;
 
 
 public class PRGraphEvaluator extends AbstractEvaluator {
-	public static final Integer[] K_VAL = {5,10,15,20,30,100,200,500,1000};
+	private static final Integer[] K_VAL = {5,10,15,20,30,100,200,500,1000};
+	private static final Double[] RECALL_STD = new Double[]{0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0};
+	private static Set<Double> recallSet;
 	private static final DecimalFormat f = new DecimalFormat("###0");
+	
+	static{
+		recallSet = new HashSet<Double>();
+		for(Double d: RECALL_STD){
+			recallSet.add(d);
+		}
+	}
 	
 	
 	public void execute(PrintStream out) {
@@ -55,22 +66,59 @@ public class PRGraphEvaluator extends AbstractEvaluator {
 				
 				k++; // go to next index in sparse matrix
 			}
-			//cntPrcn = Math.max(1.0, cntPrcn);
 			precn.add(totPrcn/cntPrcn);
 			recll.add(totRcll/cntPrcn);
 		}
-		System.out.println("precn:"+precn);
-		System.out.println("recall:"+recll);
+		showGraph(recll, precn, title);
 		
-		double[] xData = Stream.of(recll.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
-		double[] yData = Stream.of(precn.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
+		// Interpolate the Graph
+		List<Double> nPrecn = new LinkedList<Double>();
+		List<Double> nRecll = new LinkedList<Double>();
+		Double minPrecn = precn.get(0);
+		Double p, r;
+		
+		for(int i=1; i<precn.size();i++){
+			p = precn.get(i);
+			r = recll.get(i);
+			//if(recallSet.contains(r))
+			if(minPrecn >= p){
+				nPrecn.add(p);
+				nRecll.add(r);
+			}else{
+				nPrecn.add(minPrecn);
+				nRecll.add(r);
+			}	
+			minPrecn = Math.min(minPrecn, p);
+		}
+//		nPrecn.add(0.0);
+//		nRecll.add(0.0);
+		
+		showGraph(nRecll, nPrecn, title + " (Interpolated)");
+		
+
+		// Interpolate data
+//		LinearInterpolator li = new LinearInterpolator();
+//		PolynomialSplineFunction fun = li.interpolate(xData, yData);
+//		xData = fun.getKnots();
+//		yData = fun.getPolynomials();
+		
+		
+		
+	}
+	
+	/**
+	 * Plots graph given two lists
+	 * @param xData
+	 * @param yData
+	 * @param title
+	 */
+	private void showGraph(List<Double> xData, List<Double> yData, String title){
+//		double[] xData1 = Stream.of(yData.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
+//		double[] yData1 = Stream.of(xData.toArray(new Double[0])).mapToDouble(Double::doubleValue).toArray();
 		
 		title = "PRGraph: " + title;
-		
 		// Create Chart
 		Chart chart = QuickChart.getChart(title, "Recall", "Precision", "y(x)", xData, yData);
-		
-		// Show it
 		new SwingWrapper(chart).displayChart();
 		
 		// Save it
@@ -79,5 +127,5 @@ public class PRGraphEvaluator extends AbstractEvaluator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}	
+	}
 }

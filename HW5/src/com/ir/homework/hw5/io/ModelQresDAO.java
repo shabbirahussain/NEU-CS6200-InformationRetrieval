@@ -43,13 +43,12 @@ public final class ModelQresDAO {
 			docMap.put(docID, score);
 			qDocMap.put(query, docMap);
 		}
+		br.close();
 		Map<String, ModelQres> result = new HashMap<String, ModelQres>();
 		
 		for(Entry<String, Map<String, Double>> e: qDocMap.entrySet()){
 			result.put(e.getKey(), sortDscByValue(e.getValue())); //sortByValue(e.getValue()));
 		}
-		
-		br.close();
 		return result;
 	}
 	
@@ -88,6 +87,13 @@ public final class ModelQresDAO {
 	            		   .compareTo(((Map.Entry) (o2)).getValue());
 	          }
 	     });
-	     return list;
+	     
+	     ModelQres list1 = new ModelQres();
+	     Integer cnt = 0;
+	     for(Entry<String, Double> e: list){
+	    	 if(cnt++<=1000)
+	    		 list1.add(e);
+	     }
+	     return list1;
 	}
 }

@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,7 @@ import com.ir.homework.hw5.models.ModelQrel;
 import com.ir.homework.hw5.models.ModelQres;
 
 public class NDCGEvaluator extends AbstractEvaluator {
-	public static final Integer[] K_VAL = {5, 10,15,30};
+	public static final Integer[] K_VAL = {1000};
 	private static final DecimalFormat f = new DecimalFormat("###0");
 	
 	
@@ -28,21 +29,26 @@ public class NDCGEvaluator extends AbstractEvaluator {
 				String queryKey = query.getKey();
 				
 				ModelQrel qrelMap = super.qrel.get(queryKey);
-				List<Entry<String, Double>> qrel = sortDscByValue(qrelMap);
-				ModelQres                   qres = super.qres.get(queryKey);
+				ModelQres qres    = super.qres.get(queryKey);
+
+				Double ndcg = 0.0;
+				for(int i=0;i<qres.size() && i<k;i++){
+					ndcg += qrelMap.getOrDefault(qres.get(i).getKey(),0.0)
+							* ((i==0)? 1 : (Math.log(2)/Math.log(i+1)));
+				}
+				
+				//List<Entry<String, Double>> qrel = sortDscByValue(qrelMap);
+				Map<String, Double> qresMap = new HashMap<String, Double>();
+				for(Entry<String, Double> e: qres){
+					qresMap.put(e.getKey(), qrelMap.getOrDefault(e.getKey(),0.0));
+				}
+				List<Entry<String, Double>> qrel = sortDscByValue(qresMap);
 				
 				Double indcg = 0.0;
 				for(int i=0;i<qrel.size() && i<k;i++){
 					indcg += qrel.get(i).getValue()
-							*Math.log(2)/Math.log(i+2);
+							* ((i==0)? 1 : (Math.log(2)/Math.log(i+1)));
 				}
-				
-				Double ndcg = 0.0;
-				for(int i=0;i<qres.size() && i<k;i++){
-					ndcg += qrelMap.getOrDefault(qres.get(i).getKey(),0.0)
-							*Math.log(2)/Math.log(i+2);
-				}
-				
 				totPrcn += 	ndcg/indcg;
 			}
 			out.println("  At " + f.format(k) + " docs:\t" 

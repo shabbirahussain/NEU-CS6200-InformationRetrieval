@@ -33,7 +33,7 @@ public class Executor {
 		evaluators.add(new F1Evaluator());
 		evaluators.add(new NDCGEvaluator());
 		evaluators.add(new PRGraphEvaluator());
-		evaluators.add(new TrecEvalEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS));
+//		evaluators.add(new TrecEvalEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS));
 		
 		
 		//////////////////////////////////////////////////////////////////////////
@@ -45,7 +45,7 @@ public class Executor {
 		
 		if(EVALUATE_INDIVIDUAL_Q){
 			for(Entry<String, ModelQres> entry: qres.entrySet()){
-				//if(!entry.getKey().equals("99")) continue;
+				//if(!entry.getKey().equals("100")) continue;
 				Map<String, ModelQres> newQres = new HashMap<String, ModelQres>();
 				newQres.put(entry.getKey(), entry.getValue());
 				
