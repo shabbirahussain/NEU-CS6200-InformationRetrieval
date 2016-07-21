@@ -4,6 +4,7 @@ package com.ir.homework.hw5;
 import static com.ir.homework.hw5.Constants.*;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,7 +33,7 @@ public class Executor {
 		evaluators.add(new F1Evaluator());
 		evaluators.add(new NDCGEvaluator());
 		evaluators.add(new PRGraphEvaluator());
-		
+		evaluators.add(new TrecEvalEvaluator(TRECK_EVAL_PATH, TRECK_EVAL_PARAMS));
 		
 		
 		//////////////////////////////////////////////////////////////////////////
@@ -42,7 +43,7 @@ public class Executor {
 		Map<String, ModelQrel> qrel = ModelQrelDAO.readModel(QREL_PATH);
 		Map<String, ModelQres> qres = ModelQresDAO.readModel(QRES_PATH);
 		
-		if(ENABLE_INDIVIDUAL_OUTPUT){
+		if(EVALUATE_INDIVIDUAL_Q){
 			for(Entry<String, ModelQres> entry: qres.entrySet()){
 				//if(!entry.getKey().equals("99")) continue;
 				Map<String, ModelQres> newQres = new HashMap<String, ModelQres>();
@@ -66,7 +67,7 @@ public class Executor {
 	 */
 	private static void executeEvaluations(List<Evaluator> evaluators, Map<String, ModelQrel> qrel, Map<String, ModelQres> qres){
 		for(Evaluator e: evaluators){
-			e.initialize(qrel, qres);
+			e.initialize(qrel, qres, QRES_PATH);
 			e.execute(System.out);
 		}
 	}

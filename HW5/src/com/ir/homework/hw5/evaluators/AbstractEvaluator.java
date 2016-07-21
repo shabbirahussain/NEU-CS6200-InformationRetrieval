@@ -15,6 +15,7 @@ public abstract class AbstractEvaluator implements Evaluator {
 	
 	protected Map<String, ModelQrel> qrel;
 	protected Map<String, ModelQres> qres;
+	protected String srcFile;
 	
 	protected Map<String, List<Result>> resultMap;
 
@@ -26,9 +27,10 @@ public abstract class AbstractEvaluator implements Evaluator {
 	
 	
 
-	public void initialize(Map<String, ModelQrel> qrel, Map<String, ModelQres> qres){
+	public void initialize(Map<String, ModelQrel> qrel, Map<String, ModelQres> qres, String srcFile){
 		this.qrel = qrel;
 		this.qres = qres;
+		this.srcFile = srcFile;
 		
 		resultMap = new HashMap<String, List<Result>>();
 		

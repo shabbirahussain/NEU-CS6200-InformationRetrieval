@@ -18,6 +18,7 @@ public interface Evaluator {
 	 * Initializes the evaluator
 	 * @param qrel is the qrel model
 	 * @param qres is the qres model
+	 * @param srcFile is the file to evaluate
 	 */
-	void initialize(Map<String, ModelQrel> qrel, Map<String, ModelQres> qres);
+	void initialize(Map<String, ModelQrel> qrel, Map<String, ModelQres> qres, String srcFile);
 }

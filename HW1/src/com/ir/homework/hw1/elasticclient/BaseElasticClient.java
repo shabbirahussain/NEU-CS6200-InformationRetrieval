@@ -379,7 +379,6 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 				.setIndices(INDEX_NAME)
 				.setTypes(INDEX_TYPE)
 				.setLimit(MAX_RESULTS)
-				.setCachedFetch(false)
 				.setField(TEXT_FIELD_NAME);
 		
 		BaseElasticClient ec = (BaseElasticClient) eBuilder.build();

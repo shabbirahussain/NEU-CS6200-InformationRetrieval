@@ -27,7 +27,6 @@ public final class Executor {
 			.setIndices(INDEX_NAME)
 			.setTypes(INDEX_TYPE)
 			.setLimit(MAX_RESULTS)
-			.setCachedFetch(ENABLE_PERSISTENT_CACHE)
 			.build();
 
 		try {

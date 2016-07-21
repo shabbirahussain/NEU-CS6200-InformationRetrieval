@@ -23,7 +23,6 @@ import static com.ir.homework.hw1.Constants.*;
 
 public class ElasticClientBuilder {
 	private Builder settings;
-	private Boolean cachedFetch = false;
 	private Boolean customFetch = false;
 	private String  host, indices, types, field;
 	private Integer port, size;
@@ -109,16 +108,6 @@ public class ElasticClientBuilder {
 		this.field = field;
 		return this;
 	}
-
-	/**
-	 * Sets the cached retrieval method on/off
-	 * @param enable
-	 * @return ElasticClientBuilder
-	 */
-	public ElasticClientBuilder setCachedFetch(Boolean enable){
-		this.cachedFetch = enable;
-		return this;
-	}
 	
 	/**
 	 * Sets the custom retrieval method on/off
@@ -142,8 +131,7 @@ public class ElasticClientBuilder {
 		if(this.customFetch)
 			result = new Hw2IndexClient(this.indices, this.types, ENABLE_BULK_INSERT, this.size, this.field);
 		
-		if (this.cachedFetch)
-			result = new CachedElasticClient(result);
+		result = new CachedElasticClient(result);
 		
 		this.build(result);
 		return result;

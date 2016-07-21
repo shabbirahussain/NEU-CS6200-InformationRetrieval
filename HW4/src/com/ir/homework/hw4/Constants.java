@@ -3,6 +3,9 @@ package com.ir.homework.hw4;
 public final class Constants {
 	private static final String BASE_PATH = "/Users/shabbirhussain/Data/IRData";
 	
+	private static final String DATASET_NAME = "1512_great_mordenist_artist";
+	private static final String WORKING_FOLDER_PATH = BASE_PATH + "/" + DATASET_NAME;
+	
 	public static final String  LINKS_PATH = BASE_PATH + "/wt2g_inlinks.txt";
 
 	public static final Integer MAX_BUFFER_SIZE = 10000;
@@ -30,7 +33,7 @@ public final class Constants {
 	
 	public static final Double EPSILON_PRECISION = 0.01;
 	
-	public static final String OBJECTSTORE_PATH = BASE_PATH+"/ranking/"+LINK_MAP_NAME+"/"+LINK_MAP_TYPE+"/";
+	public static final String OBJECTSTORE_PATH = WORKING_FOLDER_PATH+"/cache/"+LINK_MAP_NAME+"/"+LINK_MAP_TYPE+"/";
 	
 
 }

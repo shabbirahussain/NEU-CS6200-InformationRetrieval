@@ -33,6 +33,7 @@ public final class OutputWriter {
 	 */
 	public OutputWriter(String oPath){
 		this.oPath = oPath;
+		this.bw = null;
 	}
 	
 	/**
@@ -57,6 +58,8 @@ public final class OutputWriter {
 	 * @throws IOException
 	 */
 	public void writeOutput(OutputRecord record) throws IOException{
+		if(bw == null) this.open();
+		
 		bw.write(record.queryNo + " ");
 		bw.write("Q0 ");
 		bw.write(record.docNo + " ");

@@ -6,11 +6,13 @@ package com.ir.homework.hw1;
 import static com.ir.homework.hw1.Constants.*;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.ir.homework.hw1.elasticclient.CachedElasticClient;
 import com.ir.homework.hw1.elasticclient.ElasticClient;
 import com.ir.homework.hw1.elasticclient.ElasticClientBuilder;
 import com.ir.homework.hw1.io.ObjectStore;
@@ -20,7 +22,6 @@ import com.ir.homework.hw1.io.ResultEvaluator;
 import com.ir.homework.hw1.io.StopWordReader;
 import com.ir.homework.hw1.models.*;
 import com.ir.homework.hw1.util.QueryAugmentor;
-
 /**
  * @author shabbirhussain
  *
@@ -38,42 +39,16 @@ public final class Executor {
 	public static void main(String[] args) throws IOException {
 		long start = System.nanoTime(); 
 		List<SearchController> controllers = new LinkedList<SearchController>();
-		ElasticClientBuilder eBuilder1 = ElasticClientBuilder.createElasticClientBuilder()
-				.setClusterName(CLUSTER_NAME)
-				.setHost(HOST)
-				.setPort(PORT)
-				.setIndices(INDEX_NAME)
-				.setTypes(INDEX_TYPE)
-				.setLimit(MAX_RESULTS)
-				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
-				.setCustomFetch(ENABLE_HW2_CLIENT)
-				.setField(TEXT_FIELD_NAME);
 		
-		ElasticClientBuilder eBuilder2 = ElasticClientBuilder.createElasticClientBuilder()
-				.setClusterName(CLUSTER_NAME)
-				.setHost(HOST)
-				.setPort(PORT)
-				.setIndices(INDEX_NAME)
-				.setTypes(INDEX_TYPE)
-				.setLimit(MAX_RESULTS)
-				.setCachedFetch(ENABLE_PERSISTENT_CACHE)
-				.setCustomFetch(ENABLE_HW2_CLIENT)
-				.setField("HEAD");
 		
-		if(ENABLE_PERSISTENT_CACHE){
-			System.out.println("Loading cache...");
-			elasticClient = eBuilder1.build();
-//			elasticClient = (ElasticClient) ObjectStore.getOrDefault(eBuilder1.build());
-			elasticClient1 = (ElasticClient) ObjectStore.getOrDefault(eBuilder2.build());
-		}
-		eBuilder1.build(elasticClient);
-		eBuilder2.build(elasticClient1);
-		
+		System.out.println("Loading cache...");
+		elasticClient = loadOrDefaultEC(TEXT_FIELD_NAME);	
+//		elasticClient1 = loadOrDefaultEC("HEAD");
+				
 		//////////////////////// Controllers ////////////////////////////
 		
 		// OkapiTF
 		controllers.add(new OkapiTFController(elasticClient));
-//		controllers.add(new OkapiTFController(elasticClient1));
 		
 		// TF-IDF
 		controllers.add(new TF_IDFController(elasticClient));
@@ -109,8 +84,7 @@ public final class Executor {
 		
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
-		ObjectStore.saveObject(elasticClient);
-		
+		ObjectStore.saveObject(elasticClient, OBJECTSTORE_PATH);
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
 	
@@ -133,8 +107,6 @@ public final class Executor {
 		
 		List<OutputWriter.OutputRecord> records;
 		try {
-			ow.open();
-			owA.open();
 			Map<String, String[]> queries=qr.getQueryTokens();
 			for(Entry<String, String[]> q : queries.entrySet()){
 				if(!(QUERY_NUMBER == null || QUERY_NUMBER == "") 
@@ -179,15 +151,25 @@ public final class Executor {
 				}
 				if(EVALUATE_INDIVIDUAL_Q){
 					ow.close(); owA.close();
-					evaluate(outFilePath, outFilePathA);
+					evaluate(outFilePath);
+					if(ENABLE_PSEUDO_FEEDBACK){
+						System.out.println("\nEnhanced Query:");
+						evaluate(outFilePathA);
+					}
 					ow.open(); owA.open();
 				}
 				
 				//*/
 			}
-			ow.close(); owA.close();
+			ow.close(); 
+			if(ENABLE_PSEUDO_FEEDBACK)
+				owA.close();
 			
-			evaluate(outFilePath, outFilePathA);
+			evaluate(outFilePath);
+			if(ENABLE_PSEUDO_FEEDBACK){
+				System.out.println("\nEnhanced Query:");
+				evaluate(outFilePathA);
+			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -198,22 +180,46 @@ public final class Executor {
 	/**
 	 * Executes evaluations
 	 * @param outFilePath is the full path of un-enhanced query output
-	 * @param outFilePathA is the full path of enhanced query output
 	 * @return
 	 * @throws IOException
 	 */
-	private static Double evaluate(String outFilePath, String outFilePathA) throws IOException{
+	private static Double evaluate(String outFilePath) throws IOException{
 		Double result = null;
 		// run evaluation on output
 		if(!ENABLE_SILENT_MODE) 
 			System.out.println("\nRunning trec_eval on results["+ outFilePath + "]");
 		
 		result = resultEvaluator.runEvaluation(outFilePath, ENABLE_FULL_TREC_OUTPUT);
-		if(ENABLE_PSEUDO_FEEDBACK){
-			System.out.println("\nEnhanced Query:");
-			result = resultEvaluator.runEvaluation(outFilePathA, ENABLE_FULL_TREC_OUTPUT);
-		}
 		System.out.println("");
+		return result;
+	}
+	
+	/**
+	 * Tries to load last saved elasticclient
+	 * @param textFieldName is the name of the text field to query
+	 * @return ElasticClient object
+	 * @throws UnknownHostException 
+	 */
+	private static ElasticClient loadOrDefaultEC(String textFieldName) throws UnknownHostException{
+		ElasticClient result;
+		ElasticClientBuilder eBuilder = ElasticClientBuilder.createElasticClientBuilder()
+				.setClusterName(CLUSTER_NAME)
+				.setHost(HOST)
+				.setPort(PORT)
+				.setIndices(INDEX_NAME)
+				.setTypes(INDEX_TYPE)
+				.setLimit(MAX_RESULTS)
+				.setCustomFetch(ENABLE_HW2_CLIENT)
+				.setField(textFieldName);
+
+		try{
+			result = (ElasticClient) ObjectStore.get(CachedElasticClient.class, OBJECTSTORE_PATH);
+		}catch(Exception e){
+			e.printStackTrace();
+			System.err.println("Failed to load cache re running...");
+			result = eBuilder.build();
+		}
+		eBuilder.build(result);
 		return result;
 	}
 }
