@@ -27,7 +27,7 @@ public class Executor {
 		ranker.printTotalRank();
 		
 		ranker.printTopPages(50);
-		saveObject(ranker);
+		//saveObject(ranker);
 	}
 	
 	
