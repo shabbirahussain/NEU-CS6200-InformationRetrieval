@@ -16,6 +16,6 @@ public final class Constants {
 	public static final String TRECK_EVAL_PATH      = OUTPUT_FOLDR_PATH + "/trec_eval";
 	public static final String TRECK_EVAL_PARAMS[]  = {QREL_PATH};
 	
-	public static final Boolean EVALUATE_INDIVIDUAL_Q = true;
+	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
 
 }

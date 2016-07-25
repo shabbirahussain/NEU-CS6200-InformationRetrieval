@@ -48,7 +48,7 @@ public final class Constants {
 	public static final Boolean EVALUATE_INDIVIDUAL_Q = false;
 	
 	public static final Integer MAX_RESULTS = 40000; 
-	public static final Integer MAX_RESULTS_OUTPUT = 1000;
+	public static final Integer MAX_RESULTS_OUTPUT = 40000;
 	
 	public static final String TEXT_FIELD_NAME = "TEXT";
 	

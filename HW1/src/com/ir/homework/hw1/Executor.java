@@ -84,7 +84,7 @@ public final class Executor {
 		
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
-		ObjectStore.saveObject(elasticClient, OBJECTSTORE_PATH);
+		//ObjectStore.saveObject(elasticClient, OBJECTSTORE_PATH);
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
 	
@@ -127,14 +127,10 @@ public final class Executor {
 				}
 				
 				records = sc.executeQuery(q);
-				
 				for(int i=0; i<records.size() && i<MAX_RESULTS_OUTPUT; i++)
 					ow.writeOutput(records.get(i));
 				
 				if(ENABLE_PSEUDO_FEEDBACK){
-					if(!ENABLE_SILENT_MODE) 
-						System.out.print("Executing PQ:"+ q.getKey() + " [");
-					
 					// Augment the query terms
 					q = queryAugmentor.cleanStopWordsFromQuery(
 							queryAugmentor.escapeQuery(
@@ -151,19 +147,15 @@ public final class Executor {
 				}
 				if(EVALUATE_INDIVIDUAL_Q){
 					ow.close(); owA.close();
+					
 					evaluate(outFilePath);
 					if(ENABLE_PSEUDO_FEEDBACK){
 						System.out.println("\nEnhanced Query:");
 						evaluate(outFilePathA);
 					}
-					ow.open(); owA.open();
 				}
-				
-				//*/
 			}
-			ow.close(); 
-			if(ENABLE_PSEUDO_FEEDBACK)
-				owA.close();
+			ow.close(); owA.close();
 			
 			evaluate(outFilePath);
 			if(ENABLE_PSEUDO_FEEDBACK){

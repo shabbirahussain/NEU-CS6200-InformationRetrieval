@@ -49,7 +49,10 @@ public final class OutputWriter {
 	 * @throws IOException 
 	 */
 	public void close() throws IOException{
-		bw.close();
+		try{
+			bw.close();
+		}catch(Exception e){}
+		bw = null;
 	}
 	
 	/**
