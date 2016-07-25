@@ -114,7 +114,7 @@ public interface ElasticClient {
 	 * @param bulkProcessor
 	 * @param queryProcessor 
 	 */
-	public ElasticClient attachClients(Client client, BulkProcessor bulkProcessor, QueryProcessor queryProcessor);
+	ElasticClient attachClients(Client client, BulkProcessor bulkProcessor, QueryProcessor queryProcessor);
 	
 	/**
 	 * Gets top n significant terms
@@ -123,26 +123,26 @@ public interface ElasticClient {
 	 * @return
 	 * @throws IOException 
 	 */
-	public List<String> getSignificantTerms(String term, Integer numberOfTerm) throws IOException;
+	List<String> getSignificantTerms(String term, Integer numberOfTerm) throws IOException;
 
 	/**
 	 * Gets summation of background probability of a term
 	 * @param term to search for
 	 * @return Total background probability
 	 */
-	public Double getBGProbability(String term);
+	Double getBGProbability(String term);
 
 	/**
 	 * Gets total number of times a term occurs in the corpus
 	 * @param term to search for
 	 * @return Number of times term is observed from index
 	 */
-	public Long getTotalTermCount(String term);
+	Long getTotalTermCount(String term);
 	
 	/**
 	 * Gets position vector map of a term. A position vector is list of indices a term occures in a document.
 	 * @param term to search for
 	 * @return Number of times term is observed from index
 	 */
-	public Map<String, List<Long>> getPositionVector(String term);
+	Map<String, List<Long>> getPositionVector(String term);
 }

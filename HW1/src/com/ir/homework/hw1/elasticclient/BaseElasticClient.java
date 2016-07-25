@@ -213,6 +213,54 @@ public class BaseElasticClient implements Serializable, ElasticClient{
 		return result;
 	}
 	
+
+	// ---------------------- Query statistics -------------------------
+	
+	public Map<String,Float> getDocScores(String query){
+		Map<String,Float> result = null;
+		
+		TimeValue scrollTimeValue = new TimeValue(60000);
+		Integer  windowMaxResults = 10000; 
+		if(maxResults < 10000){
+			windowMaxResults = maxResults;
+		}
+		
+		SearchRequestBuilder builder = _client.prepareSearch()
+			.setIndices(this.indices)
+			.setTypes(this.types)
+			.setQuery(query)
+			.setSize(windowMaxResults)
+	        .setScroll(scrollTimeValue)
+			.setNoFields();
+
+		SearchResponse response = builder.get();
+		
+		// Scan for results
+		Integer resultsSoFar = 0;
+		result = new HashMap<String,Float>();
+		while(true){
+			if((response.status() != RestStatus.OK) 
+					|| (response.getHits().getHits().length == 0)
+					|| (resultsSoFar >= maxResults))
+				break;
+			resultsSoFar += response.getHits().getHits().length;
+			
+			SearchHit hit[]=response.getHits().hits();
+			for(SearchHit h:hit){
+				String key  = h.getId();
+				Float score = h.getScore();
+				if(score>0) result.put(key, score);
+			}
+			
+			// fetch next window
+			response = _client.prepareSearchScroll(response.getScrollId())
+					.setScroll(scrollTimeValue)
+					.get();
+			
+		}
+		return result;
+	}
+	
 	// ---------------------- Term statistics -------------------------
 	public Map<String,Float> getDocFrequency(String term) throws IOException{
 		Map<String,Float> result = null;

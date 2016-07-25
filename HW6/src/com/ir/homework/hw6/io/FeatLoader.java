@@ -47,7 +47,7 @@ public final class FeatLoader {
 					String[] fields = line.split(SEPARATOR);
 					
 					String docID = this.getDocQueryKey(fields[0], fields[2]);
-					Double value = Double.parseDouble(fields[3]);
+					Double value = Double.parseDouble(fields[4]);
 					fMat.insertRow(docID, featureID, value);
 				}
 				br.close();
