@@ -11,11 +11,11 @@ import static com.ir.homework.hw6.Constants.*;
 
 public class FeatMatrix implements Serializable{
 	// ------------------ Constants -------------------- //
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	// -------------------- Private -------------------- //
-	private Map<String, Row>    rows; // Stores features in a hash map
-	private Map<String, Object> minFeatVal;
+	private Map<String, Row>  rows; // Stores features in a hash map
+	private Map<String, Feat> feats;
 
 	/**
 	 * Stores the row information for each row
@@ -23,19 +23,37 @@ public class FeatMatrix implements Serializable{
 	 */
 	private class Row implements Serializable{
 		private static final long serialVersionUID = 1L;
-		public Map<String, Object> featMap;
+		public Map<String, Double> featMap;
 		public Object label;
 		
 		public Row(){
-			this.featMap = new HashMap<String, Object>();
+			this.featMap = new HashMap<String, Double>();
 			this.label   = null;
 		}
 	}
 	
+	private class Feat implements Serializable{
+		private static final long serialVersionUID = 1L;
+		public Double minFeatVal, maxFeatVal;
+		
+		/**
+		 * Default constructor 
+		 * @param fMin is the minimum value of the feature
+		 * @param fMax is the maximum value of the feature
+		 */
+		public Feat(Double fMin, Double fMax){
+			this.minFeatVal = fMin;
+			this.maxFeatVal = fMax;
+		}
+	}
+	
 	// ----------------- Constructors ------------------ //
+	/**
+	 * Default constructor
+	 */
 	public FeatMatrix() {
-		rows       = new HashMap<String, Row>();
-		minFeatVal = new LinkedHashMap<String, Object>();
+		rows  = new HashMap<String, Row>();
+		feats = new LinkedHashMap<String, Feat>();
 	}
 	
 
@@ -46,7 +64,7 @@ public class FeatMatrix implements Serializable{
 	 * @param featureID is the feature id to add
 	 * @param value is the actual value to be added
 	 */
-	public <V extends Comparable<V>> void insertRow(String docID, String featureID, V value){
+	public void insertRow(String docID, String featureID, Double value){
 		// Store values in sparse matrix
 		Row row = this.rows.get(docID);
 		if(row == null) return;
@@ -55,10 +73,11 @@ public class FeatMatrix implements Serializable{
 		this.rows.put(docID, row);
 		
 		// Store minimum value for sparse matrix representation
-		@SuppressWarnings("unchecked")
-		V featVal    = (V) this.minFeatVal.getOrDefault(featureID, value);
-		V minFeatVal = (value.compareTo(featVal)==-1)? value : featVal;
-		this.minFeatVal.put(featureID, minFeatVal);
+		Feat f = this.feats.getOrDefault(featureID, new Feat(value, value));
+		f = new Feat(Math.min(f.minFeatVal, value),
+					 Math.max(f.maxFeatVal,  value));
+		
+		this.feats.put(featureID, f);
 	}
 	
 	/**
@@ -73,22 +92,32 @@ public class FeatMatrix implements Serializable{
 	}
 	
 	
+	
 	/**
 	 * Prints the qualified rows to the output stream
 	 * @param out is the given output stream
 	 */
 	public void printFeatMatrix(PrintStream out){
+		out.print("DocumentID" + SEPARATOR);
+		for(Entry<String, Feat> e1:feats.entrySet()){
+			out.print(e1.getKey() + SEPARATOR);
+		}
+		out.println("Label");
+		
 		for(Entry<String, Row> e : rows.entrySet()){
 			Row r = e.getValue();
-			if(r.label != null){
-				out.print(r.label    + SEPARATOR);
+			if(r.label != null && r.featMap.size()>0){
 				out.print(e.getKey() + SEPARATOR);
 				
-				for(Entry<String, Object> f:minFeatVal.entrySet()){
-					out.print(r.featMap.getOrDefault(f.getKey(), f.getValue())
-							+ SEPARATOR);
+				for(Entry<String, Feat> e1:feats.entrySet()){
+					Feat f = e1.getValue();
+					
+					Double val = r.featMap.getOrDefault(e1.getKey(), f.minFeatVal);
+					val = (val - f.minFeatVal)/(f.maxFeatVal - f.minFeatVal);
+					
+					out.print(val + SEPARATOR);
 				}
-				out.println("\b");
+				out.println(r.label);
 			}
 		}
 	}

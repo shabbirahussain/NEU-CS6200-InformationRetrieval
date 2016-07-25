@@ -19,10 +19,10 @@ public final class Constants {
 	public static final String OUTPUT_FILE_PATH     = OUTPUT_FOLDR_PATH + "/";
 	
 	public static final String QREL_PATH            = OUTPUT_FOLDR_PATH + "/qrels.txt";
-	public static final String QRES_PATH			= OUTPUT_FOLDR_PATH + "/featuresFile.txt";
+	public static final String QRES_PATH			= OUTPUT_FOLDR_PATH + "/featuresFile.csv";
 
 	// Word assosiations
 	
 	public static final String DATA_FILE_PREFIX = "output";
-	public static final String SEPARATOR = "\t";
+	public static final String SEPARATOR = ",";
 }
