@@ -46,9 +46,10 @@ public final class FeatLoader {
 				while((line=br.readLine())!= null){
 					String[] fields = line.split(SEPARATOR);
 					
-					String docID = this.getDocQueryKey(fields[0], fields[2]);
+					String qryID = fields[0];
+					String docID = fields[2];
 					Double value = Double.parseDouble(fields[4]);
-					fMat.insertRow(docID, featureID, value);
+					fMat.insertRow(qryID, docID, featureID, value);
 				}
 				br.close();
 			}
@@ -67,20 +68,11 @@ public final class FeatLoader {
 		while((line = br.readLine()) != null){
 			String[] fields = line.split(SEPARATOR);
 			
-			String docID = this.getDocQueryKey(fields[0], fields[2]);
+			String qryID = fields[0]; 
+			String docID = fields[2];
 			Double label = Double.parseDouble(fields[3]);
-			fMat.setLabel(docID, label);
+			fMat.setLabel(qryID, docID, label);
 		}
 		br.close();
-	}
-	
-	/**
-	 * Given query id and the document id generates a combined feature key
-	 * @param queryID is the id of the query
-	 * @param docID is the id of the document
-	 * @return A combined key of both document and query
-	 */
-	private String getDocQueryKey(String queryID, String docID){
-		return queryID + "-" + docID; 
 	}
 }

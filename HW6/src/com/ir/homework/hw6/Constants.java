@@ -20,6 +20,8 @@ public final class Constants {
 	
 	public static final String QREL_PATH            = OUTPUT_FOLDR_PATH + "/qrels.txt";
 	public static final String QRES_PATH			= OUTPUT_FOLDR_PATH + "/featuresFile.csv";
+	public static final String QTRN_PATH			= OUTPUT_FOLDR_PATH + "/featuresTrain.csv";
+	public static final String QTST_PATH			= OUTPUT_FOLDR_PATH + "/featuresTest.csv";
 
 	// Word assosiations
 	

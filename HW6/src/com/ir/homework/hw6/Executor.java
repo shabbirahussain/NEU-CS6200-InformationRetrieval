@@ -41,8 +41,13 @@ public final class Executor {
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
 		System.out.println("Saving features to file...");
-		PrintStream out = new PrintStream(new File(QRES_PATH));
-		fMat.printFeatMatrix(out);
+		PrintStream out   = new PrintStream(new File(QRES_PATH));
+		PrintStream train = new PrintStream(new File(QTRN_PATH));
+		PrintStream test  = new PrintStream(new File(QTST_PATH));
+		
+		fMat.printFeatMatrix(out, train, test);
+		
+		out.close(); train.close(); test.close();
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
 		// Save feature matrix
