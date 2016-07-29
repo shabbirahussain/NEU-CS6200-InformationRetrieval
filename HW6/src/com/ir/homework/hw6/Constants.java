@@ -22,9 +22,13 @@ public final class Constants {
 	public static final String QRES_PATH			= OUTPUT_FOLDR_PATH + "/featuresFile.csv";
 	public static final String QTRN_PATH			= OUTPUT_FOLDR_PATH + "/featuresTrain.csv";
 	public static final String QTST_PATH			= OUTPUT_FOLDR_PATH + "/featuresTest.csv";
+	public static final String QEVL_PATH			= OUTPUT_FOLDR_PATH + "/featuresEval.txt";
 
 	// Word assosiations
 	
 	public static final String DATA_FILE_PREFIX = "output";
 	public static final String SEPARATOR = ",";
+	
+	public static final String TRECK_EVAL_PATH      = OUTPUT_FOLDR_PATH + "/trec_eval";
+	public static final String TRECK_EVAL_PARAMS[]  = {QREL_PATH};
 }

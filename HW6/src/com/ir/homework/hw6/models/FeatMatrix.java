@@ -14,8 +14,8 @@ import static com.ir.homework.hw6.Constants.*;
 
 public class FeatMatrix implements Serializable{
 	// ------------------ Constants -------------------- //
-	private static final long   serialVersionUID = 3L;
-	private static final Double RANDOM_PERCENTAGE = 0.8; // How much results should flow in training file
+	private static final long   serialVersionUID = 4L;
+	private static final Double RANDOM_PERCENTAGE = 0.9; // How much results should flow in training file
 	
 	private static final Random rnd = new Random();
 	// -------------------- Private -------------------- //
@@ -23,6 +23,7 @@ public class FeatMatrix implements Serializable{
 	private Map<String, Row>  rows; // Stores features in a hash map
 	private Map<String, Feat> feats;
 
+	private Set<String> validQueries;
 	/**
 	 * Stores the row information for each row
 	 * @author shabbirhussain
@@ -66,6 +67,7 @@ public class FeatMatrix implements Serializable{
 		feats = new LinkedHashMap<String, Feat>();
 		
 		queries = new HashSet<String>();
+		validQueries = new HashSet<String>();
 	}
 	
 
@@ -92,6 +94,7 @@ public class FeatMatrix implements Serializable{
 					 Math.max(f.maxFeatVal,  value));
 		
 		this.feats.put(featureID, f);
+		this.validQueries.add(qryID);
 	}
 	
 	/**
@@ -118,11 +121,12 @@ public class FeatMatrix implements Serializable{
 	 * @param out is the given output stream
 	 * @param train is the training output stream
 	 * @param test is the testing output stream
+	 * @param eval is the evaluation stream to output
 	 */
-	public void printFeatMatrix(PrintStream out, PrintStream train, PrintStream test){
+	public void printFeatMatrix(PrintStream out, PrintStream train, PrintStream test, PrintStream eval){
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append("DocumentID" + SEPARATOR);
+		//sb.append("DocumentID" + SEPARATOR);
 		for(Entry<String, Feat> e1:feats.entrySet()){
 			sb.append(e1.getKey() + SEPARATOR);
 		}
@@ -132,18 +136,27 @@ public class FeatMatrix implements Serializable{
 		train.println(dat);
 		test.println (dat);
 		
+//		dat = "DocumentID" + SEPARATOR;
+//		eval.println(dat);
 		
 		Set<String> trainSet = new HashSet<String>();
+		Set<String> testSet  = new HashSet<String>();
+		testSet.add("63");
+		testSet.add("54");
+		testSet.add("57");
+		testSet.add("56");
+		testSet.add("58");
 		for(String q:queries){
-			if(rnd.nextDouble()<=RANDOM_PERCENTAGE)
+			//if(rnd.nextDouble()<=RANDOM_PERCENTAGE)
+			if(!testSet.contains(q))
 				trainSet.add(q);
 		}
 		
 		for(Entry<String, Row> e : rows.entrySet()){
 			Row r = e.getValue();
 			sb = new StringBuilder();
-			if(r.label != null && r.featMap.size()>0){
-				sb.append(e.getKey() + SEPARATOR);
+			if(r.label != null && this.validQueries.contains(r.qryID)/*&& r.featMap.size()>0*/){
+				//sb.append(e.getKey() + SEPARATOR);
 				
 				for(Entry<String, Feat> e1:feats.entrySet()){
 					Feat f = e1.getValue();
@@ -157,11 +170,19 @@ public class FeatMatrix implements Serializable{
 			}
 			
 			dat = sb.toString();
-			out.println(dat);
-			if(trainSet.contains(r.qryID))
-				train.print(dat);
-			else
-				test.print(dat);
+			if(dat.length()>0){
+				out.println(dat);
+				if(trainSet.contains(r.qryID))
+					train.print(dat);
+				else{
+					test.print(dat);
+					dat = r.qryID     + "\t"
+							+ "Q0"    + "\t" 
+							+ r.docID + "\t"
+							+ 1       + "\t";
+					eval.println(dat);
+				}
+			}
 		}
 	}
 	

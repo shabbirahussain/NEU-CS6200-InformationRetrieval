@@ -13,7 +13,7 @@ import com.ir.homework.hw6.models.FeatMatrix;
  * @author shabbirhussain
  *
  */
-public final class Executor {
+public final class DataGenerator {
 	private static FeatMatrix fMat;
 	/**
 	 * @param args
@@ -44,10 +44,11 @@ public final class Executor {
 		PrintStream out   = new PrintStream(new File(QRES_PATH));
 		PrintStream train = new PrintStream(new File(QTRN_PATH));
 		PrintStream test  = new PrintStream(new File(QTST_PATH));
+		PrintStream eval  = new PrintStream(new File(QEVL_PATH));
 		
-		fMat.printFeatMatrix(out, train, test);
+		fMat.printFeatMatrix(out, train, test, eval);
 		
-		out.close(); train.close(); test.close();
+		out.close(); train.close(); test.close(); eval.close();
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
 		// Save feature matrix
