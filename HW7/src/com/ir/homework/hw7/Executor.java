@@ -20,7 +20,7 @@ import com.ir.homework.hw7.io.OutputWriter;
 import com.ir.homework.hw7.io.QueryReader;
 import com.ir.homework.hw7.io.ResultEvaluator;
 import com.ir.homework.hw7.io.StopWordReader;
-import com.ir.homework.hw7.models.*;
+
 import com.ir.homework.hw7.util.QueryAugmentor;
 /**
  * @author shabbirhussain

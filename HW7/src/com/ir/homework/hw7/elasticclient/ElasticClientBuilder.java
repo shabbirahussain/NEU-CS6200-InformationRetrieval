@@ -1,29 +1,17 @@
 package com.ir.homework.hw7.elasticclient;
 
-import static com.ir.homework.hw7.Constants.*;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import org.elasticsearch.action.bulk.BackoffPolicy;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.unit.ByteSizeUnit;
-import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.unit.TimeValue;
-
-import com.ir.homework.hw2.queryprocessing.QueryProcessor;
 
 public class ElasticClientBuilder {
 	private Builder settings;
-	private Boolean customFetch = false;
 	private String  host, indices, types, field;
 	private Integer port, size;
 	
@@ -109,15 +97,6 @@ public class ElasticClientBuilder {
 		return this;
 	}
 	
-	/**
-	 * Sets the custom retrieval method on/off
-	 * @param enable
-	 * @return ElasticClientBuilder
-	 */
-	public ElasticClientBuilder setCustomFetch(Boolean enable){
-		this.customFetch = enable;
-		return this;
-	}
 	
 	// ------------------------ Builder -------------------------------
 	
@@ -126,12 +105,10 @@ public class ElasticClientBuilder {
 	 * @return ElasticClient
 	 */
 	public ElasticClient build(){
-		ElasticClient result = new BaseElasticClient(this.indices, this.types, ENABLE_BULK_INSERT, this.size, this.field);
+		ElasticClient result = new BaseElasticClient(this.indices, 
+				this.types, this.size, this.field);
 		
-		if(this.customFetch)
-			result = new Hw2IndexClient(this.indices, this.types, ENABLE_BULK_INSERT, this.size, this.field);
-		
-		result = new CachedElasticClient(result);
+		//result = new CachedElasticClient(result);
 		
 		this.build(result);
 		return result;
@@ -148,36 +125,7 @@ public class ElasticClientBuilder {
 			        .addTransportAddress(
 			        		new InetSocketTransportAddress(InetAddress.getByName(this.host), this.port));
 			
-			BulkProcessor bulkProcessor = BulkProcessor.builder(
-			        client,  
-			        new BulkProcessor.Listener() {
-						@Override
-						public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-							// TODO Auto-generated method stub
-						}
-
-						@Override
-						public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-							// TODO Auto-generated method stub
-							failure.printStackTrace();
-						}
-
-						@Override
-						public void beforeBulk(long executionId, BulkRequest request) {
-							// TODO Auto-generated method stub
-						} 
-			        })
-			        .setBulkActions(10000) 
-			        .setBulkSize(new ByteSizeValue(1, ByteSizeUnit.GB)) 
-			        .setFlushInterval(TimeValue.timeValueSeconds(5)) 
-			        .setConcurrentRequests(1) 
-			        .setBackoffPolicy(
-			            BackoffPolicy.exponentialBackoff(TimeValue.timeValueMillis(100), 3)) 
-			        .build();
-			
-			QueryProcessor queryProcessor = new QueryProcessor(indices + File.separator + types, field);
-			
-			elasticClient.attachClients(client, bulkProcessor, queryProcessor);
+			elasticClient.attachClients(client);
 		}catch (UnknownHostException e) {e.printStackTrace();}
 		
 		return elasticClient;
