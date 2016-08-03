@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ir.homework.hw7.dataloader.models.ModelQrel;
+import com.ir.homework.hw7.dataloader.models.MQrel;
 
-public final class ModelQrelDAO {
+public final class MQrelDAO {
 	private static final String FIELD_SPERATOR = "\t|\\s";
 	
 	/**
@@ -20,7 +20,7 @@ public final class ModelQrelDAO {
 	 * @throws IOException
 	 * @throws ArrayIndexOutOfBoundsException if invalid file is provided
 	 */
-	public static Map<String, ModelQrel> readModel(String filePath) throws IOException, ArrayIndexOutOfBoundsException{
+	public static Map<String, MQrel> getModel(String filePath) throws IOException, ArrayIndexOutOfBoundsException{
 		Map<String, Map<String, Double>> qDocMap = new HashMap<String, Map<String, Double>>();
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
 		
@@ -34,14 +34,14 @@ public final class ModelQrelDAO {
 			
 			//if(score == 0.0) continue;
 			// Store results into model
-			Map<String, Double> docMap = qDocMap.getOrDefault(query, new ModelQrel());
+			Map<String, Double> docMap = qDocMap.getOrDefault(query, new MQrel());
 			docMap.put(docID, score);
 			qDocMap.put(query, docMap);
 		}
-		Map<String, ModelQrel> result = new HashMap<String, ModelQrel>();
+		Map<String, MQrel> result = new HashMap<String, MQrel>();
 		
 		for(Entry<String, Map<String, Double>> e: qDocMap.entrySet()){
-			result.put(e.getKey(), (ModelQrel) e.getValue()); //sortByValue(e.getValue()));
+			result.put(e.getKey(), (MQrel) e.getValue()); //sortByValue(e.getValue()));
 		}
 		
 		br.close();

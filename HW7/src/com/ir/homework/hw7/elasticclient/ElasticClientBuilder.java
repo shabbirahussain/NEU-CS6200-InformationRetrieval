@@ -10,6 +10,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 
+import com.ir.homework.hw7.dataloader.models.BaseElasticClient;
+
 public class ElasticClientBuilder {
 	private Builder settings;
 	private String  host, indices, types, field;

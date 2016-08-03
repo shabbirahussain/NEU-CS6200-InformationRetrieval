@@ -12,10 +12,17 @@ import java.util.Map;
 public interface Parser {
 	/**
 	 * Parses the file into a map
-	 * @param qID is the qurey ID of the query for which document has to be parsed
-	 * @param filePath is the full path of the file to process
+	 * @param data is the data to be parsed
 	 * @return Map of fields and data
 	 * @throws Exception 
 	 */
-	Map<String, Object> parseFile(String qID, String filePath) throws Exception;
+	Map<String, Object> parse(String data) throws Exception;
+	
+	/**
+	 * Cleans the given text as per internal rules
+	 * @param text is the given content to parse
+	 * @return String of cleaned content
+	 */
+	String cleanContent(String text);
+	
 }

@@ -6,16 +6,16 @@ package com.ir.homework.hw7.dataloader;
 import static com.ir.homework.hw7.dataloader.Constants.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
-import com.ir.homework.hw7.dataloader.io.FileLoader;
-import com.ir.homework.hw7.dataloader.io.ModelQrelDAO;
-import com.ir.homework.hw7.dataloader.models.ModelQrel;
+import org.apache.commons.io.FileUtils;
+
+import com.ir.homework.hw7.dataloader.io.MInputDataDAO;
+import com.ir.homework.hw7.dataloader.io.MQrelDAO;
+import com.ir.homework.hw7.dataloader.models.MInputData;
+import com.ir.homework.hw7.dataloader.models.MQrel;
 import com.ir.homework.hw7.dataloader.parsers.MimeFileParser;
 import com.ir.homework.hw7.dataloader.parsers.Parser;
-import com.ir.homework.hw7.elasticclient.ElasticClient;
-import com.ir.homework.hw7.elasticclient.ElasticClientBuilder;
 
 /**
  * @author shabbirhussain
@@ -23,8 +23,9 @@ import com.ir.homework.hw7.elasticclient.ElasticClientBuilder;
  */
 public final class Executor {
 	private static long start;
-	private static ElasticClient _elasticClient;
-	private static Parser _parser;
+	private static Parser     _parser;
+	private static MInputData _mInputData;
+	private static MQrel      _mQrel;
 	
 	/**
 	 * @param args 
@@ -34,29 +35,58 @@ public final class Executor {
 		start = System.nanoTime(); 
 		
 		// Initialize
-		ElasticClient elasticClient = ElasticClientBuilder.createElasticClientBuilder()
-			.setClusterName(CLUSTER_NAME)
-			.setHost(HOST)
-			.setPort(PORT)
-			.setIndices(INDEX_NAME)
-			.setTypes(INDEX_TYPE)
-			.setLimit(MAX_RESULTS)
-			.build();
 
-		
-		Map<String, ModelQrel> qrel = ModelQrelDAO.readModel(QREL_PATH);
-		//System.out.println(qrel.get("0").size());
-		
-		
-		Parser parser = new MimeFileParser(qrel);
-		FileLoader fileLoader = new FileLoader(parser, elasticClient);
-		
+		_parser = new MimeFileParser();
+
+		_mQrel      = MQrelDAO.getModel(QREL_PATH).get("0");
+		_mInputData = MInputDataDAO.getModel(_parser,
+				CLUSTER_NAME, 
+				HOST, 
+				PORT, 
+				INDEX_NAME, 
+				INDEX_TYPE, 
+				MAX_RESULTS);
+
 		// Start load
-		Long result = fileLoader.startLoad("0");
+		startLoad();
 		
-		//System.out.println("Num of records inserted=" + result);
 		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
 	
-	
+
+	/**
+	 * Parses the document and loads it into the elasticsearch
+	 * @return number of records sent for insertion
+	 * @throws Exception
+	 */
+	public static Long startLoad() throws Exception{
+		File folder = new File(DATA_PATH);
+		File[] listOfFiles = folder.listFiles();
+		
+		Long cnt = 0L;
+		Long errCnt = 0L;
+		for (File file : listOfFiles) {
+			if (file.isFile() && file.getName().startsWith(DATA_FILE_PREFIX)) {
+				String id = file.getName();
+				System.out.println("[Info]: Loading file [" + id + "]");
+				String message = FileUtils.readFileToString(file);
+		
+				// Parse the data
+				Map<String, Object> content;
+				try{
+					content = _parser.parse(message);
+					content.put("Label", _mQrel.get(id));
+					
+					// Load the data
+					_mInputData.storeData(file.getName(), content);
+				}catch(Exception e){
+					errCnt++;
+					e.printStackTrace();
+				}
+			}
+		}
+		System.out.println("Total Errors = " + errCnt);
+		_mInputData.flush();
+		return cnt;
+	}
 }

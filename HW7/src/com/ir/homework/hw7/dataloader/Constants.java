@@ -14,7 +14,7 @@ public final class Constants{
 
 	public  static final String QREL_PATH = WORKING_FOLDER_PATH + "/results/qrel.txt"; 
 	
-	public static final String  HOST = "elastichost";//"192.168.1.105"; //"localhost";
+	public static final String  HOST = "elastichost";
 	public static final Integer PORT = 9300;
 	public static final String  CLUSTER_NAME = "dead-pool";
 

@@ -18,6 +18,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.significant.SignificantTerms;
 
 import com.ir.homework.hw2.queryprocessing.QueryProcessor;
+import com.ir.homework.hw7.dataloader.models.BaseElasticClient;
 
 
 public class CachedElasticClient extends BaseElasticClient{
