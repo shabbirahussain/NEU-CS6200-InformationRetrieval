@@ -1,6 +1,7 @@
-#=================== AP 89 Dataset ==========================
 
-PUT /ap_dataset/
+
+DELETE trec07_spam
+PUT /trec07_spam/
 {
   "settings": {
     "index": {
@@ -11,10 +12,48 @@ PUT /ap_dataset/
       "number_of_replicas": 1
     },
     "analysis": {
+      "filter":{
+        "my_shingle_filter": {
+          "type":             "shingle",
+          "min_shingle_size": 2, 
+          "max_shingle_size": 2, 
+          "output_unigrams":  false   
+        },
+        "my_email_filter" : {
+          "type" : "pattern_capture",
+          "preserve_original" : 1,
+          "patterns" : [
+            "([^@]+)",
+            "(\\p{L}+)",
+            "(\\d+)",
+            "@(.+)"
+           ]
+        }
+      },
       "analyzer": {
         "my_english": { 
           "type": "english",
+          "filter": [
+            "lowercase"
+          ],
           "stopwords_path": "stoplist.txt" 
+        },
+        "my_shingle_analyzer": {
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop",
+            "porter_stem",
+            "my_shingle_filter"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        },
+        "my_email":{
+          "tokenizer" : "uax_url_email",
+          "filter" : [ 
+            "my_email_filter", "lowercase",  "unique" 
+          ]
         }
       }
     }
@@ -22,150 +61,69 @@ PUT /ap_dataset/
 }
 
 
-PUT /ap_dataset/document/_mapping
+PUT /trec07_spam/document/_mapping
 {
   "document": {
     "properties": {
-      "DOCNO": {
-        "type": "string",
-        "store": true,
-        "index": "not_analyzed"
-      },
-      "TEXT": {
+      "From":{
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_email"
+      },
+      "To":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "Cc":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "ReplyTo":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "MultiPart":{
+        "type": "boolean",
+        "store": true
+      },
+      "Subject": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
         "analyzer": "my_english"
-      }
-    }
-  }
-}
-
-GET /ap_dataset/document/_count
-
-GET /ap_dataset/document/AP890305-0030/_termvector
-GET /ap_dataset/document/_search
-{
-    "query" : {
-        "terms" : {"TEXT" : [ "downstream","opec" ]}
-    },
-    "aggregations" : {
-        "significantCrimeTypes" : {
-            "significant_terms" : {
-              "field" : "TEXT" 
-              
-            }
-        }
-    },
-    "size": 0
-}
-
-
-GET /ap_dataset/document/_search
-{
-  "script_fields": {
-    "FIELD": {
-      "script": {
-        "inline": "_index['TEXT']['a'].df()"
-      }
-    }
-  }
-}
-
-GET /ap_dataset/document/_search
-{
-  "query":{
-    "query_string": {
-      "default_field": "TEXT", 
-      "query": "test"
-    }
-  },
-  "size": 10,
-  "highlight": {
-    "fields": {
-      "*": {}
-    }
-  }
-}
-
-
-GET /ap_dataset/document/_search
-{
-  "query": {
-    "filtered": {
-      "filter": {
-        "ids": {
-          "values": [
-            "AP890512-0154"
-          ]
-        }
-      }
-    }
-  }
-  , "script_fields": {
-    "FIELD": {
-      "script": "doc['TEXT'].values"
-    }
-  }
-}
-
-GET /ap_dataset/document/_search
-{
-  "query": {
-    "filtered": {
-      "query": {"match_all": {}},
-      "filter": {
-        "script": {
-          "script": "doc['TEXT'].values.size() == 0"
+      },
+      "Content": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_english",
+        "fields":{
+          "Shingles":{
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "my_shingle_analyzer"
+          }
         }
       }
     }
   }
 }
-GET /ap_dataset/document/_search
+
+GET trec07_spam/_analyze
 {
-  "query": {
-    "filtered": {
-      "query": {"match_all": {}},
-      "filter": {
-        "ids": {
-          "values": [
-            "AP890220-0145"
-          ]
-        }
-      }
-    }
-  }, 
-  "aggs": {
-    "NAME": {
-      "sum": {
-        "script": "_index['TEXT']['legislator'].tf() / (1+doc['TEXT'].values.size())"
-      }
-    }
-  },
-  "size": 0
+  "analyzer": "my_shingle_analyzer",
+  "text" : "no credit check"
 }
 
-GET /ap_dataset/document/_search
+PUT trec07_spam/document/inmail.1
 {
-  "aggs" : {
-    "unique_terms" : {
-      "cardinality" : {
-        "field" : "TEXT"
-        }
-      }
-    },
-    "size": 0
-}
-GET /ap_dataset/document/_search
-{
-  "aggs": {
-    "NAME": {
-      "cardinality": {
-        "script": "doc['TEXT'].value"
-      }
-    }
-  },
-  "size": 0
+  "Content": "branded the quality "
 }

@@ -23,6 +23,6 @@ public interface Parser {
 	 * @param text is the given content to parse
 	 * @return String of cleaned content
 	 */
-	String cleanContent(String text);
+	String cleanText(String text);
 	
 }

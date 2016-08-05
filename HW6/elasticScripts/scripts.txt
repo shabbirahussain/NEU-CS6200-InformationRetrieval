@@ -1,0 +1,171 @@
+#=================== AP 89 Dataset ==========================
+
+PUT /ap_dataset/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "analyzer": {
+        "my_english": { 
+          "type": "english",
+          "stopwords_path": "stoplist.txt" 
+        }
+      }
+    }
+  }
+}
+
+
+PUT /ap_dataset/document/_mapping
+{
+  "document": {
+    "properties": {
+      "DOCNO": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "TEXT": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english"
+      }
+    }
+  }
+}
+
+GET /ap_dataset/document/_count
+
+GET /ap_dataset/document/AP890305-0030/_termvector
+GET /ap_dataset/document/_search
+{
+    "query" : {
+        "terms" : {"TEXT" : [ "downstream","opec" ]}
+    },
+    "aggregations" : {
+        "significantCrimeTypes" : {
+            "significant_terms" : {
+              "field" : "TEXT" 
+              
+            }
+        }
+    },
+    "size": 0
+}
+
+
+GET /ap_dataset/document/_search
+{
+  "script_fields": {
+    "FIELD": {
+      "script": {
+        "inline": "_index['TEXT']['a'].df()"
+      }
+    }
+  }
+}
+
+GET /ap_dataset/document/_search
+{
+  "query":{
+    "query_string": {
+      "default_field": "TEXT", 
+      "query": "test"
+    }
+  },
+  "size": 10,
+  "highlight": {
+    "fields": {
+      "*": {}
+    }
+  }
+}
+
+
+GET /ap_dataset/document/_search
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "ids": {
+          "values": [
+            "AP890512-0154"
+          ]
+        }
+      }
+    }
+  }
+  , "script_fields": {
+    "FIELD": {
+      "script": "doc['TEXT'].values"
+    }
+  }
+}
+
+GET /ap_dataset/document/_search
+{
+  "query": {
+    "filtered": {
+      "query": {"match_all": {}},
+      "filter": {
+        "script": {
+          "script": "doc['TEXT'].values.size() == 0"
+        }
+      }
+    }
+  }
+}
+GET /ap_dataset/document/_search
+{
+  "query": {
+    "filtered": {
+      "query": {"match_all": {}},
+      "filter": {
+        "ids": {
+          "values": [
+            "AP890220-0145"
+          ]
+        }
+      }
+    }
+  }, 
+  "aggs": {
+    "NAME": {
+      "sum": {
+        "script": "_index['TEXT']['legislator'].tf() / (1+doc['TEXT'].values.size())"
+      }
+    }
+  },
+  "size": 0
+}
+
+GET /ap_dataset/document/_search
+{
+  "aggs" : {
+    "unique_terms" : {
+      "cardinality" : {
+        "field" : "TEXT"
+        }
+      }
+    },
+    "size": 0
+}
+GET /ap_dataset/document/_search
+{
+  "aggs": {
+    "NAME": {
+      "cardinality": {
+        "script": "doc['TEXT'].value"
+      }
+    }
+  },
+  "size": 0
+}
