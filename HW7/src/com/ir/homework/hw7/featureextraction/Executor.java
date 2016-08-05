@@ -33,6 +33,8 @@ import com.ir.homework.hw7.featureextraction.controllers.SkipgramFeatureExtracto
 import com.ir.homework.hw7.featureextraction.controllers.UnigramFeatureExtractor;
 import com.ir.homework.hw7.featureextraction.filters.FeatureFilter;
 import com.ir.homework.hw7.featureextraction.filters.ListFeatureFilter;
+import com.ir.homework.hw7.featureextraction.outputwritters.ARFFOutputWritter;
+import com.ir.homework.hw7.featureextraction.outputwritters.OutputWritter;
 
 
 /**
@@ -42,14 +44,17 @@ import com.ir.homework.hw7.featureextraction.filters.ListFeatureFilter;
 public final class Executor {
 	private static final DecimalFormat _percentFormat = new DecimalFormat("##.00");
 	private static final DateFormat    _dateFormat    = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+	private static final String FIELD_LABEL = "Label";
 	
 	private static long start;
 	private static TransportClient _client;
 	private static List<FeatureExtractor> _ext;
+	private static FeatureExtractor _extLab;
+	
 	private static List<FeatureFilter> _filters;
 	private static List<String>  _docList;
 
-	private static PrintStream _out;
+	private static OutputWritter _out;
 	private static PrintStream _log = System.out;
 
 	// Create elasticsearch Client
@@ -80,7 +85,7 @@ public final class Executor {
 
 		_ext= new LinkedList<FeatureExtractor>();
 		////////// Create feature extractors //////////////////
-		_ext.add(new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Label"));
+		_extLab = (new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, FIELD_LABEL));
 		_ext.add(new UnigramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content"));
 		_ext.add(new SkipgramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
 		
@@ -95,14 +100,14 @@ public final class Executor {
 		
 		// Read all documents
 		_docList = getDocumentList();
-		_out = new PrintStream(FEAT_FILE_PATH);
+		_out = new ARFFOutputWritter(FEAT_FILE_PATH);
 		
 		log("Info", "Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
 		
 		log("Info", "Extracting Features...");
 		execute();
-		
+		log("Info", "Finalizing...");
 		_out.close();
 		log("Info", "Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
@@ -123,23 +128,15 @@ public final class Executor {
 			for(FeatureExtractor e: _ext)
 				result.putAll(e.getFeatures(docID));
 			
-			
 			for(FeatureFilter f: _filters)
 				result = f.applyFilters(result);
 			
-			printResults(result);
+			_out.printResults(_extLab.getFeatures(docID).get(FIELD_LABEL), result);
 			cnt++;
-			return;
+			if(cnt>5)return;
 		}
 	}
 	
-	/**
-	 * Formats and outputs the feature map to the pritnstream
-	 * @param featMap is the feature map to print
-	 */
-	private static void printResults(Map<String, Double> featMap){
-		_out.println(featMap);
-	}
 	
 	/**
 	 * Logs the message to the default logging location
