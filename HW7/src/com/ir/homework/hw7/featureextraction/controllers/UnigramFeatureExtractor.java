@@ -1,6 +1,7 @@
 package com.ir.homework.hw7.featureextraction.controllers;
 
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.elasticsearch.client.transport.TransportClient;
@@ -25,7 +26,7 @@ public class UnigramFeatureExtractor extends AbstractFeatureExtractor {
 
 	@Override
 	public Map<String, Double> getFeatures(String docID) {
-		Map<String, Double> result = null;
+		Map<String, Double> result = new HashMap<String, Double>();
 		
 		try{
 			result = super.getTermFrequency(docID, textFieldName);

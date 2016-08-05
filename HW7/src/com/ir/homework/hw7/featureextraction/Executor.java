@@ -8,6 +8,10 @@ import static com.ir.homework.hw7.featureextraction.Constants.*;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +40,9 @@ import com.ir.homework.hw7.featureextraction.filters.ListFeatureFilter;
  *
  */
 public final class Executor {
+	private static final DecimalFormat _percentFormat = new DecimalFormat("##.00");
+	private static final DateFormat    _dateFormat    = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+	
 	private static long start;
 	private static TransportClient _client;
 	private static List<FeatureExtractor> _ext;
@@ -43,6 +50,7 @@ public final class Executor {
 	private static List<String>  _docList;
 
 	private static PrintStream _out;
+	private static PrintStream _log = System.out;
 
 	// Create elasticsearch Client
 	static{
@@ -68,7 +76,7 @@ public final class Executor {
 	 */
 	public static void main(String[] args) throws Exception{
 		start = System.nanoTime(); 
-		System.out.println("Initializing...");
+		log("Info", "Initializing...");
 
 		_ext= new LinkedList<FeatureExtractor>();
 		////////// Create feature extractors //////////////////
@@ -89,21 +97,28 @@ public final class Executor {
 		_docList = getDocumentList();
 		_out = new PrintStream(FEAT_FILE_PATH);
 		
-		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+		log("Info", "Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
 		
-		System.out.println("Extracting Features...");
+		log("Info", "Extracting Features...");
 		execute();
 		
 		_out.close();
-		System.out.println("Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
+		log("Info", "Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
 	
 	/**
 	 * Executes the feature extraction for document list
 	 */
 	private static void execute(){
+		Long time = System.currentTimeMillis();
+		Integer cnt = 0;
 		for(String docID: _docList){
+			if((System.currentTimeMillis() - time)>Math.pow(10, 4)){
+				time = System.currentTimeMillis();
+				log("Info", "\t" + _percentFormat.format(cnt/_docList.size()) + "% docs done" + "[" + cnt + "]");
+			}
+			
 			Map<String, Double> result = new HashMap<String, Double>();
 			for(FeatureExtractor e: _ext)
 				result.putAll(e.getFeatures(docID));
@@ -113,6 +128,8 @@ public final class Executor {
 				result = f.applyFilters(result);
 			
 			printResults(result);
+			cnt++;
+			return;
 		}
 	}
 	
@@ -122,6 +139,18 @@ public final class Executor {
 	 */
 	private static void printResults(Map<String, Double> featMap){
 		_out.println(featMap);
+	}
+	
+	/**
+	 * Logs the message to the default logging location
+	 * @param type is the type of message 
+	 * @param message is the message to log
+	 */
+	private static void log(String type, String message){
+		_log.print("[" + _dateFormat.format(new Date()) + "]");
+		_log.print("[" + type + "]");
+		_log.print(" " + message);
+		_log.println();
 	}
 	
 	/**

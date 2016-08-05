@@ -35,7 +35,7 @@ public class ListFeatureFilter extends AbstractFeatureFilter {
 	 * @param analyzer is the analyzer to process list
 	 */
 	public ListFeatureFilter addBlackList(String[] list, String analyzer){
-		blackList = new HashSet<String>();
+		if(blackList == null) blackList = new HashSet<String>();
 		for(String q: list){
 			blackList.addAll(super.analyzeQuery(q, analyzer));
 		}
@@ -48,7 +48,7 @@ public class ListFeatureFilter extends AbstractFeatureFilter {
 	 * @param analyzer is the analyzer to process list
 	 */
 	public ListFeatureFilter addWhiteList(String[] list, String analyzer){
-		whiteList = new HashSet<String>();
+		if(whiteList == null )whiteList = new HashSet<String>();
 		for(String q: list){
 			whiteList.addAll(super.analyzeQuery(q, analyzer));
 		}
@@ -64,8 +64,8 @@ public class ListFeatureFilter extends AbstractFeatureFilter {
 			result.putAll(featureMap);
 		}else{
 			for(String key: whiteList)
-				if(featureMap.containsKey(key))
-					result.put(key, featureMap.get(key));
+				result.put(key, featureMap.getOrDefault(key, 0.0));
+			
 		}
 		
 		// Remove blacklisted elements
