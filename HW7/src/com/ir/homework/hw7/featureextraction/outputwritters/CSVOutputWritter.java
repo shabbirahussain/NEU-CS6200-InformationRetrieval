@@ -1,10 +1,11 @@
 package com.ir.homework.hw7.featureextraction.outputwritters;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,33 +13,34 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 
-public class ARFFOutputWritter extends AbstractOutputWritter {
-	private static final String MY_EXTENSION = ".arff";
+public class CSVOutputWritter extends AbstractOutputWritter {
+	private static final String MY_EXTENSION = ".csv";
+	private static final String MISSING_VALUES = "0";
 	private static final Integer LABEL_INDEX = 0;
 	
 	private File tempFile;
-	private PrintStream tempOut;
+	private ObjectOutputStream tempOut;
 	private Map<String, Integer> featMap;
+	
 	
 	/**
 	 * Default constructor
 	 * @param outFile is the output file for the writer
 	 * @throws IOException
 	 */
-	public ARFFOutputWritter(String outFile) throws IOException {
+	public CSVOutputWritter(String outFile) throws IOException {
 		super(outFile, MY_EXTENSION);
 		
 		tempFile = File.createTempFile(this.getClass().getName(), ".tmp");
 		System.out.println(tempFile);
-		tempOut = new PrintStream(tempFile);
+		tempOut = new ObjectOutputStream(new FileOutputStream(tempFile));
 		
 		featMap = new LinkedHashMap<String, Integer>();
-		
 		featMap.put("LABEL", LABEL_INDEX);
 	}
 	
 	@Override
-	public void printResults(Double label, Map<String, Double> featureMap) {
+	public void printResults(Double label, Map<String, Double> featureMap) throws IOException {
 		TreeMap<Integer, Double> srtdMap = new TreeMap<>();
 		// Map features to keys
 		for(Entry<String, Double> e: featureMap.entrySet()){
@@ -49,42 +51,48 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 				featMap.put(key, nKey);
 			}
 			srtdMap.put(nKey, e.getValue());
-			
 		}
+		srtdMap.put(LABEL_INDEX, label);
 		
-		tempOut.print("{");
-		tempOut.print(LABEL_INDEX + " " + label + ", ");
-		Integer cnt = 1;
-		for(Entry<Integer, Double> e: srtdMap.entrySet()){
-			tempOut.print(e.getKey() + " " + e.getValue());
-			if((cnt++) != srtdMap.size())
-				tempOut.print(", ");	
-		}
-		tempOut.println("}");
+		tempOut.writeObject(srtdMap);
 	}
 	
-	public void close() throws IOException{
+	public void close() throws IOException, ClassNotFoundException{
 		tempOut.close();
 		
 		///////////////// Print Headers ///////////////////////
 		PrintStream out = new PrintStream(outFile);
-		out.println("@RELATION " + outFile.getName());
-		out.println();
-		
+		Integer cnt = 1;
 		for(String f: featMap.keySet()){
-			out.println("@ATTRIBUTE " + f + "  NUMERIC");
+			out.print(f);
+			if((cnt++) != featMap.size())
+				out.print(", ");	
 		}
-		out.println();
-		out.println("@DATA");
 		out.println();
 
 		///////////////// Print body /////////////////////////
-		BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(tempFile)));
-		String line = null;
-		while((line = in.readLine()) != null){
-			out.println(line);
-		}
-
+		ObjectInputStream in = new ObjectInputStream(new FileInputStream(tempFile));
+		Object obj = null;
+		try{
+			while((obj = in.readObject()) != null){
+				@SuppressWarnings("unchecked")
+				TreeMap<Integer, Double> srtdMap = (TreeMap<Integer, Double>) obj;
+				
+				cnt = 1;
+				for(Integer key : featMap.values()){
+					String value = MISSING_VALUES;
+					Double dVal = srtdMap.get(key);
+					if(dVal != null) 
+						value = dVal.toString();
+					
+					out.print(value);
+					if((cnt++) != featMap.size())
+						out.print(", ");	
+				}
+				out.println();
+			}
+		}catch(Exception e){}
+		
 		in.close();
 		out.close();
 		tempFile.delete();

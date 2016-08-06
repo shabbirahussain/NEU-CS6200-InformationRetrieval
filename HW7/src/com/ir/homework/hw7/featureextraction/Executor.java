@@ -5,6 +5,7 @@ package com.ir.homework.hw7.featureextraction;
 
 import static com.ir.homework.hw7.featureextraction.Constants.*;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -34,6 +35,7 @@ import com.ir.homework.hw7.featureextraction.controllers.UnigramFeatureExtractor
 import com.ir.homework.hw7.featureextraction.filters.FeatureFilter;
 import com.ir.homework.hw7.featureextraction.filters.ListFeatureFilter;
 import com.ir.homework.hw7.featureextraction.outputwritters.ARFFOutputWritter;
+import com.ir.homework.hw7.featureextraction.outputwritters.CSVOutputWritter;
 import com.ir.homework.hw7.featureextraction.outputwritters.OutputWritter;
 
 
@@ -54,7 +56,7 @@ public final class Executor {
 	private static List<FeatureFilter> _filters;
 	private static List<String>  _docList;
 
-	private static OutputWritter _out;
+	private static List<OutputWritter> _out;
 	private static PrintStream _log = System.out;
 
 	// Create elasticsearch Client
@@ -83,25 +85,31 @@ public final class Executor {
 		start = System.nanoTime(); 
 		log("Info", "Initializing...");
 
-		_ext= new LinkedList<FeatureExtractor>();
+		_ext= new LinkedList<>();
 		////////// Create feature extractors //////////////////
 		_extLab = (new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, FIELD_LABEL));
 		_ext.add(new UnigramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content"));
 //		_ext.add(new ShingleFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
 		
 		//////////////////////////////////////////////////////
-		
-		// Create feature filters
-		_filters = new LinkedList<FeatureFilter>();
+
+		_filters = new LinkedList<>();
+		///////// Create feature filters /////////////////////
 		if(MANUAL_FEAT_LIST.length > 0)
 			_filters.add(new ListFeatureFilter(_client, INDEX_NAME, INDEX_TYPE)
 					.addWhiteList(MANUAL_FEAT_LIST, "my_shingle_analyzer")
 					.addWhiteList(MANUAL_FEAT_LIST, "my_english"));
-		
-		
+
+		//////////////////////////////////////////////////////
+
+		_out = new LinkedList<>();
+		///////// Create output writers  /////////////////////
+		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH));
+		_out.add(new CSVOutputWritter(FEAT_FILE_PATH));
+		//////////////////////////////////////////////////////
+
 		// Read all documents
 		_docList = getDocumentList();
-		_out = new ARFFOutputWritter(FEAT_FILE_PATH);
 		
 		log("Info", "Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 		
@@ -109,14 +117,18 @@ public final class Executor {
 		log("Info", "Extracting Features...");
 		execute();
 		log("Info", "Finalizing...");
-		_out.close();
+		
+		for(OutputWritter out : _out)
+			out.close();
+		
 		log("Info", "Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
 	}
 	
 	/**
 	 * Executes the feature extraction for document list
+	 * @throws IOException 
 	 */
-	private static void execute(){
+	private static void execute() throws IOException{
 		Long time = System.currentTimeMillis();
 		Integer cnt = 0;
 		for(String docID: _docList){
@@ -132,7 +144,8 @@ public final class Executor {
 			for(FeatureFilter f: _filters)
 				result = f.applyFilters(result);
 			
-			_out.printResults(_extLab.getFeatures(docID).get(FIELD_LABEL), result);
+			for(OutputWritter out : _out)
+				out.printResults(_extLab.getFeatures(docID).get(FIELD_LABEL), result);
 			cnt++;
 		}
 	}

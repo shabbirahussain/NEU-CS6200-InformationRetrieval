@@ -1,7 +1,7 @@
 package com.ir.homework.hw7.machinelearning;
 
 
-import nz.ac.waikato.cms;
+import weka.classifiers.functions.LinearRegression;;
 public class Test {
 
 	public Test() {
@@ -10,7 +10,8 @@ public class Test {
 	
 	
 	public static void main(String args[]){
-		
+		LinearRegression lr = new LinearRegression();
+		lr.
 	}
 
 }

@@ -12,7 +12,7 @@ weka.classifiers.functions.LinearRegression  \
 
 
 
-java -classpath /Volumes/weka-3-6-14/weka-3-6-14/weka.jar \
+java -Xmx6024m -classpath /Volumes/weka-3-6-14/weka-3-6-14/weka.jar \
 weka.classifiers.functions.LinearRegression  \
 -t "featuresUniGram.arff" \
 -d "LinearRegression.featuresUniGram.model" \
