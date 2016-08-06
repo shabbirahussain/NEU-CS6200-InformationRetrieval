@@ -18,6 +18,8 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 	private PrintStream tempOut;
 	private Map<String, Integer> featMap;
 	
+	private static final Integer LABEL_INDEX = 0;
+	
 	/**
 	 * Default constructor
 	 * @param outFile is the output file for the writer
@@ -32,6 +34,8 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 		tempOut = new PrintStream(tempFile);
 		
 		featMap = new LinkedHashMap<String, Integer>();
+		
+		featMap.put("LABEL", LABEL_INDEX);
 	}
 	
 	/**
@@ -46,6 +50,11 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 	@Override
 	public void printResults(Double label, Map<String, Double> featureMap) {
 		tempOut.print("{");
+		
+		// Print label
+		tempOut.print(LABEL_INDEX + " " + label + ", ");
+		
+		// Print other features
 		Integer cnt = 1;
 		for(Entry<String, Double> e: featureMap.entrySet()){
 			String key = e.getKey();
@@ -58,7 +67,6 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 			if((cnt++) != featureMap.size())
 				tempOut.print(", ");	
 		}
-		
 		tempOut.println("}");
 	}
 	
@@ -71,19 +79,20 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 		out.println();
 		
 		for(String f: featMap.keySet()){
+			f = f.replaceAll("\\s", "_");
 			out.println("@ATTRIBUTE " + f + "  NUMERIC");
 		}
 		out.println();
 		out.println("@DATA");
 		out.println();
-		
+
 		///////////////// Print body /////////////////////////
-		BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(this.outFile)));
+		BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(tempFile)));
 		String line = null;
 		while((line = in.readLine()) != null){
 			out.println(line);
 		}
-		
+
 		in.close();
 		out.close();
 		tempFile.delete();
