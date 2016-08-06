@@ -1,0 +1,21 @@
+/Users/shabbirhussain/Data/IRData/trec07_spam/results/
+
+
+cd /Users/shabbirhussain/Data/IRData/trec07_spam/results/ 
+java -classpath /Volumes/weka-3-6-14/weka-3-6-14/weka.jar \
+weka.classifiers.functions.LinearRegression  \
+-t "featuresManual.arff" \
+-d "LinearRegression.featuresManual.model" \
+-i \
+-c first \
+-split-percentage 80
+
+
+
+java -classpath /Volumes/weka-3-6-14/weka-3-6-14/weka.jar \
+weka.classifiers.functions.LinearRegression  \
+-t "featuresUniGram.arff" \
+-d "LinearRegression.featuresUniGram.model" \
+-i \
+-c first \
+-split-percentage 80
