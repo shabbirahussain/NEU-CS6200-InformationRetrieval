@@ -1,10 +1,10 @@
 package com.ir.homework.hw7.featureextraction.controllers;
 
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.elasticsearch.client.transport.TransportClient;
+
+import com.ir.homework.hw7.featureextraction.models.MFeature;
 
 public class LabelFeatureExtractor extends AbstractFeatureExtractor {
 	private static final long serialVersionUID = 1L;
@@ -25,8 +25,8 @@ public class LabelFeatureExtractor extends AbstractFeatureExtractor {
 	}
 
 	@Override
-	public Map<String, Double> getFeatures(String docID) {
-		Map<String, Double> result = new HashMap<String, Double>();
+	public MFeature getFeatures(String docID) {
+		MFeature result = new MFeature();
 		Object val = null;
 		try{
 			val = super.getValue(docID, textFieldName);

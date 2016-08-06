@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.elasticsearch.client.transport.TransportClient;
 
+import com.ir.homework.hw7.featureextraction.models.MFeature;
+
 public class UnigramFeatureExtractor extends AbstractFeatureExtractor {
 	private static final long serialVersionUID = 1L;
 	private String textFieldName;
@@ -25,14 +27,15 @@ public class UnigramFeatureExtractor extends AbstractFeatureExtractor {
 	}
 
 	@Override
-	public Map<String, Double> getFeatures(String docID) {
-		Map<String, Double> result = new HashMap<String, Double>();
+	public MFeature getFeatures(String docID) {
+		MFeature result = new MFeature();
+		Map<String, Double> tfMap = new HashMap<String, Double>();
 		
 		try{
-			result = super.getTermFrequency(docID, textFieldName);
+			tfMap = super.getTermFrequency(docID, textFieldName);
 		}catch(Exception e){}
 		
-		for(String e: result.keySet()){
+		for(String e: tfMap.keySet()){
 			result.put(e, 1.0);
 		}
 		return result;

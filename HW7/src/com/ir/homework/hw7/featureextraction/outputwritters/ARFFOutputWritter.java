@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 
 public class ARFFOutputWritter extends AbstractOutputWritter {
@@ -49,13 +50,8 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 	
 	@Override
 	public void printResults(Double label, Map<String, Double> featureMap) {
-		tempOut.print("{");
-		
-		// Print label
-		tempOut.print(LABEL_INDEX + " " + label + ", ");
-		
-		// Print other features
-		Integer cnt = 1;
+		TreeMap<Integer, Double> srtdMap = new TreeMap<>();
+		// Map features to keys
 		for(Entry<String, Double> e: featureMap.entrySet()){
 			String key = e.getKey();
 			Integer nKey = featMap.get(e.getKey());
@@ -63,8 +59,16 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 				nKey = featMap.size();
 				featMap.put(key, nKey);
 			}
-			tempOut.print(nKey + " " + e.getValue());
-			if((cnt++) != featureMap.size())
+			srtdMap.put(nKey, e.getValue());
+			
+		}
+		
+		tempOut.print("{");
+		tempOut.print(LABEL_INDEX + " " + label + ", ");
+		Integer cnt = 1;
+		for(Entry<Integer, Double> e: srtdMap.entrySet()){
+			tempOut.print(e.getKey() + " " + e.getValue());
+			if((cnt++) != srtdMap.size())
 				tempOut.print(", ");	
 		}
 		tempOut.println("}");
@@ -78,8 +82,10 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 		out.println("@RELATION " + outFile.getName());
 		out.println();
 		
+		Integer cnt = 0;
 		for(String f: featMap.keySet()){
-			f = f.replaceAll("\\s", "_");
+			//f = (cnt++) + "_" + f.replaceAll("\\W", "_");
+			
 			out.println("@ATTRIBUTE " + f + "  NUMERIC");
 		}
 		out.println();

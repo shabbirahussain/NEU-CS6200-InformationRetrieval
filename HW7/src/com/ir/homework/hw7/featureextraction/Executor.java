@@ -29,7 +29,7 @@ import org.elasticsearch.search.SearchHit;
 
 import com.ir.homework.hw7.featureextraction.controllers.FeatureExtractor;
 import com.ir.homework.hw7.featureextraction.controllers.LabelFeatureExtractor;
-import com.ir.homework.hw7.featureextraction.controllers.SkipgramFeatureExtractor;
+import com.ir.homework.hw7.featureextraction.controllers.ShingleFeatureExtractor;
 import com.ir.homework.hw7.featureextraction.controllers.UnigramFeatureExtractor;
 import com.ir.homework.hw7.featureextraction.filters.FeatureFilter;
 import com.ir.homework.hw7.featureextraction.filters.ListFeatureFilter;
@@ -87,15 +87,16 @@ public final class Executor {
 		////////// Create feature extractors //////////////////
 		_extLab = (new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, FIELD_LABEL));
 		_ext.add(new UnigramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content"));
-		_ext.add(new SkipgramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
+//		_ext.add(new ShingleFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
 		
 		//////////////////////////////////////////////////////
 		
 		// Create feature filters
 		_filters = new LinkedList<FeatureFilter>();
-		_filters.add(new ListFeatureFilter(_client, INDEX_NAME, INDEX_TYPE)
-				.addWhiteList(MANUAL_FEAT_LIST, "my_shingle_analyzer")
-				.addWhiteList(MANUAL_FEAT_LIST, "my_english"));
+		if(MANUAL_FEAT_LIST.length > 0)
+			_filters.add(new ListFeatureFilter(_client, INDEX_NAME, INDEX_TYPE)
+					.addWhiteList(MANUAL_FEAT_LIST, "my_shingle_analyzer")
+					.addWhiteList(MANUAL_FEAT_LIST, "my_english"));
 		
 		
 		// Read all documents
@@ -121,7 +122,7 @@ public final class Executor {
 		for(String docID: _docList){
 			if((System.currentTimeMillis() - time)>Math.pow(10, 4)){
 				time = System.currentTimeMillis();
-				log("Info", "\t" + _percentFormat.format(cnt/_docList.size()) + "% docs done" + "[" + cnt + "]");
+				log("Info", "\t" + _percentFormat.format(cnt*100.0/_docList.size()) + "% docs done" + "[" + cnt + "]");
 			}
 			
 			Map<String, Double> result = new HashMap<String, Double>();
@@ -133,7 +134,6 @@ public final class Executor {
 			
 			_out.printResults(_extLab.getFeatures(docID).get(FIELD_LABEL), result);
 			cnt++;
-			if(cnt>5)return;
 		}
 	}
 	

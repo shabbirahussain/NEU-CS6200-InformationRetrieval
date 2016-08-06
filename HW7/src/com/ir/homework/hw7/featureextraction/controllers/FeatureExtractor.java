@@ -3,6 +3,8 @@ package com.ir.homework.hw7.featureextraction.controllers;
 import java.io.Serializable;
 import java.util.Map;
 
+import com.ir.homework.hw7.featureextraction.models.MFeature;
+
 public interface FeatureExtractor extends Serializable{
 	
 	/**
@@ -10,5 +12,5 @@ public interface FeatureExtractor extends Serializable{
 	 * @param docID is the given 
 	 * @return Map of features and values
 	 */
-	Map<String, Double> getFeatures(String docID);
+	MFeature getFeatures(String docID);
 }

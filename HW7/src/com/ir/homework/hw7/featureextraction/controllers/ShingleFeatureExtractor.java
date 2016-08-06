@@ -6,7 +6,9 @@ import java.util.Map;
 
 import org.elasticsearch.client.transport.TransportClient;
 
-public class SkipgramFeatureExtractor extends AbstractFeatureExtractor {
+import com.ir.homework.hw7.featureextraction.models.MFeature;
+
+public class ShingleFeatureExtractor extends AbstractFeatureExtractor {
 	private static final long serialVersionUID = 1L;
 	private String textFieldName;
 
@@ -18,21 +20,21 @@ public class SkipgramFeatureExtractor extends AbstractFeatureExtractor {
 	 * @param textFieldName is the field from which features has to be extracted
 	 * @throws UnknownHostException
 	 */
-	public SkipgramFeatureExtractor(TransportClient client, String indices, String types, String textFieldName)
+	public ShingleFeatureExtractor(TransportClient client, String indices, String types, String textFieldName)
 			throws UnknownHostException {
 		super(client, indices, types);
 		this.textFieldName = textFieldName;
 	}
 
 	@Override
-	public Map<String, Double> getFeatures(String docID) {
-		Map<String, Double> result = new HashMap<String, Double>();
+	public MFeature getFeatures(String docID) {
+		MFeature result = new MFeature();
+		Map<String, Double> tfMap = new HashMap<String, Double>();
+		try {
+			tfMap = super.getTermFrequency(docID, textFieldName);
+		} catch (Exception e1) {}
 		
-		try{
-			result = super.getTermFrequency(docID, textFieldName);
-		}catch(Exception e){}
-		
-		for(String e: result.keySet()){
+		for(String e: tfMap.keySet()){
 			result.put(e, 1.0);
 		}
 		return result;
