@@ -1,3 +1,22 @@
+# ===========================================================
+#                    Spam Dataset
+# ===========================================================
+
+GET trec07_spam/document/inmail.10904
+GET trec07_spam/document/inmail.19436
+GET trec07_spam/document/inmail.21151
+
+GET trec07_spam/document/inmail.32775
+GET trec07_spam/document/inmail.1085
+GET trec07_spam/document/_search
+
+GET trec07_spam/document/inmail.1/_termvectors?fields=Content.Shingles
+
+GET trec07_spam/_analyze
+{
+  "analyzer": "my_shingle_analyzer",
+  "text" : "no credit check required"
+}
 
 
 DELETE trec07_spam
@@ -117,11 +136,6 @@ PUT /trec07_spam/document/_mapping
   }
 }
 
-GET trec07_spam/_analyze
-{
-  "analyzer": "my_shingle_analyzer",
-  "text" : "no credit check"
-}
 
 PUT trec07_spam/document/inmail.1
 {
