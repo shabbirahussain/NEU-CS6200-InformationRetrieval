@@ -48,8 +48,17 @@ abstract class AbstractFeatureFilter implements FeatureFilter{
 					.getTokens();
 			
 			for (AnalyzeResponse.AnalyzeToken token : tokens)
-				results.add(token.getTerm());
+				results.add(this.getFeatName(token.getTerm()));
 		} catch (Exception e) {}
 		return results;
+	}
+	
+	/**
+	 * Builds a feature name from the text given. Feature name follows standards of not containing illegal characters
+	 * @param text is the feature text to be converted
+	 * @return Feature name
+	 */
+	protected String getFeatName(String text){
+		return text.replaceAll("\\W", "_");
 	}
 }

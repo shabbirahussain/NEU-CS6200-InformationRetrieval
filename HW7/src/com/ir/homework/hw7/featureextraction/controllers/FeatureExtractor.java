@@ -1,7 +1,6 @@
 package com.ir.homework.hw7.featureextraction.controllers;
 
 import java.io.Serializable;
-import java.util.Map;
 
 import com.ir.homework.hw7.featureextraction.models.MFeature;
 

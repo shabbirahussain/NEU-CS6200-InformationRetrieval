@@ -19,3 +19,17 @@ weka.classifiers.functions.LinearRegression  \
 -i \
 -c first \
 -split-percentage 80
+
+java -Xmx7g -classpath /Volumes/weka-3-8-0/weka-3-8-0/weka.jar \
+weka.classifiers.bayes.NaiveBayesUpdateable  \
+-t "featuresManual.arff" \
+-d "NaiveBayesUpdateable.featuresManual.model" \
+-c first \
+-split-percentage 80
+
+java -Xmx7g -classpath /Volumes/weka-3-8-0/weka-3-8-0/weka.jar \
+weka.classifiers.bayes.NaiveBayesUpdateable  \
+-t "featuresUniGram.arff" \
+-d "NaiveBayesUpdateable.featuresUniGram.model" \
+-c first \
+-split-percentage 80

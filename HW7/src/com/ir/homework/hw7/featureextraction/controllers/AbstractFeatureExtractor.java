@@ -96,4 +96,13 @@ abstract class AbstractFeatureExtractor implements FeatureExtractor {
 		}
 		return result;
 	}
+	
+	/**
+	 * Builds a feature name from the text given. Feature name follows standards of not containing illegal characters
+	 * @param text is the feature text to be converted
+	 * @return Feature name
+	 */
+	protected String getFeatName(String text){
+		return text.replaceAll("\\W", "_");
+	}
 }

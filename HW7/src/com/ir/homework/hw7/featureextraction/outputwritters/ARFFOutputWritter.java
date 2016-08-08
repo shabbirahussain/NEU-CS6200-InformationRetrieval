@@ -6,9 +6,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 
@@ -19,6 +22,7 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 	private File tempFile;
 	private PrintStream tempOut;
 	private Map<String, Integer> featMap;
+	private Set<Double> labelSet;
 	
 	/**
 	 * Default constructor
@@ -32,13 +36,16 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 		System.out.println(tempFile);
 		tempOut = new PrintStream(tempFile);
 		
-		featMap = new LinkedHashMap<String, Integer>();
+		featMap  = new LinkedHashMap<>();
+		labelSet = new HashSet<>();
 		
 		featMap.put("LABEL", LABEL_INDEX);
 	}
 	
 	@Override
 	public void printResults(Double label, Map<String, Double> featureMap) {
+		labelSet.add(label);
+		
 		TreeMap<Integer, Double> srtdMap = new TreeMap<>();
 		// Map features to keys
 		for(Entry<String, Double> e: featureMap.entrySet()){
@@ -71,9 +78,23 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 		out.println("@RELATION " + outFile.getName());
 		out.println();
 		
-		for(String f: featMap.keySet()){
+		// Print class
+		Iterator<String> itr=featMap.keySet().iterator();
+		String f = itr.next();
+		out.print("@ATTRIBUTE " + f + "  {");
+		Integer cnt=1;
+		for(Double l: labelSet){
+			out.print(l.toString());
+			if((cnt++) != labelSet.size())
+				out.print(", ");
+		}
+		out.println("}");
+		
+		for(; itr.hasNext();){
+			f=itr.next();
 			out.println("@ATTRIBUTE " + f + "  NUMERIC");
 		}
+		
 		out.println();
 		out.println("@DATA");
 		out.println();
