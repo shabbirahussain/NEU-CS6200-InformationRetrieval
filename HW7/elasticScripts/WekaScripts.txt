@@ -33,3 +33,26 @@ weka.classifiers.bayes.NaiveBayesUpdateable  \
 -d "NaiveBayesUpdateable.featuresUniGram.model" \
 -c first \
 -split-percentage 80
+
+
+java -Xmx7g -classpath /Volumes/weka-3-8-0/weka-3-8-0/weka.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/lib/liblinear-java-1.96-SNAPSHOT.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/LibLINEAR.jar \
+weka.classifiers.functions.LibLINEAR -S 0 -C 1.0 -E 0.001 -B 1.0 -P -L 0.1 -I 1000 -distribution \
+-classifications "weka.classifiers.evaluation.output.prediction.CSV" \
+-t "featuresUniGram.arff" \
+-d "LibLINEAR.featuresUniGram.model" \
+-c first \
+-g \
+-split-percentage 80
+
+
+java -Xmx7g -classpath /Volumes/weka-3-8-0/weka-3-8-0/weka.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/lib/liblinear-java-1.96-SNAPSHOT.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/LibLINEAR.jar \
+weka.classifiers.functions.LibLINEAR -S 0 -C 1.0 -E 0.001 -B 1.0 -P -L 0.1 -I 1000 \
+-t "featuresUniGram.arff" \
+-d "LibLINEAR.featuresUniGram.model" \
+-c first \
+-split-percentage 80
+
+
+java -Xmx1024m -jar /Volumes/weka-3-8-0/weka-3-8-0/weka.jar
+
+/Users/shabbirhussain/Downloads/weka-3-8-0-oracle-jvm.dmg

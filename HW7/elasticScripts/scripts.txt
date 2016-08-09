@@ -14,8 +14,18 @@ GET trec07_spam/document/inmail.1/_termvectors?fields=Content.Shingles
 
 GET trec07_spam/_analyze
 {
-  "analyzer": "my_shingle_analyzer",
+  "analyzer": "my_skipgram_analyzer",
   "text" : "no credit check required"
+}
+
+GET trec07_spam/document/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "is credit",
+      "fields": ["Content", "Content.Shingles"]
+    }
+  }
 }
 
 
@@ -32,6 +42,12 @@ PUT /trec07_spam/
     },
     "analysis": {
       "filter":{
+        "my_skipgram_filter":{
+          "type": "nGram",
+          "min_gram" : "2",
+          "max_gram" : "4",
+          "token_chars": [ "letter", "digit" ]
+        },
         "my_shingle_filter": {
           "type":             "shingle",
           "min_shingle_size": 2, 
@@ -65,6 +81,17 @@ PUT /trec07_spam/
             "stop",
             "porter_stem",
             "my_shingle_filter"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        },
+        "my_skipgram_analyzer":{
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop",
+            "porter_stem",
+            "my_skipgram_filter"
           ],
           "stopwords_path": "stoplist.txt" 
         },
@@ -129,6 +156,12 @@ PUT /trec07_spam/document/_mapping
             "store": true,
             "index": "analyzed",
             "analyzer": "my_shingle_analyzer"
+          },
+          "Skipgrams":{
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "my_skipgram_analyzer"
           }
         }
       }
