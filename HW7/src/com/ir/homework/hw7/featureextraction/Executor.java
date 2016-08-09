@@ -89,8 +89,8 @@ public final class Executor {
 		_extLab = (new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, FIELD_LABEL));
 		
 		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content"));
-//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
-//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Skipgrams"));
+		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
+		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Skipgrams"));
 //		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "From"));
 		
 		//////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ public final class Executor {
 		///////// Create feature filters /////////////////////
 		if(MANUAL_FEAT_LIST.length > 0)
 			_filters.add(new ListFeatureFilter(_client, INDEX_NAME, INDEX_TYPE)
-//					.addWhiteList(MANUAL_FEAT_LIST, "my_shingle_analyzer")
+					.addWhiteList(MANUAL_FEAT_LIST, "my_shingle_analyzer")
 //					.addWhiteList(MANUAL_FEAT_LIST, "my_skipgram_analyzer")
 //					.addWhiteList(MANUAL_FEAT_LIST, "my_email_analyzer")
 					.addWhiteList(MANUAL_FEAT_LIST, "my_english"));

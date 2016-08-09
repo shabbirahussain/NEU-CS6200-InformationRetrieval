@@ -63,8 +63,10 @@ public class ListFeatureFilter extends AbstractFeatureFilter {
 		if(whiteList == null){
 			result.putAll(featureMap);
 		}else{
-			for(String key: whiteList)
-				result.put(key, featureMap.getOrDefault(key, 0.0));
+			for(String key: whiteList){
+				if(featureMap.containsKey(key))
+					result.put(key, featureMap.get(key));
+			}
 			
 		}
 		
