@@ -28,10 +28,10 @@ abstract class AbstractFeatureFilter implements FeatureFilter{
 	}
 	
 	/**
-	 * Analyzes the 
-	 * @param query
-	 * @param analyzer
-	 * @return
+	 * Analyzes the query
+	 * @param query is the query to use
+	 * @param analyzer is the analyzer to use
+ 	 * @return List of terms/features
 	 */
 	protected List<String> analyzeQuery(String query, String analyzer){
 		List<String> results = new LinkedList<String>();

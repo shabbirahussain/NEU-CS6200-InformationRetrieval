@@ -5,6 +5,7 @@ package com.ir.homework.hw7.featureextraction;
 
 import static com.ir.homework.hw7.featureextraction.Constants.*;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
@@ -87,12 +88,13 @@ public final class Executor {
 		_ext= new LinkedList<>();
 		////////// Create feature extractors //////////////////
 		_extLab = (new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, FIELD_LABEL));
-		
+
+//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "TEXT", "my_shingle_analyzer"));
 		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content"));
 		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
-		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Skipgrams"));
-		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "From"));
-		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "ContentType"));
+//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Skipgrams"));
+//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "From"));
+//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "ContentType"));
 		
 		//////////////////////////////////////////////////////
 
@@ -100,7 +102,7 @@ public final class Executor {
 		///////// Create feature filters /////////////////////
 		if(MANUAL_FEAT_LIST.length > 0)
 			_filters.add(new ListFeatureFilter(_client, INDEX_NAME, INDEX_TYPE)
-					.addWhiteList(MANUAL_FEAT_LIST, "my_shingle_analyzer")
+//					.addWhiteList(MANUAL_FEAT_LIST, "my_shingle_analyzer")
 //					.addWhiteList(MANUAL_FEAT_LIST, "my_keyword")
 //					.addWhiteList(MANUAL_FEAT_LIST, "my_skipgram_analyzer")
 //					.addWhiteList(MANUAL_FEAT_LIST, "my_email_analyzer")
@@ -110,7 +112,8 @@ public final class Executor {
 
 		_out = new LinkedList<>();
 		///////// Create output writers  /////////////////////
-		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH));
+		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH));
+//		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH, true));
 		//_out.add(new CSVOutputWritter(FEAT_FILE_PATH));
 		//////////////////////////////////////////////////////
 
@@ -172,9 +175,12 @@ public final class Executor {
 	/**
 	 * Gets the document list from elastic search
 	 * @return List of string containing document ids from elasticsearch
+	 * @throws FileNotFoundException 
 	 */
-	private static List<String> getDocumentList(){
+	private static List<String> getDocumentList() throws FileNotFoundException{
 		List<String> result = new LinkedList<String>();
+		
+		PrintStream out = new PrintStream(FEAT_ID_FILE_PATH); 
 		
 		TimeValue scrollTimeValue = new TimeValue(60000);
 		SearchResponse response = _client.prepareSearch()
@@ -186,6 +192,7 @@ public final class Executor {
 				.setNoFields()
 				.get();
 		
+		Integer cnt = 1;
 		while(true){
 			if((response.status() != RestStatus.OK) 
 					|| (response.getHits().getHits().length == 0))
@@ -193,15 +200,19 @@ public final class Executor {
 			
 			SearchHit hit[]=response.getHits().hits();
 			for(SearchHit h:hit){
-				result.add(h.getId());
+				String id = h.getId();
+				
+				result.add(id);
+				out.println((cnt++) + ", " + id);
 			}
 			
 			// fetch next window
 			response = _client.prepareSearchScroll(response.getScrollId())
 					.setScroll(scrollTimeValue)
 					.get();
-			
 		}
+		out.close();
+		
 		return result;
 	}
 }

@@ -157,19 +157,25 @@ weka.classifiers.functions.LibLINEAR -S 0 -C 1.0 -E 0.001 -B 1.0 -P -L 0.1 -I 10
 -c first \
 -split-percentage 80
 
-================================ General =================================================
+================================ SkipFromContent =================================================
 
 java -Xmx7g -classpath /Volumes/weka-3-8-0/weka-3-8-0/weka.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/lib/liblinear-java-1.96-SNAPSHOT.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/LibLINEAR.jar \
 weka.classifiers.functions.LibLINEAR -S 0 -C 1.0 -E 0.001 -B 1.0 -P -L 0.1 -I 1000 \
 -classifications "weka.classifiers.evaluation.output.prediction.CSV" \
 -t "featuresSkipGramFromContent.arff" \
--d "LibLINEAR.featuresSkipGramFromContent.model" \
+-d "LibLINEAR.featuresSkipFromContent.model" \
 -c first \
 -split-percentage 80
 
 java -Xmx7g -classpath /Volumes/weka-3-8-0/weka-3-8-0/weka.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/lib/liblinear-java-1.96-SNAPSHOT.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/LibLINEAR.jar \
 weka.classifiers.functions.LibLINEAR -S 0 -C 1.0 -E 0.001 -B 1.0 -P -L 0.1 -I 1000 \
 -t "featuresSkipGramFromContent.arff" \
--d "LibLINEAR.featuresSkipGramFromContent.model" \
+-d "LibLINEAR.featuresSkipFromContent.model" \
 -c first \
 -split-percentage 80
+
+java -Xmx7g -classpath /Volumes/weka-3-8-0/weka-3-8-0/weka.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/lib/liblinear-java-1.96-SNAPSHOT.jar:/Users/shabbirhussain/wekafiles/packages/LibLINEAR/LibLINEAR.jar \
+weka.classifiers.functions.LibLINEAR \
+-classifications "weka.classifiers.evaluation.output.prediction.CSV" \
+-T "features.arff" \
+-l "Models/LibLINEAR.featuresSkipFromContent.model" 

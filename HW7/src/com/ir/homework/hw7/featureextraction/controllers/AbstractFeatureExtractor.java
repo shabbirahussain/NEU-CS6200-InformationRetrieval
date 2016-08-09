@@ -3,9 +3,13 @@ package com.ir.homework.hw7.featureextraction.controllers;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequest;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.termvectors.TermVectorsRequest;
 import org.elasticsearch.action.termvectors.TermVectorsResponse;
@@ -104,5 +108,32 @@ abstract class AbstractFeatureExtractor implements FeatureExtractor {
 	 */
 	protected String getFeatName(String text){
 		return text.replaceAll("\\W", "_");
+	}
+	
+	
+	/**
+	 * Analyzes the query
+	 * @param query is the query to use
+	 * @param analyzer is the analyzer to use
+ 	 * @return List of terms/features
+	 */
+	protected List<String> analyzeQuery(String query, String analyzer){
+		List<String> results = new LinkedList<String>();
+		
+		AnalyzeRequest request = (new AnalyzeRequest())
+				.index(indices)
+				.text(query)
+				.analyzer(analyzer);
+		try {
+			List<AnalyzeResponse.AnalyzeToken> tokens = client.admin()
+					.indices()
+					.analyze(request)
+					.get()
+					.getTokens();
+			
+			for (AnalyzeResponse.AnalyzeToken token : tokens)
+				results.add(this.getFeatName(token.getTerm()));
+		} catch (Exception e) {}
+		return results;
 	}
 }
