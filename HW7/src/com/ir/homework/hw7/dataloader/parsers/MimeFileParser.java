@@ -81,14 +81,16 @@ public final class MimeFileParser extends AbstractParser{
 		
 		// Load properties into resultset
 		Map<String, Object> result = new HashMap<String, Object>();
-		try{result.put("From"     , prsr.getFrom());    }catch(Exception e){}
-		try{result.put("To"       , prsr.getTo());      }catch(Exception e){}
-		try{result.put("Cc"       , prsr.getCc());      }catch(Exception e){}
-		//try{result.put("Bcc"      , prsr.getBcc());     }catch(Exception e){}
-		try{result.put("ReplyTo"  , prsr.getReplyTo()); }catch(Exception e){}
-		try{result.put("MultiPart", prsr.isMultipart());}catch(Exception e){}
-		try{result.put("Subject"  , cleanText(prsr.getSubject()));}catch(Exception e){}
-		try{result.put("Content"  , getContent(prsr));  }catch(Exception e){}
+		
+		try{result.put("From"     	, prsr.getFrom());    						}catch(Exception e){}
+		try{result.put("To"       	, prsr.getTo());      						}catch(Exception e){}
+		try{result.put("Cc"       	, prsr.getCc());     				 			}catch(Exception e){}
+		//try{result.put("Bcc"      , prsr.getBcc());     						}catch(Exception e){}
+		try{result.put("ReplyTo"  	, prsr.getReplyTo()); 						}catch(Exception e){}
+		try{result.put("MultiPart"	, prsr.isMultipart());						}catch(Exception e){}
+		try{result.put("Subject"  	, cleanText(prsr.getSubject()));				}catch(Exception e){}
+		try{result.put("Content"  	, getContent(prsr));  						}catch(Exception e){}
+		try{result.put("ContentType", prsr.getMimeMessage().getContentType());  	}catch(Exception e){}
 		
 		////////////////////////////////////////////////
 		fis.close();
