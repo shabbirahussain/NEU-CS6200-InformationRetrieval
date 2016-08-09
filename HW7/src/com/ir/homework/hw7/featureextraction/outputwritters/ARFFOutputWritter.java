@@ -19,29 +19,33 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+/**
+ * Internal model
+ * @author shabbirhussain
+ */
+class InternalModel implements Serializable{
+	private static final long serialVersionUID = 1L;
+	Map<String, Integer> featMap;
+	Set<Double> labelSet;
+	
+	/**
+	 * Default constructor
+	 */
+	public InternalModel(){
+		this.featMap  = new LinkedHashMap<>();
+		this.labelSet = new HashSet<>();
+	}
+}
 
-public class ARFFOutputWritter extends AbstractOutputWritter {
+public class ARFFOutputWritter extends AbstractOutputWritter{
 	private static final String MY_EXTENSION = ".arff";
 	private static final Integer LABEL_INDEX = 0;
+	private static Double JUNK_LABEL = 0.0;
 	
 	private File tempFile, modelFile;
 	private PrintStream tempOut;
 	private Boolean enforceModel;
 	private InternalModel iModel;
-	
-	private class InternalModel implements Serializable{
-		private static final long serialVersionUID = 1L;
-		Map<String, Integer> featMap;
-		Set<Double> labelSet;
-		
-		/**
-		 * Default constructor
-		 */
-		public InternalModel(){
-			this.featMap  = new LinkedHashMap<>();
-			this.labelSet = new HashSet<>();
-		}
-	}
 	
 	/**
 	 * Default constructor
@@ -79,7 +83,8 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 	
 	@Override
 	public void printResults(Double label, Map<String, Double> featureMap) {
-		this.iModel.labelSet.add(label);
+		if(!this.enforceModel)
+			this.iModel.labelSet.add(label);
 		
 		TreeMap<Integer, Double> srtdMap = new TreeMap<>();
 		// Map features to keys
@@ -94,7 +99,13 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 		}
 		
 		tempOut.print("{");
+		
+		// Assign a junk default label if no label is provided
+		if(!this.iModel.labelSet.contains(label))
+			label = JUNK_LABEL;
+			
 		tempOut.print(LABEL_INDEX + " " + label + ", ");
+		
 		Integer cnt = 1;
 		for(Entry<Integer, Double> e: srtdMap.entrySet()){
 			tempOut.print(e.getKey() + " " + e.getValue());
@@ -106,7 +117,8 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 	
 	public void close() throws IOException{
 		this.tempOut.close();
-		this.saveModel();
+		if(!this.enforceModel)
+			this.saveModel();
 
 		PrintStream out = new PrintStream(this.outFile);
 		this.printHeaders(out);
@@ -118,13 +130,13 @@ public class ARFFOutputWritter extends AbstractOutputWritter {
 	
 	/**
 	 * Saves the model
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
-	private void saveModel(){
-		try {
-			ObjectOutputStream  out = new ObjectOutputStream(new FileOutputStream(this.modelFile));
-			out.writeObject(this.iModel);
-			out.close();
-		} catch (Exception e) {}
+	private void saveModel() throws FileNotFoundException, IOException{
+		ObjectOutputStream  out = new ObjectOutputStream(new FileOutputStream(this.modelFile));
+		out.writeObject(this.iModel);
+		out.close();
 	}
 	
 	/**
