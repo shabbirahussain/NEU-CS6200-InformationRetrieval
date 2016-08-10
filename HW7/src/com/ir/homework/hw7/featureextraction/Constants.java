@@ -2,15 +2,15 @@ package com.ir.homework.hw7.featureextraction;
 
 public final class Constants{
 	private static final String BASE_PATH = "/Users/shabbirhussain/Data/IRData";
-	private static final String DATASET_NAME = "trec07_spam";
+	private static final String DATASET_NAME = "topic_model";
 	
-	public static final String  INDEX_NAME   = "1512_great_mordenist_artist"; //"ap_dataset";
+	public static final String  INDEX_NAME   = "ap_dataset"; //"1512_great_mordenist_artist";
 	public static final String  INDEX_TYPE   = "document";
 	
 
 	private static final String WORKING_FOLDER_PATH = BASE_PATH + "/" + DATASET_NAME;
 	public  static final String FEAT_FILE_PATH        = WORKING_FOLDER_PATH + "/results/features";
-	public  static final String FEAT_JMODEL_FILE_PATH = FEAT_FILE_PATH + "4Crawl" + ".jmodel";
+	public  static final String FEAT_JMODEL_FILE_PATH = FEAT_FILE_PATH + ".jmodel";
 	public  static final String FEAT_ID_FILE_PATH = FEAT_FILE_PATH + ".idlist.txt";
 	
 	public static final String  HOST = "elastichost";

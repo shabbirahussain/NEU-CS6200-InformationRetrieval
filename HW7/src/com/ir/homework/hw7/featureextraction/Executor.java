@@ -44,7 +44,7 @@ import com.ir.homework.hw7.featureextraction.outputwritters.OutputWritter;
  *
  */
 public final class Executor {
-	private static final DecimalFormat _percentFormat = new DecimalFormat("##.00");
+	private static final DecimalFormat _percentFormat = new DecimalFormat("##.00%");
 	private static final DateFormat    _dateFormat    = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 	private static final String FIELD_LABEL = "Label";
 	
@@ -87,10 +87,10 @@ public final class Executor {
 		
 		_ext= new LinkedList<>();
 		////////// Create feature extractors //////////////////
-		_extLab = (new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, FIELD_LABEL));
+		_extLab = (new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, FIELD_LABEL, 1.0));
 
-		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "TEXT", "my_shingle_analyzer"));
-//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content"));
+//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "TEXT", "my_shingle_analyzer"));
+		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "TEXT"));
 //		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
 //		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Skipgrams"));
 //		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "From"));
@@ -113,9 +113,9 @@ public final class Executor {
 		_out = new LinkedList<>();
 		///////// Create output writers  /////////////////////
 //		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH));
-		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH, true));
+//		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH, true));
 		
-		//_out.add(new CSVOutputWritter(FEAT_FILE_PATH));
+		_out.add(new CSVOutputWritter(FEAT_FILE_PATH));
 		//////////////////////////////////////////////////////
 
 		// Read all documents
@@ -138,11 +138,11 @@ public final class Executor {
 	 */
 	private static void execute() throws IOException{
 		Long time = System.currentTimeMillis();
-		Integer cnt = 0;
+		Double cnt = 0.0;
 		for(String docID: _docList){
 			if((System.currentTimeMillis() - time)>Math.pow(10, 4)){
 				time = System.currentTimeMillis();
-				log("Info", "\t" + _percentFormat.format(cnt*100.0/_docList.size()) + "% docs done" + "[" + cnt + "]");
+				log("Info", "\t" + _percentFormat.format(cnt/_docList.size()) + " docs done" + "[" + cnt + "]");
 			}
 			
 			Map<String, Double> result = new HashMap<String, Double>();
@@ -185,7 +185,7 @@ public final class Executor {
 		SearchResponse response = _client.prepareSearch()
 				.setIndices(INDEX_NAME)
 				.setTypes(INDEX_TYPE)
-				.setSize(1000)
+				.setSize(10000)
 				.setScroll(scrollTimeValue)
 				.setQuery(QueryBuilders.matchAllQuery())
 				.setNoFields()
@@ -209,7 +209,7 @@ public final class Executor {
 			response = _client.prepareSearchScroll(response.getScrollId())
 					.setScroll(scrollTimeValue)
 					.get();
-			break;
+//			break;
 		}
 		out.close();
 		

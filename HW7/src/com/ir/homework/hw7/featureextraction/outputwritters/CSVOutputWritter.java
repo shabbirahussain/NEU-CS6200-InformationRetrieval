@@ -20,8 +20,7 @@ public class CSVOutputWritter extends AbstractOutputWritter {
 	
 	private File tempFile;
 	private ObjectOutputStream tempOut;
-	private Map<String, Integer> featMap;
-	
+	private Map<String, Integer> featMap; 
 	
 	/**
 	 * Default constructor
@@ -41,6 +40,8 @@ public class CSVOutputWritter extends AbstractOutputWritter {
 	
 	@Override
 	public void printResults(Double label, Map<String, Double> featureMap) throws IOException {
+		super.addRow();
+		
 		TreeMap<Integer, Double> srtdMap = new TreeMap<>();
 		// Map features to keys
 		for(Entry<String, Double> e: featureMap.entrySet()){
@@ -60,8 +61,19 @@ public class CSVOutputWritter extends AbstractOutputWritter {
 	public void close() throws IOException, ClassNotFoundException{
 		tempOut.close();
 		
-		///////////////// Print Headers ///////////////////////
 		PrintStream out = new PrintStream(outFile);
+		this.printHeaders(out);
+		this.printData(out);
+		
+		out.close();
+		tempFile.delete();
+	}
+
+	/**
+	 * Prints the headers of the ARFF file
+	 * @param out is the out stream to print to
+	 */
+	private void printHeaders(PrintStream out){
 		Integer cnt = 1;
 		for(String f: featMap.keySet()){
 			out.print(f);
@@ -69,16 +81,24 @@ public class CSVOutputWritter extends AbstractOutputWritter {
 				out.print(", ");	
 		}
 		out.println();
-
-		///////////////// Print body /////////////////////////
+	}
+	
+	/**
+	 * Prints the body to the output stream
+	 * @param out is the out stream to print to
+	 * @throws IOException 
+	 */
+	private void printData(PrintStream out) throws IOException{
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(tempFile));
 		Object obj = null;
 		try{
 			while((obj = in.readObject()) != null){
+				super.showStatus(10000L);
+				
 				@SuppressWarnings("unchecked")
 				TreeMap<Integer, Double> srtdMap = (TreeMap<Integer, Double>) obj;
 				
-				cnt = 1;
+				Integer cnt = 1;
 				for(Integer key : featMap.values()){
 					String value = MISSING_VALUES;
 					Double dVal = srtdMap.get(key);
@@ -94,8 +114,5 @@ public class CSVOutputWritter extends AbstractOutputWritter {
 		}catch(Exception e){}
 		
 		in.close();
-		out.close();
-		tempFile.delete();
 	}
-	
 }

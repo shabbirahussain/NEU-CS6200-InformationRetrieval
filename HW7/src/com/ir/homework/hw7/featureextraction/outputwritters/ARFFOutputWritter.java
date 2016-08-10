@@ -83,6 +83,8 @@ public class ARFFOutputWritter extends AbstractOutputWritter{
 	
 	@Override
 	public void printResults(Double label, Map<String, Double> featureMap) {
+		super.addRow();
+		
 		if(!this.enforceModel)
 			this.iModel.labelSet.add(label);
 		
@@ -190,6 +192,8 @@ public class ARFFOutputWritter extends AbstractOutputWritter{
 		BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(tempFile)));
 		String line = null;
 		while((line = in.readLine()) != null){
+			super.showStatus(10000L);
+			
 			out.println(line);
 		}
 		in.close();
