@@ -89,9 +89,9 @@ public final class Executor {
 		////////// Create feature extractors //////////////////
 		_extLab = (new LabelFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, FIELD_LABEL));
 
-//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "TEXT", "my_shingle_analyzer"));
-		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content"));
-		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
+		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "TEXT", "my_shingle_analyzer"));
+//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content"));
+//		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Shingles"));
 //		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "Content.Skipgrams"));
 //		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "From"));
 //		_ext.add(new NGramFeatureExtractor(_client, INDEX_NAME, INDEX_TYPE, "ContentType"));
@@ -112,16 +112,15 @@ public final class Executor {
 
 		_out = new LinkedList<>();
 		///////// Create output writers  /////////////////////
-		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH));
-//		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH, true));
+//		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH));
+		_out.add(new ARFFOutputWritter(FEAT_FILE_PATH, FEAT_JMODEL_FILE_PATH, true));
+		
 		//_out.add(new CSVOutputWritter(FEAT_FILE_PATH));
 		//////////////////////////////////////////////////////
 
 		// Read all documents
 		_docList = getDocumentList();
-		
 		log("Info", "Time Required=" + ((System.nanoTime() - start) * 1.0e-9));
-		
 		
 		log("Info", "Extracting Features...");
 		execute();
@@ -186,7 +185,7 @@ public final class Executor {
 		SearchResponse response = _client.prepareSearch()
 				.setIndices(INDEX_NAME)
 				.setTypes(INDEX_TYPE)
-				.setSize(10000)
+				.setSize(1000)
 				.setScroll(scrollTimeValue)
 				.setQuery(QueryBuilders.matchAllQuery())
 				.setNoFields()
@@ -210,6 +209,7 @@ public final class Executor {
 			response = _client.prepareSearchScroll(response.getScrollId())
 					.setScroll(scrollTimeValue)
 					.get();
+			break;
 		}
 		out.close();
 		
