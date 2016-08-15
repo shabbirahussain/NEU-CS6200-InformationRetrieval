@@ -49,16 +49,20 @@ class TermVectors(object):
         Fetches the term vectors for the given id
             id is the document id to search for
         '''
-      
+        #print(id)
         tv_json = self.es.termvectors(index=self.index_name, 
                                      doc_type=self.doc_type,
                                      id=id)
-        tv_dict = dict([ (k, v['term_freq'])  
+        tv_dict = {}
+        try:
+            tv_dict = dict([ (k, v['term_freq'])  
                         for k,v in tv_json \
                         .get('term_vectors')\
                         .get(self.field_name)\
                         .get('terms')\
                         .iteritems()])
+        except: AttributeError
+            
         return tv_dict
             
     

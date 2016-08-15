@@ -17,7 +17,7 @@ sys.stderr = DevNull()
 nltk.data.path = ['/Users/shabbirhussain/Data/nltk_data']
 
 N_TOP_WORDS = 8
-N_ITER = 100
+N_ITER = 1000
 N_TOPICS = 10
 MAX_DOC_PER_Q = 10
 
@@ -122,6 +122,6 @@ if __name__ == '__main__':
                    docs=docs.keys())
         printTopics(ec, docs)
         print("")
-        break
+        #break
     pass
 
