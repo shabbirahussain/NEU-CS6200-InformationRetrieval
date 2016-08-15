@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>NEU-CS6200-InformationRetrieval-HW8</groupId>
+	<artifactId>NEU-CS6200-InformationRetrieval-HW8</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.5.1</version>
+				<configuration>
+					<source />
+					<target />
+				</configuration>
+			</plugin><!--Mallet logging is horrifically verbose, and has not easy to configure-->
+			<!--We have to use this complicated process to copy the logging.properties file to the right location -->
+			<plugin>
+			    <artifactId>maven-resources-plugin</artifactId>
+			    <version>2.6</version>
+			    <executions>
+			        <execution>
+			            <id>copy-resources</id>
+			            <phase>validate</phase>
+			            <goals>
+			                <goal>copy-resources</goal>
+			            </goals>
+			            <configuration>
+			                <outputDirectory>
+			                    ${basedir}/target/classes/cc/mallet/util/resources
+			                </outputDirectory>
+			                <resources>
+			                    <resource>
+			                        <directory>src/mallet-resources</directory>
+			                        <filtering>true</filtering>
+			                    </resource>
+			                </resources>
+			            </configuration>
+			        </execution>
+			    </executions>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/cc.mallet/mallet -->
+		<dependency>
+			<groupId>cc.mallet</groupId>
+			<artifactId>mallet</artifactId>
+			<version>2.0.8</version>
+		</dependency>
+	</dependencies>
+</project>
