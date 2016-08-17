@@ -41,6 +41,25 @@ def getRelDocSet():
         
     return qDoc
 
+def getRelDocMap():
+    qMap = {}
+    
+    # load qrel into map
+    f = open(QREL_PATH, 'r')
+    for line in f:
+        tokens = line.split()
+        key = tokens[0]
+        docs = qMap.get(key)
+        if(int(tokens[3]) == 1):
+            docs[tokens[2]] = 1
+            qMap[key]       = docs
+        #docs.setdefault(tokens[2], int(tokens[3]))
+        #qMap.setdefault(key, docs)
+    
+    #print(qMap.get("60"))
+    return qMap
+
+
 def getAllDocList():
     docs = []
     
@@ -71,16 +90,14 @@ def printTopics(termVector, relDocs):
     doc_topic = model.doc_topic_
     doc_keys  = termVector.getDocuments()
     for i, topic_dist  in enumerate(doc_topic):
-        #if(relDocs.get(doc_keys[i], 0) == 0): continue # irrelevant document skip
         for j, prob in enumerate(doc_topic[i]):
             print('"{}","{}",{}'.format(doc_keys[i], j, prob))
-        #print("{},{},{}".format(doc_topic[i].argmax()))
     print(topicMap)
     pass
 
 if __name__ == '__main__':
     docsLst = getAllDocList()
-    relDocs = getRelDocSet()
+    relDocs = getRelDocMap()
     ec = TermVectors(host=HOST, 
                    index_name=INDEX_NAME, 
                    doc_type=DOC_TYPE, 

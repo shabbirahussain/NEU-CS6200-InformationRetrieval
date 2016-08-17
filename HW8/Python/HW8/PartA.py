@@ -16,9 +16,9 @@ sys.stderr = DevNull()
 
 nltk.data.path = ['/Users/shabbirhussain/Data/nltk_data']
 
-N_TOP_WORDS = 8
+N_TOP_WORDS = 20
 N_ITER = 1000
-N_TOPICS = 10
+N_TOPICS = 20
 MAX_DOC_PER_Q = 10
 
 HOST       = "elastichost:9200"
@@ -98,6 +98,7 @@ def printTopics(termVector, docs):
     #docs = termVector.getDocuments()
     doc_topic = model.doc_topic_
     doc_keys  = termVector.getDocuments()
+
     cnt = 1
     for i, topic_dist  in enumerate(doc_topic):
         if(cnt > MAX_DOC_PER_Q): break           # max documents printed
@@ -107,7 +108,7 @@ def printTopics(termVector, docs):
         for prob in doc_topic[i]:
             print(",{}".format(prob)),
         print(",{}".format(doc_topic[i].argmax()))
-
+    pass
 
 if __name__ == '__main__':
     docsMap = getQueryDocList()
