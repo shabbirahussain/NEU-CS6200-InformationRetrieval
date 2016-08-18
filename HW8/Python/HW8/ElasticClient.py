@@ -4,6 +4,7 @@ Created on Aug 15, 2016
 @author: shabbirhussain
 '''
 import elasticsearch
+import time
 from scipy.sparse import csr_matrix
 
 class TermVectors(object):
@@ -31,7 +32,13 @@ class TermVectors(object):
         data = []
         vocabulary = {}
         
-        for d in docs:
+        size  = len(docs)
+        start = time.clock()
+        for i, d in enumerate(docs):
+            if((time.clock() - start) > 10):
+                start = time.clock()
+                print ("\t{: 6.2%} done ({:d})".format((float(i)/size), i))
+            
             terms = self.get_tv_dict(id=d)
             for term, value in terms.items():
                 index = vocabulary.setdefault(term, len(vocabulary))
@@ -69,3 +76,5 @@ class TermVectors(object):
     def getTermMatrix(self): return self.termMatrix
     def getVocab(self): return self.vocabulary
     def getDocuments(self): return self.documents
+    
+    
