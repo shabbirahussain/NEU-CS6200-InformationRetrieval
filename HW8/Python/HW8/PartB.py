@@ -4,7 +4,7 @@ Created on Aug 14, 2016
 @author: shabbirhussain
 '''
 import nltk
-import numpy as np
+import time
 import lda
 from HW8.ElasticClient import TermVectors
 from sklearn.cluster import KMeans
@@ -17,7 +17,7 @@ class DevNull(object):
 nltk.data.path = ['/Users/shabbirhussain/Data/nltk_data']
 
 N_TOP_WORDS = 8
-N_ITER = 10
+N_ITER = 1000
 N_TOPICS = 200
 MAX_DOCS = 100000
 N_CLUSTERS = 25
@@ -101,26 +101,39 @@ def calcConfusionMat(doc, cluster, relDocs):
     print ("\t\t same cluster \t different clusters")
     print ("same query      \t {} \t {}".format(sqsc, sqdc))
     print ("different query \t {} \t {}".format(dqsc, dqdc))
+    
+from time import gmtime, strftime
+def log(start, msg):
+    end = time.time()
+    print "\n[{}][Took:{: 5.2f}s]{}".format(strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                                       , end-start
+                                       , msg)
+    return end
 
 
 if __name__ == '__main__':
+    start = time.time()
+    start = log(start, "Initializing...")
     docs = getAllDocs()
-    print "\nFetching term vector..."
+    
+    start = log(start, "Fetching term vector...")
     ec = TermVectors(host=HOST, 
                    index_name=INDEX_NAME, 
                    doc_type=DOC_TYPE, 
                    field_name=FIELD_NAME, 
                    docs=docs.keys())
     vocab = ec.getVocab()
-    print "\nGenerating topics..."
+    start = log(start, "Generating topics...") 
     model = runLDA(ec)
     
-    print "\nClustering topics..."
+    start = log(start, "Clustering topics...")
     clusters = clusterDocs(model.doc_topic_)
     
-    print "\nCalculating Results...\n"
+    start = log(start, "Calculating Results...")
     relDocs = getRelDocMap()
     calcConfusionMat(docs, clusters, relDocs)
+    
+    start = log(start, "Done.")
     
     pass
 
