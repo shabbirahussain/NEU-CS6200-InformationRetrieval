@@ -6,7 +6,7 @@ public final class Constants {
 	//private static final String DATASET_NAME = "1512_great_mordenist_artist";
 	private static final String DATASET_NAME = "ap_dataset";
 	
-	public static final String  INDEX_NAME   = DATASET_NAME; //"ap_dataset";
+	public static final String  INDEX_NAME   = "ap_dataset1";//DATASET_NAME; //"ap_dataset";
 	public static final String  INDEX_TYPE   = "document";
 	
 	public static final String PRE_PROCESS_SRC_PATH = BASE_PATH + "/AP_DATA_RO/ap89_collection";

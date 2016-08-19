@@ -25,6 +25,8 @@ class TermVectors(object):
         self.doc_type   = doc_type 
         self.field_name = field_name
         self.es = elasticsearch.Elasticsearch([host])
+        
+        self.ttf = {}
         #print(self.es.termvectors())
         
         indptr = [0]
@@ -41,6 +43,9 @@ class TermVectors(object):
             
             terms = self.get_tv_dict(id=d)
             for term, value in terms.items():
+                #if(len(term)<=2): continue
+                #if(self.getDF(term) <= 2): continue
+                
                 index = vocabulary.setdefault(term, len(vocabulary))
                 indices.append(index)
                 data.append(value)
@@ -50,6 +55,41 @@ class TermVectors(object):
         self.documents  = docs
         
         #print(vocabulary)
+    
+    def getDF(self, term):
+        ttf = self.ttf.get(term)
+        if(ttf!=None): return ttf
+        
+        ttf = self.getDFFromES(term)
+        self.ttf[term] = ttf
+        return ttf
+        
+    def getDFFromES(self, term):
+        body = """
+        {{
+          "script_fields": 
+          {{
+            "FIELD": 
+            {{
+              "script": {{
+                "id": "getDF",
+                "params": {{
+                  "field": "TEXT","term":"{term}"
+                }}
+              }}
+            }}
+          }},
+          "size": 1
+        }} """.format(term=term)
+        
+        res = self.es.search(self.index_name, self.doc_type, body)
+        ttf = 0
+        for doc in res['hits']['hits']:
+            ttf = doc['fields']['FIELD'][0]
+            break
+
+        return ttf
+        
     
     def get_tv_dict(self, id):
         '''
