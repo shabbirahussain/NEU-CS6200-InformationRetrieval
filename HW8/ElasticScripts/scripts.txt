@@ -1,0 +1,1426 @@
+GET _nodes
+GET _cluster/state
+GET _cat/shards?v
+GET _cat/indices?v
+
+
+GET /ap_dataset/_mapping
+GET _cluster/pending_tasks
+
+POST 1512_great_mordenist_artist/_close
+
+POST 1512_great_mordenist_artist/_refresh
+
+PUT /1512_great_mordenist_artist/_settings
+{
+  "analysis": {
+    "filter":{
+      "my_shingle_filter": {
+        "type":             "shingle",
+        "min_shingle_size": 2, 
+        "max_shingle_size": 2, 
+        "output_unigrams":  true   
+      }
+    },
+    "analyzer": {
+      "my_shingle_analyzer": {
+        "type":       "custom",
+        "tokenizer":  "standard",
+        "filter": [
+          "lowercase",
+          "stop",
+          "my_shingle_filter"
+        ],
+        "stopwords_path": "stoplist.txt" 
+      }
+    }
+  }
+}
+
+PUT /1512_great_mordenist_artist/document/_mapping
+{
+  "document": {
+    "properties": {
+      "TEXT": {
+        "type":"string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english",
+        "fields":{
+          "Shingles":{
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "my_shingle_analyzer"
+          }
+        }
+      }
+    }
+  }
+}
+
+POST 1512_great_mordenist_artist/_open
+
+GET 1512_great_mordenist_artist/document/http%3A%2F%2Fwww.mutanteggplant.com%2Fvitro-nasu%2Fcategory%2Fpoetry%2F/_termvectors?fields=TEXT.Shingles
+
+
+GET 1512_great_mordenist_artist/document/http%3A%2F%2Fwww.mutanteggplant.com%2Fvitro-nasu%2Fcategory%2Fpoetry%2F/_termvectors?
+{
+  "fields" : ["TEXT"],
+  "offsets" : true,
+  "positions" : false,
+  "term_statistics" : false,
+  "field_statistics" : true
+}
+
+PUT _cluster/settings
+{
+  "transient": {
+    "cluster.routing.allocation.disk.watermark.low"  : "95%",
+    "cluster.routing.allocation.disk.watermark.high" : "98%"
+  }
+}
+
+PUT _settings 
+{
+  "number_of_replicas": 0
+
+}
+
+POST _cluster/reroute
+{
+    "commands": [{
+        "allocate": {
+            "index": "frontier",
+            "shard": 0,
+            "node": "node-shabbir",
+            "allow_primary": 1
+        }
+    }]
+}
+
+GET /links/map1/_count
+
+# START: RESET -----------------------------------------------
+#DELETE /*
+
+
+POST /_scripts/groovy/MAGIC_DEQUEUE
+{
+     "script": "max((ceil(max(0, random() - 0.9999)) * 1000000), (_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf())))"
+}
+
+POST /_scripts/groovy/MAGIC_TRUNCATE
+{
+  "script": "1 / (1 + ((_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))))"
+}
+
+POST /_scripts/groovy/MAGIC_ENQUEUE
+{
+     "script": "ctx._source.PARENT_SCORE = max(ctx._source.PARENT_SCORE, PARENT_SCORE); ctx._source.DISCOVERY_WAVE_NO = min(ctx._source.DISCOVERY_WAVE_NO, DISCOVERY_WAVE_NO); ctx._source.IN_LINK_CNT += IN_LINK_CNT;"
+}
+
+
+#DELETE /1512_great_mordenist_artist
+PUT /1512_great_mordenist_artist/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 3,
+      "number_of_replicas": 2
+    },
+    "analysis": {
+      "analyzer": {
+        "my_english": { 
+          "type": "english",
+          "stopwords_path": "stoplist.txt" 
+        }
+      }
+    }
+  }
+}
+
+PUT /1512_great_mordenist_artist/document/_mapping
+{
+  "document": {
+    "properties": {
+      "HTTP_HEADERS": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LAST_UPDATED": {
+        "type": "date",
+        "format": "basic_date_time_no_millis",
+        "store": true,
+        "index": "no"
+      },
+      "HTML": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "TITLE": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english"
+      },
+      "TEXT": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english"
+      }
+    }
+  }
+}
+
+#DELETE links
+PUT /links/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 3,
+      "number_of_replicas": 2
+    },
+    "analysis": {
+      "analyzer": {
+        "my_keyword": { 
+          "type": "keyword",
+          "filter":"lowercase"
+        }
+      }
+    }
+  }
+}
+
+#DELETE links1
+PUT /links1/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 3,
+      "number_of_replicas": 0
+    },
+  "analysis": {
+    "analyzer": {
+        "my_keyword": { 
+          "type": "keyword",
+          "filter":"lowercase"
+        }
+      }
+    }
+  }
+}
+
+
+PUT /links1/map1/_mapping
+{
+  "map1": {
+    "properties": {
+      "SRC_LINKS": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed" 
+      },
+      "DST_LINKS": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      }
+    }
+  }
+}
+
+
+PUT /links/map/_mapping
+{
+  "map": {
+    "properties": {
+      "SRC_LINKS": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "DST_LINKS": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      }
+    }
+  }
+}
+
+
+#DELETE /frontier/
+PUT /frontier/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 3,
+      "number_of_replicas": 2
+    },
+    "analysis": {
+      "analyzer": {
+        "my_keyword": { 
+          "type": "keyword",
+          "filter":"lowercase"
+        }
+      }
+    }
+  }
+}
+
+PUT /frontier/queue/_mapping
+{
+  "queue": {
+    "properties": {
+      "VISITED_DOMAIN_NAME":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer":"my_keyword" 
+      },
+      "DOMAIN_NAME":{
+        "type": "string",
+        "store": true,
+        "index":"no" 
+      },
+      "PARENT_SCORE": {
+        "type": "float",
+        "store": true
+      },
+      "IN_LINK_CNT": {
+        "type": "integer",
+        "store": true
+      },
+      "DISCOVERY_WAVE_NO": {
+        "type": "integer",
+        "store": true
+      },
+      "VISITED":{
+        "type": "boolean",
+        "store": true
+      },
+      "VISITED_DATE": {
+        "type": "date",
+        "format": "basic_date_time_no_millis",
+        "store": true,
+        "index": "no"
+      }
+    },
+    "_source": {
+      "enabled": true
+    }
+  }
+}
+
+PUT /_settings
+{
+    "index" : {
+        "number_of_replicas" : 0
+    }
+}
+
+
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_modern_artists
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fwww.ranker.com%2Flist%2Ffamous-modernism-artists%2Freference
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"ranker.com",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FAntoni_Gaud%25C3%25AD
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_Gaud%25C3%25AD_buildings
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+
+
+
+#=======================================
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_modern_artists
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+POST /frontier/queue/http%3A%2F%2Fwww.ranker.com%2Flist%2Ffamous-modernism-artists%2Freference
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FConstantin_Br%C3%A2ncu%C8%99i
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+POST /frontier/queue/http%3A%2F%2Fwww.visual-arts-cork.com%2Fsculpture%2Fconstantin-brancusi.htm
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_modern_artists
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fwww.ranker.com%2Flist%2Ffamous-modernism-artists%2Freference
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"ranker.com",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FPablo_Picasso
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FCategory%3APaintings_by_Pablo_Picasso
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+POST /frontier/queue/https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FModernism
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"wikipedia.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+
+POST /frontier/queue/http%3A%2F%2Fwww.theartstory.org%2Fdefinition-modern-art.htm
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"theartstory.org",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+POST /frontier/queue/http%3A%2F%2Fwww.visual-arts-cork.com%2Fmodern-art.htm
+{
+  "VISITED_DOMAIN_NAME": "",
+  "DOMAIN_NAME":"visual-arts-cork.com",
+  "PARENT_SCORE": 1,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_WAVE_NO": 1,
+  "VISITED":false
+}
+
+# END: RESET -----------------------------------------------
+###################################################################
+###################################################################
+POST /_scripts/groovy/MAGIC_DEQUEUE
+{
+     "script": "max((ceil(max(0, random() - 0.9999)) * 1000000), (_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf())))"
+}
+###################################################################
+###################################################################
+POST /frontier/queue/_search
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "function_score": {
+          "query": {
+            "match_all": {}
+          },
+          "functions": [
+            {
+              "script_score": {
+                "script": {
+                  "lang": "groovy",
+                  "id": "MAGIC_DEQUEUE"
+                }
+              }
+            }
+          ],
+          "boost_mode": "replace"
+        }
+      },
+      "filter": {
+        "term": {
+          "VISITED": false
+        }
+      }
+    }
+  },
+  "fields": ["*"], 
+  "size": 60
+}
+
+
+
+###################################################################
+GET /1512_great_mordenist_artist/document/_count
+###################################################################
+#4:03 => 157056 s
+#4:09 => 160129 e
+#4:16 => 3087 s
+#4:23 => 6055
+#4:32 => 10886
+#4:46 => 18590
+#4:56 => 23322 e
+#6:49 => 52472 s
+#7:46 => 53068 s
+#12:18 => 36 s
+
+###################################################################
+
+GET /1512_great_mordenist_artist/document/_count
+GET /links/map/_count
+GET /frontier/queue/_count
+
+GET /links/map1/_search
+
+GET /1512_great_mordenist_artist/
+GET /1512_great_mordenist_artist/document/_count
+
+POST /frontier/queue/_search
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "function_score": {
+          "query": {
+            "term": {
+              "VISITED_DOMAIN_NAME": {
+                "value": ""
+              }
+            }
+          },
+          "functions": [
+            {
+              "script_score": {
+                "script": {
+                  "lang": "groovy",
+                  "id": "MAGIC_DEQUEUE"
+                }
+              }
+            }
+          ],
+          "boost_mode": "replace"
+        }
+      },
+      "filter": {
+        "term": {
+            "VISITED": true
+        }
+      }
+    }
+  },
+  "fields": [], 
+  "size": 60
+}
+
+GET /1512_great_mordenist_artist/document/http%3A%2F%2Fwww.real.com
+
+GET /frontier/queue/http%3A%2F%2Fdirector.real.com%2Frealplayer
+
+
+
+#Speed => 340 pages/min
+
+POST /frontier/queue/_search
+
+
+POST /frontier/queue/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "VISITED": true
+            }
+        },
+        {
+          "match": {
+            "VISITED_DOMAIN_NAME": "wikipedia.org"
+          }
+        }
+      ]
+    }
+  }
+}
+
+
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_modern_artists
+{
+  "VISITED_DOMAIN_NAME": "en.wikipedia.org",
+  "DOMAIN_NAME":"en.wikipedia.org",
+  "PARENT_SCORE": 0,
+  "IN_LINK_CNT": 1,
+  "DISCOVERY_TIME": 1,
+  "VISITED":false
+}
+
+POST /frontier/queue/http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FList_of_modern_artists/_termvectors?fields=VISITED_DOMAIN_NAME
+
+GET /frontier/queue/http%3A%2F%2Fwww.ranker.com%2Flist%2Ffamous-asexual-people%2Fcelebrity-lists
+
+GET /1512_great_mordenist_artist/document/http%3A%2F%2Fwww.reynoldstown.net%2Fsites%2Freynoldstownatl.com%2Ffiles%2Fassets%2FGA_02001405.pdf
+
+
+###################################################################
+###################################################################
+POST /_scripts/groovy/MAGIC_DEQUEUE
+{
+     "script": "(ceil(max(0, random() - 0.9999)) * 1000000) + (_source.PARENT_SCORE * (10000/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_WAVE_NO * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))"
+}
+###################################################################
+###################################################################
+POST /frontier/queue/_search
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "function_score": {
+          "query": {
+            "match_all": {}
+          },
+          "functions": [
+            {
+              "script_score": {
+                "script": {
+                  "lang": "groovy",
+                  "id": "MAGIC_DEQUEUE"
+                }
+              }
+            }
+          ],
+          "boost_mode": "replace"
+        }
+      },
+      "filter": {
+        "term": {
+          "VISITED": false
+        }
+      }
+    }
+  },
+  "fields": [], 
+  "size": 60
+}
+
+POST /frontier/queue/https%3A%2F%2Fen.wikipedia.org%2F/_update
+{
+  "script": {
+    "id": "MAGIC_ENQUEUE",
+    "lang": "groovy",
+    "params": {
+      "PARENT_SCORE": 1,
+      "DISCOVERY_TIME": 999,
+      "IN_LINK_CNT": 2
+    }
+  }, 
+  "upsert": {
+    "PARENT_SCORE": 101,
+    "DISCOVERY_TIME": 999,
+    "IN_LINK_CNT": 2
+  }
+}
+POST /frontier/queue/_search
+
+POST /frontier/queue/http%3A%2F%2Fwww.ranker.com%2Flist%2Fbest-pet-names%2Franker-facebook-reactions/_termvectors?fields=VISITED_DOMAIN_NAME
+
+POST /frontier/queue/_search
+{
+  "script_fields": {
+    "FIELD": {
+      "script": {
+        "inline": "_index['VISITED_DOMAIN_NAME']['ranker.com'].ttf()"
+      }
+    }
+  }
+}
+
+POST /frontier/queue/_search
+{
+  "script_fields": {
+    "FIELD": {
+      "script": {
+        "inline": "(_source.PARENT_SCORE + (1/(1 + exp(- 0.1 * _source.IN_LINK_CNT)))) / (_source.DISCOVERY_TIME * exp(0.01 * _index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))"
+      }
+    }
+  }
+}
+
+#_index['VISITED_DOMAIN_NAME'][_source.DOMAIN_NAME].ttf()))
+
+
+POST /frontier/queue/_search
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "match_all": {}
+      },
+      "filter": {
+        "term": {
+          "VISITED_DOMAIN_NAME": "www.ranker.com"
+        }
+      }
+    }
+  },
+  "script_fields": {
+    "FIELD": {
+      "script": {
+        "inline": "_index['VISITED_DOMAIN_NAME']['www.ranker.com'].ttf()"
+      }
+    }
+  }
+}
+
+
+
+#===========================================================
+
+GET /1512_great_mordenist_artist/document/_search
+{
+  "script_fields": {
+    "FIELD": {
+      "script": {
+        "inline": "ceil(max(0, random() - 0.85)) * 10000 "
+      }
+    },
+    "FIELD1": {
+      "script": {
+        "inline": "random()"
+      }
+    }
+  },
+  "size": 20
+}
+GET /ap_dataset/document/AP890220-0147/_termvectors?fields=TEXT
+
+GET /ap_dataset/document/_search
+{
+  "size": 0,
+  "aggs": {
+    "NAME": {
+      "sum": {
+        "script": "doc['TEXT'].values.size()"
+      }
+    }
+  }
+}
+
+GET /ap_dataset/document/_search
+{
+    "size": 0, 
+    "aggs" : {
+      "totalDocLen" : {
+        "sum" : {
+          "script": "doc['text'].values.size()"
+        }
+      }
+    }
+}
+
+
+GET /ap_dataset/document/_search
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "ids": {
+          "values": [
+            "AP890512-0154"
+          ]
+        }
+      }
+    }
+  }, 
+  "script_fields": {
+    "FIELD": {
+      "script": "doc['TEXT'].values"
+    }
+  }
+}
+
+GET /ap_dataset/document/_search
+GET /ap_dataset/document/_search
+{
+  "query": {
+      "match": {
+        "TEXT": "iran"
+    }
+  },
+  "fields": []
+}
+
+
+GET /ap_dataset/document/AP890912-0225/_termvectors?fields=TEXT
+
+GET /ap_dataset/document/_search
+{"query":{"function_score":{"query":{"match":{"TEXT":"cambodia"}},"functions":[{"script_score":{"script":"_index[field][term].tf()","params":{"term":"cambodia","field":"TEXT"}}}],"boost_mode":"replace"}},"size":1000,"fields":[]}
+
+
+#===========================================================
+
+POST /_scripts/groovy/getTF
+{
+     "script": "_index[field][term].tf()"
+}
+POST /_scripts/groovy/getTTF
+{
+     "script": "_index[field][term].ttf()"
+}
+POST /_scripts/groovy/getDF
+{
+     "script": "_index[field][term].df()"
+}
+GET /_scripts/groovy/getTF
+DELETE /_scripts/groovy/getTF
+
+GET links/map1/_count
+
+
+GET /links/map1/_search
+{
+  "query": {
+     "constant_score" : {
+        "filter" : {
+            "missing" : { "field" : "SRC_LINK"           }
+        }
+     }
+  }
+}
+
+POST 1512_great_mordenist_artist/document/_search
+{
+  "size": 0,
+  "query": {
+    "match_all": {}
+  },
+  "aggs": {
+    "Version_Stats": {
+      "stats": {
+        "script": "doc['_version']"
+      }
+    }
+  }
+}
+
+POST /links1/map1/_count
+
+GET /links1/map1/null#SHAB
+GET /links1/map1/_search
+GET /links1/map1/_search
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "match_all": {}
+      },
+      "filter": {
+        "term": {
+          "SRC_LINK": "wt02-b31-236"
+        }
+      }
+    }
+  }
+}
+
+GET /links2/_analyze
+{
+  "field": "SRC_LINK",
+  "text": "WT02-b31-236" 
+}
+
+DELETE links2
+PUT /links2/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 3,
+      "number_of_replicas": 0
+    },
+  "analysis": {
+    "analyzer": {
+        "my_keyword": { 
+          "type": "custom",
+          "tokenizer": "whitespace"
+        }
+      }
+    }
+  }
+}
+
+
+PUT /links2/map1/_mapping
+{
+  "map1": {
+    "properties": {
+      "SRC_LINKS": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "DST_LINKS": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      }
+    }
+  }
+}
+
+POST /links2/map1/test
+{
+  "SRC_LINKS" : "WT02-b31-236" 
+}
+
+GET links/map/_search
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "match_phrase": {
+          "DST_LINK":"http://codex.wordpress.org/Main_Page"
+        }
+      }
+    }
+  }
+}
+
+POST /_scripts/groovy/MAGIC_ENQUEUE
+{
+     "script": "ctx._source.EVAL_SCORE = ctx._source.EVAL_SCORE"
+}
+
+
+
+
+
+
+# ===========================================================
+#                    AP 89 Dataset
+# ===========================================================
+
+PUT /ap_dataset/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "analyzer": {
+        "my_english": { 
+          "type": "english",
+          "stopwords_path": "stoplist.txt" 
+        }
+      }
+    }
+  }
+}
+
+
+PUT /ap_dataset/document/_mapping
+{
+  "document": {
+    "properties": {
+      "DOCNO": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "TEXT": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english"
+      }
+    }
+  }
+}
+
+
+DELETE ap_dataset1
+PUT /ap_dataset1/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "analyzer": {
+        "my_english": { 
+          "type": "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        }
+      }
+    }
+  }
+}
+
+PUT /ap_dataset1/document/_mapping
+{
+  "document": {
+    "properties": {
+      "DOCNO": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "TEXT": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "yes",
+        "analyzer": "my_english"
+      }
+    }
+  }
+}
+
+GET /ap_dataset/document/_count
+
+GET /ap_dataset/document/AP890305-0030/_termvector
+GET /ap_dataset/document/_search
+{
+    "query" : {
+        "terms" : {"TEXT" : [ "downstream","opec" ]}
+    },
+    "aggregations" : {
+        "significantCrimeTypes" : {
+            "significant_terms" : {
+              "field" : "TEXT" 
+              
+            }
+        }
+    },
+    "size": 0
+}
+
+
+GET /ap_dataset/document/_search
+{
+  "script_fields": {
+    "FIELD": {
+      "script": {
+        "inline": "_index['TEXT']['a'].df()"
+      }
+    }
+  }
+}
+
+GET /ap_dataset/document/_search
+{
+  "query":{
+    "query_string": {
+      "default_field": "TEXT", 
+      "query": "test"
+    }
+  },
+  "size": 10,
+  "highlight": {
+    "fields": {
+      "*": {}
+    }
+  }
+}
+
+
+GET /ap_dataset/document/_search
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "ids": {
+          "values": [
+            "AP890512-0154"
+          ]
+        }
+      }
+    }
+  }
+  , "script_fields": {
+    "FIELD": {
+      "script": "doc['TEXT'].values"
+    }
+  }
+}
+
+GET /ap_dataset/document/_search
+{
+  "query": {
+    "filtered": {
+      "query": {"match_all": {}},
+      "filter": {
+        "script": {
+          "script": "doc['TEXT'].values.size() == 0"
+        }
+      }
+    }
+  }
+}
+GET /ap_dataset/document/_search
+{
+  "query": {
+    "filtered": {
+      "query": {"match_all": {}},
+      "filter": {
+        "ids": {
+          "values": [
+            "AP890220-0145"
+          ]
+        }
+      }
+    }
+  }, 
+  "aggs": {
+    "NAME": {
+      "sum": {
+        "script": "_index['TEXT']['legislator'].tf() / (1+doc['TEXT'].values.size())"
+      }
+    }
+  },
+  "size": 0
+}
+
+GET /ap_dataset/document/_search
+{
+  "aggs" : {
+    "unique_terms" : {
+      "cardinality" : {
+        "field" : "TEXT"
+        }
+      }
+    },
+    "size": 0
+}
+GET /ap_dataset/document/_search
+{
+  "aggs": {
+    "NAME": {
+      "cardinality": {
+        "script": "doc['TEXT'].value"
+      }
+    }
+  },
+  "size": 0
+}
+
+
+
+# ===========================================================
+#                    Spam Dataset
+# ===========================================================
+
+GET trec07_spam/document/inmail.10904
+GET trec07_spam/document/inmail.19436
+GET trec07_spam/document/inmail.21151
+
+GET trec07_spam/document/inmail.32775
+GET trec07_spam/document/inmail.1085
+GET trec07_spam/document/_search
+GET 1512_great_mordenist_artist/document/_search
+
+
+
+GET trec07_spam/document/inmail.1/_termvectors?fields=Content
+
+GET 1512_great_mordenist_artist/_analyze
+{
+  "analyzer": "my_shingle_analyzer",
+  "text" : "no credit check required"
+}
+
+GET trec07_spam/document/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "is credit",
+      "fields": ["Content", "Content.Shingles"]
+    }
+  }
+}
+
+
+GET trec07_spam/document/_search
+{
+  "query": {
+    "match": {
+      "Content": "free"
+    }
+  }
+}
+
+
+DELETE trec07_spam
+PUT /trec07_spam/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "filter":{
+        "my_skipgram_filter":{
+          "type": "nGram",
+          "min_gram" : "2",
+          "max_gram" : "4",
+          "token_chars": [ "letter", "digit" ]
+        },
+        "my_shingle_filter": {
+          "type":             "shingle",
+          "min_shingle_size": 2, 
+          "max_shingle_size": 2, 
+          "output_unigrams":  false   
+        },
+        "my_email_filter" : {
+          "type" : "pattern_capture",
+          "preserve_original" : 1,
+          "patterns" : [
+            "([^@]+)",
+            "(\\p{L}+)",
+            "(\\d+)",
+            "@(.+)"
+           ]
+        }
+      },
+      "analyzer": {
+        "my_english": {
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        },
+        "my_shingle_analyzer": {
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop",
+            "my_shingle_filter"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        },
+        "my_skipgram_analyzer":{
+          "type":       "custom",
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "stop",
+            "my_skipgram_filter"
+          ],
+          "stopwords_path": "stoplist.txt" 
+        },
+        "my_email":{
+          "type":       "custom",
+          "tokenizer" : "uax_url_email",
+          "filter" : [ 
+            "lowercase", "my_email_filter",  "unique" 
+          ]
+        },
+        "my_keyword":{
+          "type":     "custom",
+          "tokenizer":"keyword",
+          "filter": "lowercase"
+        }
+      }
+    }
+  }
+}
+
+
+PUT /trec07_spam/document/_mapping
+{
+  "document": {
+    "properties": {
+      "From":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "To":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "Cc":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "ReplyTo":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_email"
+      },
+      "MultiPart":{
+        "type": "boolean",
+        "store": true
+      },
+      "Subject": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_english"
+      },
+      "ContentType":{
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_keyword"
+      },
+      "Content": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "my_english",
+        "fields":{
+          "Shingles":{
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "my_shingle_analyzer"
+          },
+          "Skipgrams":{
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "my_skipgram_analyzer"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+PUT trec07_spam/document/inmail.1
+{
+  "Content": "branded the quality "
+}
+
+GET /ap_dataset/document/_search
+{
+  "script_fields": 
+  {
+    "FIELD": 
+    {
+      "script": {
+        "id": "getDF",
+        "params": {
+          "field": "TEXT","term":"borrow"
+        }
+      }
+    }
+  },
+  "size": 1
+}
+
+{"script_fields" : {"test1" : {"script" : "getTF", "params" : {"field": "TEXT","term":"borrow"}}}}
+
+GET /ap_dataset1/document/AP890209-0243/_termvectors
