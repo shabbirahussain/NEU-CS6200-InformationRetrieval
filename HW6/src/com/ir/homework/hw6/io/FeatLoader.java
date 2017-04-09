@@ -17,7 +17,6 @@ public final class FeatLoader {
 	
 	/**
 	 * Default constructor
-	 * @param elasticClient client to use for loading
 	 * @param fMat is the feature matrix to be loaded
 	 */
 	public FeatLoader(FeatMatrix fMat){
